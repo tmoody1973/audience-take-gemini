@@ -45,6 +45,18 @@ service cloud.firestore {
       allow write: if isServerOrAdmin();
     }
 
+    // Public Research Runs: Public projection read
+    match /publicResearchRuns/{runId} {
+      allow read: if true;
+      allow write: if isServerOrAdmin();
+    }
+
+    // Events: Public read of public events
+    match /events/{eventId} {
+      allow read: if resource.data.publicVisibility == 'public' || isServerOrAdmin();
+      allow write: if isServerOrAdmin();
+    }
+
     // Evidence Leads: Authenticated create; public read of verified leads; moderation server-only
     match /evidence_leads/{leadId} {
       allow read: if resource.data.status == 'verified' || (isAuthenticated() && resource.data.submittedByUid == request.auth.uid) || isServerOrAdmin();

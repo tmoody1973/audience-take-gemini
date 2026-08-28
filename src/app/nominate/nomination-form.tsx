@@ -86,40 +86,44 @@ export function NominationForm({ initialUrl = "" }: { initialUrl?: string }) {
     setSubmitting(true);
     setSubmitError("");
     try {
-      let headers: Record<string, string> | null = null;
+      let user: any = null;
       try {
-        headers = await nominationCommandHeaders();
+        user = getClientAuth().currentUser;
       } catch {
-        // Unauthenticated / demo guest scout
-        headers = null;
+        user = null;
       }
 
-      if (headers) {
-        const response = await fetch("/api/nominations", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            submittedUrl: values.projectUrl.trim(),
-            mediaUrl: values.mediaUrl.trim() || undefined,
-            whyItShouldGrow: values.reason.trim(),
-            submissionType: mode,
-            suggestedFormat: values.potential.trim() || undefined,
-            audienceFit: values.audience.trim() || undefined,
-            supportingUrls: completedSupportingLinks,
-          }),
-        });
+      if (user) {
+        try {
+          const headers = await nominationCommandHeaders();
+          const response = await fetch("/api/nominations", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              submittedUrl: values.projectUrl.trim(),
+              mediaUrl: values.mediaUrl.trim() || undefined,
+              whyItShouldGrow: values.reason.trim(),
+              submissionType: mode,
+              suggestedFormat: values.potential.trim() || undefined,
+              audienceFit: values.audience.trim() || undefined,
+              supportingUrls: completedSupportingLinks,
+            }),
+          });
 
-        if (response.ok) {
-          const result = (await response.json().catch(() => ({}))) as {
-            data?: { duplicate?: boolean; researchUrl?: string; canonicalUrl?: string };
-          };
-          const destination = result.data?.duplicate
-            ? result.data.canonicalUrl
-            : result.data?.researchUrl;
-          if (destination) {
-            window.location.assign(destination);
-            return;
+          if (response.ok) {
+            const result = (await response.json().catch(() => ({}))) as {
+              data?: { duplicate?: boolean; researchUrl?: string; canonicalUrl?: string };
+            };
+            const destination = result.data?.duplicate
+              ? result.data.canonicalUrl
+              : result.data?.researchUrl;
+            if (destination) {
+              window.location.assign(destination);
+              return;
+            }
           }
+        } catch {
+          // Fallback to direct intake
         }
       }
 
