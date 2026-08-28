@@ -10,11 +10,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { CityDemandHeatmap } from "./CityDemandHeatmap";
 import type { PulseMetrics, UserEngagementRecord, PathwayHypothesis } from "@/domain";
 import { clsx } from "clsx";
 
 interface AudiencePulsePanelProps {
   projectId: string;
+  projectTitle?: string;
   initialMetrics: PulseMetrics;
   initialUserEngagement: UserEngagementRecord | null;
   pathways: [PathwayHypothesis, PathwayHypothesis, PathwayHypothesis];
@@ -22,6 +24,7 @@ interface AudiencePulsePanelProps {
 
 export function AudiencePulsePanel({
   projectId,
+  projectTitle = "Independent Screen Project",
   initialMetrics,
   initialUserEngagement,
   pathways,
@@ -155,64 +158,14 @@ export function AudiencePulsePanel({
 
       </div>
 
-      {/* City Demand Input Prompt */}
-      {isCityPromptOpen && (
-        <div className="p-4 bg-field-paper border-2 border-ink space-y-3 font-mono text-xs shadow-selected-lift">
-          <div className="flex items-center justify-between">
-            <span className="text-ink font-extrabold flex items-center gap-1.5 uppercase">
-              <MapPin className="w-4 h-4 text-signal-coral" />
-              Register Screening Demand in Your City
-            </span>
-            <span className="text-[10px] text-muted-ink uppercase">Requires city name</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="e.g. Seattle, WA or London, UK"
-              value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
-              className="flex-1 bg-paper border-2 border-ink px-3 py-2 text-ink font-bold focus:outline-none"
-            />
-            <Button
-              variant="coral"
-              size="sm"
-              onClick={() => {
-                if (cityInput.trim()) {
-                  handleAction("set_city", cityInput.trim());
-                  setIsCityPromptOpen(false);
-                }
-              }}
-            >
-              CONFIRM CITY
-            </Button>
-          </div>
-          {engagement.city && (
-            <p className="text-ink font-bold text-[11px] pt-1">
-              CURRENTLY COMMITTED TO: <strong className="text-signal-coral">{engagement.city}</strong>
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Top Requested Cities Badge List */}
-      {Object.keys(metrics.cities || {}).length > 0 && (
-        <div className="space-y-1.5 pt-2 font-mono">
-          <span className="text-[10px] uppercase tracking-wider text-muted-ink font-extrabold">
-            Top City Screening Demand
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(metrics.cities).map(([city, count]) => (
-              <span
-                key={city}
-                className="inline-flex items-center gap-1 px-2.5 py-1 bg-field-paper border-2 border-ink text-xs font-bold text-ink"
-              >
-                <MapPin className="w-3.5 h-3.5 text-signal-coral" />
-                {city}: <strong className="text-signal-coral">{count}</strong>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Theatrical City Demand Heatmap */}
+      <CityDemandHeatmap
+        projectId={projectId}
+        projectTitle={projectTitle}
+        cities={metrics.cities || {}}
+        onAddCity={(city) => handleAction("set_city", city)}
+        userCity={engagement.city}
+      />
 
       {/* Pathway Voting Section */}
       <div className="pt-6 border-t-2 border-ink space-y-4">

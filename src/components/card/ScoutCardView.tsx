@@ -407,6 +407,7 @@ export function ScoutCardView({
       {/* Section 7: AUDIENCE PULSE (Placed BEFORE Industry Lens as requested!) */}
       <AudiencePulsePanel
         projectId={project.id}
+        projectTitle={project.identity.title}
         initialMetrics={project.metrics}
         initialUserEngagement={userEngagement}
         pathways={card.pathways}
