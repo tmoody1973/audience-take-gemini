@@ -9,8 +9,8 @@ import { fetchSafeWebContent } from "@/services/ssrf-guard";
 import { parallelClient } from "@/services/parallel-client";
 import { validateScoutProposal } from "./deterministic-validator";
 import { dataRepo } from "@/services/firestore-repo";
-import type { ScoutCard, ResearchRunState, Project } from "@/domain";
-import { validSciFiShortProposal } from "../../tests/fixtures/sample-proposals";
+import type { ResearchRunState, ScoutCard } from "@/domain";
+import { validSciFiShortProposal } from "@/domain/sample-proposals";
 
 export async function executeScoutResearchRun(runId: string): Promise<ResearchRunState> {
   const run = await dataRepo.getResearchRunById(runId);

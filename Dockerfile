@@ -1,12 +1,12 @@
 # Stage 1: Base image
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
 # Stage 2: Dependencies
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci || npm install
 
 # Stage 3: Builder
 FROM base AS builder
