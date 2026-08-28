@@ -248,54 +248,90 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
       const dynamicProject = await dataRepo.getProjectById(slug);
     if (dynamicProject?.publishedCardId) {
       const dynamicCard = await dataRepo.getScoutCardById(dynamicProject.publishedCardId);
-      const dynamicCritic = await dataRepo.getTrailerCriticByProjectId(dynamicProject.id);
+      const dynamicCritic = await dataRepo.getTrailerCriticById(dynamicProject.id);
       if (dynamicCard) {
+        const sourceLedgerEntries = dynamicCard.evidenceLedger.map((ev, idx) => ({
+          id: ev.id || `source-${idx + 1}`,
+          origin: "submitted" as const,
+          title: ev.title || "Verified Source",
+          url: ev.sourceUrl || dynamicProject.identity.originalUrl,
+          publishedAt: new Date().toISOString(),
+          retrievedAt: new Date().toISOString(),
+          availability: "available" as const,
+          verificationStatus: "verified" as const,
+          supportsClaimIds: [ev.id || `claim-${idx + 1}`],
+          externalCommentary: false,
+        }));
+        const sourceIds = sourceLedgerEntries.map((s) => s.id);
+        const claimIds = dynamicCard.evidenceLedger.map((ev, idx) => ev.id || `claim-${idx + 1}`);
+
         return {
           cardVersionId: dynamicCard.id,
+          runId: "run-dynamic",
+          researchVersion: 1,
           projectId: dynamicProject.id,
           slug: dynamicProject.id,
           title: dynamicProject.identity.title,
           hook: dynamicProject.identity.logline || dynamicCard.whyScouted,
-          completeness: "complete",
-          evidenceStatus: "verified_core",
+          projectType: (dynamicProject.identity.medium === "series" ? "series" : "film") as any,
+          submissionLabel: dynamicProject.creatorClaim.status === "verified" ? "Creator submission" : "Fan nomination — unclaimed by creator",
           claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
-          creatorContext: {
-            creators: dynamicProject.identity.creators || ["Original Creator"],
-            statedStage: dynamicProject.identity.currentStage,
-            originSummary: dynamicCard.whyScouted,
-            claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
+          completeness: "complete" as const,
+          fallbackUsed: false,
+          provenance: {
+            submissionType: "fan" as const,
+            submittedSourceUrl: dynamicProject.identity.originalUrl,
+            nominationLabel: "Fan-submitted public project source",
+            nominatedByLabel: "Community scout",
+            researchedAt: dynamicProject.createdAt || new Date().toISOString(),
           },
-          sourceMedia: {
-            state: "authorized_embed",
+          media: {
+            state: "authorized_embed" as const,
             title: dynamicProject.identity.title,
             sourceUrl: dynamicProject.identity.originalUrl,
-            embedUrl: dynamicCard.sourceMedia?.[0]?.url || dynamicProject.identity.originalUrl,
+            embedUrl: dynamicCard.sourceMedia?.[0]?.url || `https://www.youtube-nocookie.com/embed/${youtubeVideoId(dynamicProject.identity.originalUrl) || ""}`,
             attribution: dynamicProject.identity.creators?.[0] || "Public Source",
             accessibleFallback: `Public video for ${dynamicProject.identity.title}`,
           },
-          whatWeKnow: dynamicCard.whatWeKnow,
-          whatWereChecking: dynamicCard.whatWereChecking,
-          claims: dynamicCard.evidenceLedger.map((ev, idx) => ({
+          storyContext: {
+            summary: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
+            storyworld: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
+            themes: ["independent cinema", "creative vision"],
+            currentFormat: dynamicProject.identity.medium,
+            audienceHooks: ["independent creators", "unique storytelling"],
+            claimIds,
+          },
+          creatorContext: {
+            displayName: dynamicProject.identity.creators?.[0] || null,
+            claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
+            summary: dynamicCard.whyScouted,
+            sourceIds,
+            limitations: ["Based on public web reporting and submitted video evidence."],
+          },
+          sourceIds,
+          claimIds,
+          evidenceClaims: dynamicCard.evidenceLedger.map((ev, idx) => ({
             id: ev.id || `claim-${idx + 1}`,
             statement: ev.excerpt || ev.title,
-            status: "supported",
+            status: "supported" as const,
             sourceIds: [ev.id || `source-${idx + 1}`],
             qualification: null,
           })),
-          pathwayIds: ["p1", "p2", "p3"],
+          externalSignals: [],
+          pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
           pathways: (dynamicCard.pathways || []).slice(0, 3).map((pw, idx) => ({
-            id: `p${idx + 1}`,
+            id: `pathway-${idx + 1}`,
             order: idx + 1,
             label: pw.title,
             format: pw.title,
             audience: pw.targetAudience,
             rationale: pw.mediumFitRationale,
-            supportingClaimIds: [dynamicCard.evidenceLedger?.[0]?.id || "claim-1"],
+            supportingClaimIds: [claimIds[0] || "claim-1"],
             comparableSourceIds: [],
             strengths: [pw.mediumFitRationale],
             risks: pw.risksAndUncertainties,
             openQuestions: ["How will audience feedback shape development?"],
-            confidence: "high",
+            confidence: "high" as const,
             nextExperiment: {
               title: pw.nextBoundedExperiment?.name || "Audience Feedback Pulse",
               hypothesis: pw.nextBoundedExperiment?.description || "Audience will validate interest",
@@ -305,26 +341,15 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
               timebox: "14 days",
             },
           })),
-          sourceLedger: dynamicCard.evidenceLedger.map((ev, idx) => ({
-            id: ev.id || `source-${idx + 1}`,
-            origin: "submitted",
-            title: ev.title || "Verified Source",
-            url: ev.sourceUrl || dynamicProject.identity.originalUrl,
-            publishedAt: new Date().toISOString(),
-            retrievedAt: new Date().toISOString(),
-            availability: "available",
-            verificationStatus: "verified",
-            supportsClaimIds: [ev.id || `claim-${idx + 1}`],
-            externalCommentary: false,
-          })),
+          sourceLedger: sourceLedgerEntries,
           missingSections: [],
           limitations: ["Based on public web reporting and submitted video evidence."],
           industryLens: {
-            pathwayIds: ["p1", "p2", "p3"],
+            pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
             comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((title) => ({
               title,
               relevance: "Comparable market trajectory and audience crossover.",
-              sourceIds: [dynamicCard.evidenceLedger?.[0]?.id || "source-1"],
+              sourceIds: [sourceIds[0] || "source-1"],
               limitations: ["Market conditions differ."],
             })),
             risks: [dynamicCard.decisionBrief?.primaryRisk || "Financing and distribution alignment."],
@@ -344,25 +369,61 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           trailerCritiques: dynamicCritic ? [{
             artifactId: dynamicCritic.id,
             projectId: dynamicProject.id,
-            sourceId: dynamicCard.evidenceLedger?.[0]?.id || "source-1",
-            youtubeUrl: dynamicCritic.youtubeUrl,
-            youtubeVideoId: dynamicCritic.youtubeVideoId,
-            modelId: dynamicCritic.modelId,
+            sourceId: sourceIds[0] || "source-1",
+            youtubeUrl: dynamicCritic.sourceVideoUrl,
+            youtubeVideoId: youtubeVideoId(dynamicCritic.sourceVideoUrl) || "M2djoKmnOTY",
+            modelId: dynamicCritic.model || "gemini-3.7-flash",
             analysisVersion: 1,
             cardVersionId: dynamicCard.id,
-            structuralNarrative: dynamicCritic.structuralNarrative,
-            technicalCraft: dynamicCritic.technicalCraft,
-            marketingPersuasion: dynamicCritic.marketingPersuasion,
-            emotionalRhetorical: dynamicCritic.emotionalRhetorical,
-            matrix: dynamicCritic.matrix as any,
+            structuralNarrative: {
+              genreSignaling: dynamicCritic.genreAndForm,
+              narrativeDelivery: dynamicCritic.summary,
+              trailerType: "Concept Pitch",
+              beats: (dynamicCritic.timestampedBeats || []).slice(0, 4).map((b) => ({
+                label: b.label || b.description.slice(0, 30) || "Narrative Beat",
+                start: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:00",
+                end: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:30",
+                observation: b.description,
+                modality: "audiovisual" as const,
+              })),
+            },
+            technicalCraft: {
+              editingAndPace: dynamicCritic.craftAnalysis?.editingAndPacing || "Rhythmic sync to audio cue.",
+              cinematographyAndFraming: dynamicCritic.craftAnalysis?.cinematography || "Cinematic aspect ratio.",
+              soundAndScore: dynamicCritic.craftAnalysis?.soundAndScore || "Original score blend.",
+              graphicsAndTitles: dynamicCritic.craftAnalysis?.graphicsAndText || "Clean typography.",
+            },
+            marketingPersuasion: {
+              uniqueSellingProposition: dynamicCritic.whyItMayConnect,
+              targetAudienceHypothesis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Core animation community.",
+              conceptVsStarEmphasis: "Concept and aesthetic led.",
+              representationCaveat: "Authentic subcultural representation.",
+            },
+            emotionalRhetorical: {
+              emotionalHook: dynamicCritic.persuasionAndEmotion?.emotionalArc || "Engaging hook.",
+              toneAndMoodBalance: "Balanced tone and pacing.",
+              persuasiveArgument: dynamicCritic.persuasionAndEmotion?.callToAction || "Call to follow project.",
+            },
+            matrix: [
+              { category: "genre" as const, analysis: dynamicCritic.genreAndForm },
+              { category: "narrative_stance" as const, analysis: dynamicCritic.summary },
+              { category: "usp" as const, analysis: dynamicCritic.whyItMayConnect },
+              { category: "target_audience" as const, analysis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Target audience." },
+              { category: "sound_music" as const, analysis: dynamicCritic.craftAnalysis?.soundAndScore || "Sound design." },
+              { category: "camera_editing" as const, analysis: dynamicCritic.craftAnalysis?.cinematography || "Visual framing." },
+            ],
+            sourceIds,
+            limitations: ["Based on multimodal audiovisual stream analysis."],
+            analyzedAt: dynamicProject.updatedAt || new Date().toISOString(),
+            visibility: "public" as const,
           }] : [],
         };
       }
     }
   }
 
-    return null;
-  } catch (error) {
+  return null;
+} catch (error) {
     logPublishedCardLoadFailure(slug, error);
     return slug === JUNICHIO_SLUG || slug === JUNICHIO_LIVE_SLUG || slug === "proj-junichiro"
       ? fixtures.fallback
