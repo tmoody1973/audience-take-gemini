@@ -22,7 +22,7 @@ export function getGoogleGenAIClient(): GoogleGenAI | null {
     "us-central1";
 
   if (useVertex) {
-    return new GoogleGenAI({ vertexAI: true, project, location });
+    return new GoogleGenAI({ vertexai: true, project, location });
   }
 
   if (apiKey && apiKey !== "AIzaDummyApiKeyForTesting" && !apiKey.startsWith("demo_")) {
@@ -31,7 +31,7 @@ export function getGoogleGenAIClient(): GoogleGenAI | null {
 
   // Auto-detect GCP Cloud Run environment to use Vertex AI with default credentials
   if (process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT) {
-    return new GoogleGenAI({ vertexAI: true, project, location });
+    return new GoogleGenAI({ vertexai: true, project, location });
   }
 
   return null;
