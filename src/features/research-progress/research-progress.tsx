@@ -127,16 +127,63 @@ function runStateToSnapshot(runState: any): ResearchSnapshot {
   };
 }
 
+function initialLiveRunSnapshot(runId: string): ResearchSnapshot {
+  return {
+    mode: "live",
+    run: {
+      runId,
+      projectId: null,
+      attempt: 1,
+      researchVersion: 1,
+      status: "running",
+      currentStage: 1,
+      completedStages: [],
+      missingStages: [],
+      publicFailureMessage: null,
+      projectSlug: null,
+      cardUrl: null,
+      retryEligible: false,
+      fallbackUsed: false,
+      updatedAt: new Date().toISOString(),
+    },
+    events: [
+      {
+        id: `init-${runId}`,
+        sequence: 1,
+        stage: 1,
+        status: "active",
+        kind: "stage",
+        title: "Starting autonomous scouting research run",
+        summary: "Validating nominated project source and dispatching Gemini & Parallel research agents.",
+        occurredAt: new Date().toISOString(),
+        toolName: "ScoutDesk",
+        queryLabel: "Intake",
+      },
+    ],
+  };
+}
+
 export function ResearchProgress({ runId }: { runId: string }) {
+  const isDemoRun = runId === "demo-junichiro" || runId === "run-junichiro-v1" || runId.startsWith("demo");
   const demo = useMemo(() => localJunichiroDemo(), []);
+  const initialSnapshot = useMemo(() => (isDemoRun ? demo : initialLiveRunSnapshot(runId)), [demo, isDemoRun, runId]);
   const firebaseAvailable = hasFirebaseClientConfig();
-  const [loadState, setLoadState] = useState<LoadState>({ kind: "loading", snapshot: demo });
+  const [loadState, setLoadState] = useState<LoadState>({ kind: "loading", snapshot: initialSnapshot });
   const filmstripRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
     let active = true;
     let received = false;
     let unsubscribe = () => {};
+
+    // For live runs, ensure background execution is triggered immediately
+    if (!isDemoRun) {
+      void fetch("/api/agent/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId }),
+      }).catch(() => {});
+    }
 
     // 1. Poll /api/agent/run for live runner state
     const pollInterval = window.setInterval(async () => {
@@ -157,7 +204,7 @@ export function ResearchProgress({ runId }: { runId: string }) {
       } catch {
         // network retry
       }
-    }, 2000);
+    }, 1500);
 
     // Initial immediate fetch
     void fetch(`/api/agent/run?runId=${encodeURIComponent(runId)}`)
@@ -171,7 +218,7 @@ export function ResearchProgress({ runId }: { runId: string }) {
       .catch(() => {});
 
     // 2. Real-time Firestore subscription
-    if (firebaseAvailable) {
+    if (firebaseAvailable && !isDemoRun) {
       try {
         unsubscribe = subscribeToPublicResearch(
           getClientFirestore(),
@@ -193,7 +240,7 @@ export function ResearchProgress({ runId }: { runId: string }) {
     }
 
     const fallbackTimer = window.setTimeout(() => {
-      if (!received && active) {
+      if (!received && active && isDemoRun) {
         setLoadState(current => current.kind === "loading" ? { kind: "error", snapshot: demo } : current);
       }
     }, 15_000);
@@ -204,7 +251,7 @@ export function ResearchProgress({ runId }: { runId: string }) {
       window.clearTimeout(fallbackTimer);
       unsubscribe();
     };
-  }, [demo, firebaseAvailable, runId]);
+  }, [demo, firebaseAvailable, isDemoRun, runId]);
 
   const { snapshot } = loadState;
   const run = snapshot.run;
@@ -236,7 +283,7 @@ export function ResearchProgress({ runId }: { runId: string }) {
       <div className="research-announcement sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
       <section className="research-banner" aria-labelledby="research-title">
         <div>
-          <h1 id="research-title">{snapshot.mode === "demo" ? "Live scouting run" : statusHeadline(snapshot)}</h1>
+          <h1 id="research-title">{isDemoRun ? "Live scouting run" : statusHeadline(snapshot)}</h1>
         </div>
         <div className="research-banner-status">
           <strong>{statusHeadline(snapshot)}</strong>
@@ -245,13 +292,13 @@ export function ResearchProgress({ runId }: { runId: string }) {
         </div>
       </section>
 
-      {snapshot.mode === "demo" ? (
+      {isDemoRun ? (
         <div className="demo-disclosure" role="status">
           <strong>Local Junichiro demonstration</strong>
           <span>Firebase configuration or run data is unavailable. This labeled projection demonstrates the interface only; it does not claim a completed provider result.</span>
         </div>
       ) : loadState.kind === "loading" ? (
-        <div className="demo-disclosure" role="status"><strong>Loading saved run</strong><span>Restoring the latest public projection and receipts.</span></div>
+        <div className="demo-disclosure" role="status"><strong>Live scouting run initializing</strong><span>Dispatched autonomous agents to inspect project and build Scout Card.</span></div>
       ) : null}
 
       <div className="research-workbench">
