@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 
 import { ArrowIcon } from "../../components/icons";
+import { getClientAuth } from "../../lib/firebase/client";
 import { youtubeVideoId } from "../../lib/media/youtube";
 import { nominationCommandHeaders } from "../../lib/nomination/client-auth";
 
