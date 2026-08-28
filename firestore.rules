@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isServerOrAdmin() {
+      return request.auth != null && (request.auth.token.admin == true || request.auth.token.firebase.sign_in_provider == 'custom');
+    }
+
+    // Projects: Public read for published projects; creation allowed for authenticated users; updates server-only
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isServerOrAdmin();
+      
+      // Subcollection for user engagement (Audience Pulse per-user record)
+      match /user_engagements/{userId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Scout Cards: Public read for published/partial; write server-only
+    match /scout_cards/{cardId} {
+      allow read: if resource.data.status in ['published', 'partial'] || isServerOrAdmin();
+      allow write: if isServerOrAdmin();
+    }
+
+    // Trailer Critics: Public read; write server-only
+    match /trailer_critics/{criticId} {
+      allow read: if true;
+      allow write: if isServerOrAdmin();
+    }
+
+    // Research Runs: Private to nominator or server
+    match /research_runs/{runId} {
+      allow read: if isAuthenticated() && (resource.data.nominatorUid == request.auth.uid || isServerOrAdmin());
+      allow write: if isServerOrAdmin();
+    }
+
+    // Evidence Leads: Authenticated create; public read of verified leads; moderation server-only
+    match /evidence_leads/{leadId} {
+      allow read: if resource.data.status == 'verified' || (isAuthenticated() && resource.data.submittedByUid == request.auth.uid) || isServerOrAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isServerOrAdmin();
+    }
+
+    // Takes: Public read of active/edited; authenticated create; author edit/withdraw
+    match /takes/{takeId} {
+      allow read: if resource.data.status in ['active', 'edited'] || isServerOrAdmin();
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.authorUid == request.auth.uid;
+      allow delete: if isServerOrAdmin();
+    }
+
+    // Replies: Public read; author create & edit/withdraw
+    match /replies/{replyId} {
+      allow read: if resource.data.status in ['active', 'edited'] || isServerOrAdmin();
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.authorUid == request.auth.uid;
+      allow delete: if isServerOrAdmin();
+    }
+
+    // Creator Claims: Authenticated create; owner read; admin update/verify
+    match /creator_claims/{claimId} {
+      allow read: if isAuthenticated() && (resource.data.claimedByUid == request.auth.uid || isServerOrAdmin());
+      allow create: if isAuthenticated();
+      allow update, delete: if isServerOrAdmin();
+    }
+
+    // Creator Updates: Public read; creator owner create/update
+    match /creator_updates/{updateId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.creatorUid == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.creatorUid == request.auth.uid;
+    }
+
+    // Reports: Private to reporter/admin
+    match /reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isServerOrAdmin();
+    }
+
+    // Corrections: Public immutable read; server-only create
+    match /corrections/{correctionId} {
+      allow read: if true;
+      allow write: if isServerOrAdmin();
+    }
+  }
+}
