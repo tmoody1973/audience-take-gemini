@@ -230,6 +230,7 @@ Output MUST strictly adhere to the following JSON structure:
     // Mark Run Complete
     run.currentStep = "complete";
     run.progressPercent = 100;
+    run.cardId = cardId;
     run.completedAt = new Date().toISOString();
     run.stepLogs.push({
       timestamp: new Date().toISOString(),

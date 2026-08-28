@@ -300,6 +300,7 @@ export interface ResearchRunState {
     message: string;
     status: "pending" | "in_progress" | "done" | "warning" | "error";
   }[];
+  cardId?: string;
   partialCard?: Partial<ScoutCard>;
   errorMessage?: string;
   completedAt?: string;

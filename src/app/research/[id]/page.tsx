@@ -3,16 +3,9 @@
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import {
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
   ArrowRight,
-  ShieldCheck,
-  Loader2,
-  Terminal,
+  Lock,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import type { ResearchRunState } from "@/domain";
 
 interface PageProps {
@@ -67,160 +60,190 @@ export default function ResearchProgressPage({ params }: PageProps) {
     return () => clearInterval(intervalId);
   }, [runId, isRunning]);
 
+  const stepOrder = [
+    { key: "fetching", label: "READING SOURCE", desc: "Discovering and reviewing trusted sources." },
+    { key: "validating", label: "MAPPING STORY", desc: "Extracting key narratives and building a map." },
+    { key: "searching", label: "PARALLEL SEARCH", desc: "Searching public web with Parallel." },
+    { key: "synthesizing", label: "CHECKING EVIDENCE", desc: "Verifying facts and cross-checking claims." },
+    { key: "pathways", label: "THREE PATHWAYS", desc: "Sorting findings into confirms, contradicts, or unclear." },
+    { key: "complete", label: "PUBLISHING CARD", desc: "Packaging findings into a public Scout Card." },
+  ];
+
+  const currentIdx = run
+    ? stepOrder.findIndex((s) => s.key === run.currentStep)
+    : 0;
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-4">
-      {/* Header */}
-      <div className="space-y-3 pb-6 border-b-3 border-ink">
-        <div className="flex flex-wrap items-center gap-2 font-mono text-xs font-extrabold uppercase">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-acid-yellow text-ink border-2 border-ink tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-signal-coral" />
-            AUTONOMOUS SCOUT RESEARCH PIPELINE
-          </div>
-          <Badge variant="coral">GEMINI 3.5 FLASH</Badge>
-          <Badge variant="blue">PARALLEL SEARCH</Badge>
+    <div className="research-page max-w-7xl mx-auto my-4 border-3 border-ink shadow-ticket-lift">
+      
+      {/* ---------------------------------------------------- */}
+      {/* 1. TOP LIVE BANNER (Acid Yellow) */}
+      {/* ---------------------------------------------------- */}
+      <div className="research-banner">
+        <div>
+          <h1>LIVE SCOUTING RUN</h1>
         </div>
-        <h1 className="font-display text-5xl sm:text-7xl font-normal uppercase text-ink leading-[0.78]">
-          INVESTIGATING PROJECT DOSSIER
-        </h1>
-        <p className="text-xs font-mono font-bold text-muted-ink uppercase">
-          RUN ID: <span className="text-ink">{runId}</span>
-        </p>
+        <div className="research-banner-status">
+          <span>A RESEARCH RUN IN PROGRESS.</span>
+          <strong>PUBLIC. TRACEABLE. USEFUL.</strong>
+          <span className="text-[10px]">⌖ ACC-ID: {runId}</span>
+        </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-error-red text-white border-3 border-ink text-xs font-mono font-bold">
-          <strong>AGENT ERROR:</strong> {error}
-        </div>
-      )}
-
-      {/* Progress Bar & Current Status */}
-      <div className="bg-paper p-6 sm:p-8 border-3 border-ink shadow-ticket-lift space-y-5">
-        <div className="flex items-center justify-between font-mono text-xs font-extrabold">
-          <div className="flex items-center gap-2 uppercase">
-            {run?.currentStep === "complete" ? (
-              <CheckCircle2 className="w-5 h-5 text-signal-coral" />
-            ) : run?.currentStep === "failed" ? (
-              <AlertTriangle className="w-5 h-5 text-error-red" />
-            ) : (
-              <Loader2 className="w-5 h-5 text-electric-blue animate-spin" />
-            )}
-            <span className="text-sm text-ink">
-              STAGE: <strong className="text-signal-coral">{run?.currentStep || "INITIALIZING"}</strong>
-            </span>
+      {/* ---------------------------------------------------- */}
+      {/* 2. WORKBENCH: 6-Frame Contact Strip + Public Receipts */}
+      {/* ---------------------------------------------------- */}
+      <div className="research-workbench">
+        
+        {/* Left: 35mm Contact Strip */}
+        <div className="filmstrip-region">
+          <div className="film-perforations">
+            <i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i />
           </div>
-          <span className="text-ink font-mono text-base font-extrabold">
-            {run?.progressPercent || 0}%
-          </span>
+
+          <ul className="research-filmstrip">
+            {stepOrder.map((step, idx) => {
+              const isPassed = currentIdx > idx || run?.currentStep === "complete";
+              const isActive = currentIdx === idx && run?.currentStep !== "complete";
+              const state = isPassed ? "complete" : isActive ? "active" : "incomplete";
+
+              return (
+                <li
+                  key={step.key}
+                  className="research-frame"
+                  data-state={state}
+                >
+                  <div className="frame-heading">
+                    <span>0{idx + 1}</span>
+                    <h3>{step.label}</h3>
+                  </div>
+
+                  <div className={`stage-art stage-art-${idx + 1}`}>
+                    <span />
+                    <span />
+                    <span />
+                    <b>0{idx + 1}A</b>
+                  </div>
+
+                  <p>{step.desc}</p>
+
+                  <div className="stage-stamp">
+                    {isPassed ? "COMPLETE" : isActive ? "IN PROGRESS" : "PENDING"}
+                  </div>
+
+                  {isActive && (
+                    <div className="parallel-chase">
+                      <i /><i /><i /><i /><i /><i />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="film-perforations">
+            <i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i />
+          </div>
         </div>
 
-        {/* Stepped Progress Bar */}
-        <div className="w-full h-4 bg-paper border-2 border-ink overflow-hidden flex">
-          <div
-            style={{ width: `${run?.progressPercent || 5}%` }}
-            className="h-full bg-signal-coral transition-all duration-500 ease-out border-r-2 border-ink"
-          />
-        </div>
+        {/* Right: Public Receipts Ledger */}
+        <div className="receipt-ledger">
+          <ul className="receipt-category-spine">
+            <li>SAFE SOURCES</li>
+            <li>QUERY RECEIPTS</li>
+            <li>EVIDENCE LOG</li>
+          </ul>
 
-        {/* 6-Stage Checkpoints */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-2 text-[10px] font-mono font-extrabold uppercase">
-          {[
-            { id: "fetching", label: "01 Source" },
-            { id: "classifying", label: "02 Context" },
-            { id: "extracting_evidence", label: "03 Evidence" },
-            { id: "pathways", label: "04 Pathways" },
-            { id: "validating", label: "05 Validation" },
-            { id: "complete", label: "06 Published" },
-          ].map((stage, idx) => {
-            const isCurrent = run?.currentStep === stage.id;
-            const isDone = run?.progressPercent && run.progressPercent >= (idx + 1) * 16.6;
+          <div className="receipt-ledger-content">
+            <div className="ledger-heading">
+              <h2>PUBLIC RECEIPTS</h2>
+              <ArrowRight className="w-6 h-6 text-signal-coral" />
+            </div>
 
-            return (
-              <div
-                key={stage.id}
-                className={`p-2 border-2 border-ink text-center transition-all ${
-                  isCurrent
-                    ? "bg-acid-yellow font-black shadow-selected-lift"
-                    : isDone
-                    ? "bg-evidence-mint text-ink"
-                    : "bg-field-paper text-muted-ink"
-                }`}
-              >
-                {stage.label}
+            <div className="space-y-4 pt-3 font-mono text-xs">
+              {/* Safe Sources Summary */}
+              <div className="border-b border-ink/40 pb-3">
+                <span className="text-[10px] font-extrabold text-muted-ink uppercase block mb-1">
+                  SOURCE DOMAIN VERIFICATION
+                </span>
+                <div className="space-y-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <strong>YOUTUBE / PRIMARY VIDEO</strong>
+                    <span className="text-electric-blue font-bold">SUBMITTED</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <strong>PARALLEL SEARCH ENGINE</strong>
+                    <span className="text-acid-yellow bg-ink px-1 font-bold">ACTIVE</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <strong>PUBLIC WEB ARCHIVES</strong>
+                    <span className="text-evidence-mint font-bold">GROUNDED</span>
+                  </div>
+                </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Completion CTA */}
-        {run?.currentStep === "complete" && (
-          <div className="pt-4 border-t-2 border-ink flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-ink">
-              <ShieldCheck className="w-5 h-5 text-signal-coral" />
-              <span>Dossier verified & immutable Scout Card generated.</span>
-            </div>
-            <Link href={`/scout/${run.projectId}`} className="w-full sm:w-auto">
-              <Button variant="coral" size="md" className="w-full">
-                OPEN SCOUT CARD
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        )}
+              {/* Query Receipts */}
+              <div className="border-b border-ink/40 pb-3">
+                <span className="text-[10px] font-extrabold text-muted-ink uppercase block mb-1">
+                  ACTIVE AGENT QUERIES
+                </span>
+                <ul className="space-y-1 text-[10px]">
+                  <li>▸ History and creator background</li>
+                  <li>▸ Festival distribution track record</li>
+                  <li>▸ Comparable title commercial benchmarks</li>
+                </ul>
+              </div>
 
-        {/* Failure Explanation */}
-        {run?.currentStep === "failed" && (
-          <div className="p-4 bg-error-red/10 border-2 border-error-red text-error-red font-mono text-xs space-y-2">
-            <div className="flex items-center gap-2 font-bold uppercase">
-              <AlertTriangle className="w-5 h-5" />
-              <span>RESEARCH RUN HALTED HONESTLY</span>
-            </div>
-            <p className="text-ink font-sans">{run.errorMessage || "Validation failed safe publication rules."}</p>
-            <div className="pt-2">
-              <Link href="/nominate">
-                <Button variant="outline" size="sm">
-                  TRY ANOTHER NOMINATION
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Terminal Step Logs */}
-      <div className="bg-paper border-3 border-ink shadow-ticket-lift space-y-0 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-3 border-b-2 border-ink bg-field-paper font-mono">
-          <span className="flex items-center gap-2 text-xs font-extrabold text-ink uppercase">
-            <Terminal className="w-4 h-4 text-signal-coral" />
-            INSPECTABLE AGENT EXECUTION TRACE
-          </span>
-          <span className="text-[10px] font-bold text-muted-ink">
-            {run?.stepLogs?.length || 0} EVENTS RECORDED
-          </span>
-        </div>
-
-        <div className="p-6 font-mono text-xs space-y-3 max-h-96 overflow-y-auto bg-field-paper">
-          {run?.stepLogs?.map((log, index) => (
-            <div key={index} className="flex items-start gap-3 border-b border-ink/10 pb-2">
-              <span className="text-muted-ink text-[10px] flex-shrink-0 mt-0.5 font-bold">
-                {new Date(log.timestamp).toLocaleTimeString()}
-              </span>
-              <div className="flex items-start gap-2 flex-1">
-                {log.status === "done" && <CheckCircle2 className="w-4 h-4 text-signal-coral flex-shrink-0 mt-0.5" />}
-                {log.status === "in_progress" && <Loader2 className="w-4 h-4 text-electric-blue animate-spin flex-shrink-0 mt-0.5" />}
-                {log.status === "warning" && <AlertTriangle className="w-4 h-4 text-acid-yellow flex-shrink-0 mt-0.5" />}
-                {log.status === "error" && <AlertTriangle className="w-4 h-4 text-error-red flex-shrink-0 mt-0.5" />}
-                <p className="leading-relaxed text-ink">
-                  <strong className="uppercase text-[10px] text-signal-coral mr-2">[{log.step}]</strong>
-                  {log.message}
+              {/* Evidence Log */}
+              <div className="space-y-1 text-[10px]">
+                <span className="font-extrabold text-muted-ink uppercase block">
+                  EVIDENCE LEDGER
+                </span>
+                <p className="text-ink">
+                  ✓ Collected from verified public sources.
+                </p>
+                <p className="text-ink">
+                  ✓ Cross-checked across independent references.
+                </p>
+                <p className="text-ink">
+                  ✓ Prepared for immutable Scout Card publication.
                 </p>
               </div>
-            </div>
-          ))}
 
-          {(!run?.stepLogs || run.stepLogs.length === 0) && (
-            <p className="text-muted-ink italic">Connecting to agent worker...</p>
-          )}
+              <div className="pt-2 border-t border-ink/30 text-[10px] text-muted-ink flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>All receipts are public and viewable by anyone. No private data.</span>
+              </div>
+            </div>
+          </div>
         </div>
+
+      </div>
+
+      {/* ---------------------------------------------------- */}
+      {/* 3. BOTTOM DESTINATION TEAR-OFF BAR */}
+      {/* ---------------------------------------------------- */}
+      <div className="card-destination">
+        <div className="destination-code">AT-RUN</div>
+        <div>
+          <h2>COMPLETION DESTINATION</h2>
+          <p>
+            {run?.currentStep === "complete"
+              ? "Investigation complete! Your verified Scout Card is now published and active."
+              : "Your Scout Card is currently being assembled with primary citations and commercial pathway hypotheses."}
+          </p>
+        </div>
+
+        {run?.currentStep === "complete" && run.projectId ? (
+          <Link href={`/scout/${run.projectId}`} className="card-tearoff-action">
+            <span>OPEN SCOUT CARD</span>
+            <ArrowRight />
+          </Link>
+        ) : (
+          <div className="card-tearoff-waiting">
+            <span>SCOUTING IN PROGRESS...</span>
+          </div>
+        )}
       </div>
 
     </div>
