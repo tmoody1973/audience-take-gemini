@@ -77,33 +77,130 @@ function handleFilmstripKeyDown(event: KeyboardEvent<HTMLOListElement>) {
   filmstrip.scrollLeft = Math.max(0, Math.min(nextPosition, filmstrip.scrollWidth - filmstrip.clientWidth));
 }
 
+function runStateToSnapshot(runState: any): ResearchSnapshot {
+  const stepMap: Record<string, number> = {
+    intake: 1,
+    fetching: 3,
+    classifying: 4,
+    synthesizing: 5,
+    critic: 5,
+    validating: 6,
+    publishing: 6,
+    complete: 6,
+    failed: 1,
+  };
+  const currentStage = stepMap[runState.currentStep] || 1;
+  const isDone = runState.currentStep === "complete";
+  const isFailed = runState.currentStep === "failed";
+  const events = (runState.stepLogs || []).map((log: any, idx: number) => ({
+    id: `event-${idx}`,
+    sequence: idx + 1,
+    stage: stepMap[log.step] || 1,
+    status: (log.status === "done" ? "complete" : log.status === "in_progress" ? "active" : "waiting") as StageState,
+    kind: log.step === "fetching" ? "tool_receipt" : "stage",
+    title: log.message.slice(0, 100),
+    summary: log.message,
+    occurredAt: log.timestamp || null,
+    toolName: log.step === "fetching" ? "Parallel" : "Gemini",
+    queryLabel: `Step ${log.step}`,
+  }));
+
+  return {
+    mode: "live",
+    run: {
+      runId: runState.id,
+      projectId: runState.projectId,
+      attempt: 1,
+      researchVersion: 1,
+      status: isDone ? "complete" : isFailed ? "failed" : "running",
+      currentStage,
+      completedStages: Array.from({ length: currentStage }, (_, i) => i + 1).filter(s => s < currentStage || isDone),
+      missingStages: [],
+      publicFailureMessage: isFailed ? runState.error || "Research encountered an issue" : null,
+      projectSlug: runState.projectId,
+      cardUrl: `/projects/${runState.projectId}`,
+      retryEligible: false,
+      fallbackUsed: false,
+      updatedAt: new Date().toISOString(),
+    },
+    events,
+  };
+}
+
 export function ResearchProgress({ runId }: { runId: string }) {
   const demo = useMemo(() => localJunichiroDemo(), []);
   const firebaseAvailable = hasFirebaseClientConfig();
-  const [loadState, setLoadState] = useState<LoadState>(firebaseAvailable ? { kind: "loading", snapshot: demo } : { kind: "empty", snapshot: demo });
+  const [loadState, setLoadState] = useState<LoadState>({ kind: "loading", snapshot: demo });
   const filmstripRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
-    if (!firebaseAvailable) return;
+    let active = true;
     let received = false;
     let unsubscribe = () => {};
-    try {
-      unsubscribe = subscribeToPublicResearch(
-        getClientFirestore(),
-        runId,
-        (snapshot) => {
+
+    // 1. Poll /api/agent/run for live runner state
+    const pollInterval = window.setInterval(async () => {
+      if (!active) return;
+      try {
+        const res = await fetch(`/api/agent/run?runId=${encodeURIComponent(runId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.run && active) {
+            received = true;
+            const liveSnapshot = runStateToSnapshot(data.run);
+            setLoadState({ kind: "ready", snapshot: liveSnapshot });
+            if (data.run.currentStep === "complete" || data.run.currentStep === "failed") {
+              window.clearInterval(pollInterval);
+            }
+          }
+        }
+      } catch {
+        // network retry
+      }
+    }, 2000);
+
+    // Initial immediate fetch
+    void fetch(`/api/agent/run?runId=${encodeURIComponent(runId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.run && active) {
           received = true;
-          setLoadState(snapshot ? { kind: "ready", snapshot } : { kind: "empty", snapshot: demo });
-        },
-        () => setLoadState({ kind: "error", snapshot: demo }),
-      );
-    } catch {
-      window.setTimeout(() => setLoadState({ kind: "error", snapshot: demo }), 0);
+          setLoadState({ kind: "ready", snapshot: runStateToSnapshot(data.run) });
+        }
+      })
+      .catch(() => {});
+
+    // 2. Real-time Firestore subscription
+    if (firebaseAvailable) {
+      try {
+        unsubscribe = subscribeToPublicResearch(
+          getClientFirestore(),
+          runId,
+          (snapshot) => {
+            if (!active) return;
+            if (snapshot) {
+              received = true;
+              setLoadState({ kind: "ready", snapshot });
+            }
+          },
+          () => {
+            // on error, rely on polling
+          },
+        );
+      } catch {
+        // fallback to polling
+      }
     }
+
     const fallbackTimer = window.setTimeout(() => {
-      if (!received) setLoadState({ kind: "error", snapshot: demo });
-    }, 8_000);
+      if (!received && active) {
+        setLoadState(current => current.kind === "loading" ? { kind: "error", snapshot: demo } : current);
+      }
+    }, 15_000);
+
     return () => {
+      active = false;
+      window.clearInterval(pollInterval);
       window.clearTimeout(fallbackTimer);
       unsubscribe();
     };
