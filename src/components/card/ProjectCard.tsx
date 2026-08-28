@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Eye, MapPin, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
-import { Badge } from "../ui/Badge";
+import { ArrowRight, ShieldCheck, Eye, DollarSign, MapPin } from "lucide-react";
 import type { Project } from "@/domain";
 
 interface ProjectCardProps {
@@ -11,108 +10,91 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   const { identity, metrics, creatorClaim } = project;
   const isClaimed = creatorClaim.status === "verified";
-  const totalPathwayVotes = metrics.pathwayVotes.reduce((a, b) => a + b, 0);
+
+  // Safe metrics fallback
+  const watchCount = metrics?.watchCount ?? 0;
+  const payCount = metrics?.payCount ?? 0;
+  const cityCount = metrics?.cityDemandCount ?? 0;
 
   return (
-    <article className="group bg-paper border-3 border-ink hover:bg-field-paper transition-all duration-100 flex flex-col justify-between p-6 rounded-none shadow-card-lift">
-      {/* Top Header: Medium & Stage */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2 border-b-2 border-ink pb-3">
-          <Badge medium={identity.medium}>{identity.medium.replace("_", " ")}</Badge>
-          <div className="flex items-center gap-2">
+    <article className="bg-[#fffdf7] border-3 border-ink flex flex-col justify-between p-5 sm:p-6 shadow-card-lift">
+      {/* 1. TOP BAR: Format Badge (Yellow) + Stage (Mint/Light) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2 border-b-2 border-ink pb-2.5">
+          <span className="px-2 py-0.5 bg-acid-yellow text-ink border-2 border-ink font-mono text-[11px] font-black uppercase tracking-wider">
+            {identity.medium.replace("_", " ")}
+          </span>
+          <div className="flex items-center gap-1.5">
             {isClaimed && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-extrabold text-ink bg-evidence-mint px-1.5 py-0.5 border border-ink">
-                <ShieldCheck className="w-3.5 h-3.5 text-electric-blue" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-black text-ink bg-evidence-mint px-1.5 py-0.5 border border-ink">
+                <ShieldCheck className="w-3 h-3 text-electric-blue" />
                 VERIFIED
               </span>
             )}
-            <Badge stage={identity.currentStage}>{identity.currentStage.replace("_", " ")}</Badge>
+            <span className="px-2 py-0.5 bg-[#e4dfd2] text-ink border border-ink font-mono text-[10px] font-bold uppercase">
+              {identity.currentStage.replace("_", " ")}
+            </span>
           </div>
         </div>
 
-        {/* Title & Creators */}
+        {/* 2. TITLE & METADATA */}
         <div>
-          <Link href={`/scout/${project.id}`} className="focus:outline-none block">
-            <h3 className="font-headline text-4xl sm:text-5xl font-normal uppercase tracking-tight text-ink group-hover:text-signal-coral transition-colors leading-[0.85] line-clamp-2">
+          <Link href={`/scout/${project.id}`} className="block focus:outline-none group">
+            <h3 className="font-display text-4xl sm:text-5xl font-normal uppercase tracking-tight text-ink group-hover:text-signal-coral transition-colors leading-[0.82]">
               {identity.title}
             </h3>
           </Link>
-          {identity.creators && identity.creators.length > 0 && (
-            <p className="text-xs font-mono font-bold text-muted-ink mt-2 uppercase">
-              CREATORS: {identity.creators.join(", ")}
-            </p>
-          )}
+          <p className="text-[11px] font-mono font-bold text-muted-ink mt-2 uppercase">
+            CREATOR: {identity.creators?.join(", ") || "INDEPENDENT"}
+          </p>
         </div>
 
-        {/* Logline */}
-        {identity.logline && (
-          <p className="text-sm text-ink font-sans leading-relaxed line-clamp-3 pt-1">
-            {identity.logline}
-          </p>
-        )}
+        {/* 3. LOGLINE / SUMMARY */}
+        <p className="text-xs text-ink font-sans leading-relaxed line-clamp-3 pt-1 font-medium">
+          {identity.logline || project.nomination.reason}
+        </p>
       </div>
 
-      {/* Bottom Section: Audience Signals & Action */}
-      <div className="pt-5 mt-5 border-t-2 border-ink space-y-4">
-        
-        {/* Audience Pulse Snapshot */}
-        <div className="grid grid-cols-3 gap-0 bg-field-paper border-2 border-ink text-center font-mono text-xs">
-          <div className="p-2 flex flex-col items-center border-r-2 border-ink">
-            <span className="text-muted-ink text-[10px] font-extrabold uppercase flex items-center gap-1">
-              <Eye className="w-3 h-3 text-signal-coral" /> WATCH
+      {/* 4. METRICS & CTA BUTTON */}
+      <div className="pt-4 mt-4 border-t-2 border-ink space-y-3">
+        {/* 3-Cell Metrics Grid */}
+        <div className="grid grid-cols-3 border-2 border-ink bg-paper font-mono text-center">
+          <div className="p-1.5 border-r-2 border-ink flex flex-col items-center">
+            <span className="text-[9px] font-black uppercase text-signal-coral flex items-center gap-0.5">
+              <Eye className="w-2.5 h-2.5" /> WATCH
             </span>
-            <span className="text-ink font-extrabold text-sm mt-0.5">{metrics.watchCount}</span>
+            <span className="font-display text-lg leading-tight text-ink font-normal">{watchCount}</span>
           </div>
 
-          <div className="p-2 flex flex-col items-center border-r-2 border-ink">
-            <span className="text-muted-ink text-[10px] font-extrabold uppercase flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-electric-blue" /> CITIES
+          <div className="p-1.5 border-r-2 border-ink flex flex-col items-center">
+            <span className="text-[9px] font-black uppercase text-electric-blue flex items-center gap-0.5">
+              <DollarSign className="w-2.5 h-2.5" /> PAY
             </span>
-            <span className="text-ink font-extrabold text-sm mt-0.5">{metrics.cityDemandCount}</span>
+            <span className="font-display text-lg leading-tight text-ink font-normal">{payCount}</span>
           </div>
 
-          <div className="p-2 flex flex-col items-center">
-            <span className="text-muted-ink text-[10px] font-extrabold uppercase flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-acid-yellow" /> BACK
+          <div className="p-1.5 flex flex-col items-center">
+            <span className="text-[9px] font-black uppercase text-ink flex items-center gap-0.5">
+              <MapPin className="w-2.5 h-2.5" /> CITY
             </span>
-            <span className="text-ink font-extrabold text-sm mt-0.5">{metrics.backCount}</span>
+            <span className="font-display text-lg leading-tight text-ink font-normal">{cityCount}</span>
           </div>
         </div>
 
-        {/* Pathway Distribution Mini-Bar */}
-        {totalPathwayVotes > 0 && (
-          <div className="space-y-1 font-mono text-[10px]">
-            <div className="flex justify-between font-bold text-muted-ink">
-              <span>PATHWAY CONSENSUS</span>
-              <span>{totalPathwayVotes} VOTES</span>
-            </div>
-            <div className="w-full h-2 bg-field-paper border-2 border-ink flex overflow-hidden">
-              <div
-                style={{ width: `${(metrics.pathwayVotes[0] / totalPathwayVotes) * 100}%` }}
-                className="bg-signal-coral"
-                title="Pathway 1"
-              />
-              <div
-                style={{ width: `${(metrics.pathwayVotes[1] / totalPathwayVotes) * 100}%` }}
-                className="bg-electric-blue"
-                title="Pathway 2"
-              />
-              <div
-                style={{ width: `${(metrics.pathwayVotes[2] / totalPathwayVotes) * 100}%` }}
-                className="bg-acid-yellow"
-                title="Pathway 3"
-              />
-            </div>
-          </div>
-        )}
+        {/* Tri-color Accent Bar */}
+        <div className="w-full h-1.5 border border-ink flex overflow-hidden">
+          <div className="w-1/3 bg-signal-coral" />
+          <div className="w-1/3 bg-electric-blue" />
+          <div className="w-1/3 bg-acid-yellow" />
+        </div>
 
-        {/* CTA Link */}
+        {/* Black Inspect Button */}
         <Link
           href={`/scout/${project.id}`}
-          className="w-full h-[46px] bg-ink text-white font-headline text-2xl uppercase tracking-wider flex items-center justify-between px-4 hover:bg-signal-coral transition-colors"
+          className="w-full min-h-[44px] bg-ink hover:bg-signal-coral text-white font-mono text-xs font-black uppercase flex items-center justify-between px-4 transition-colors border-2 border-ink shadow-action-lift"
         >
           <span>INSPECT SCOUT CARD</span>
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
     </article>
