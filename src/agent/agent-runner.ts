@@ -9,6 +9,7 @@ import { fetchSafeWebContent } from "@/services/ssrf-guard";
 import { parallelClient } from "@/services/parallel-client";
 import { validateScoutProposal } from "./deterministic-validator";
 import { dataRepo } from "@/services/firestore-repo";
+import { analyzeTrailerVideo } from "@/critic/trailer-critic-engine";
 import type { ResearchRunState, ScoutCard } from "@/domain";
 import { validSciFiShortProposal } from "@/domain/sample-proposals";
 
@@ -212,6 +213,36 @@ Output MUST strictly adhere to the following JSON structure:
     }
 
     // ----------------------------------------------------
+    // STEP 5.5: Multimodal Video Critic (if video source present)
+    // ----------------------------------------------------
+    let trailerCriticId: string | null = null;
+    const videoSourceUrl =
+      (run.sourceUrl.includes("youtube.com") || run.sourceUrl.includes("youtu.be"))
+        ? run.sourceUrl
+        : proposalData.sourceMedia?.find((m: any) => m.type === "youtube_embed" || m.url?.includes("youtube"))?.url;
+
+    if (videoSourceUrl) {
+      await logStep(
+        "validating",
+        `Gemini Video Critic analyzing sampled audiovisual stream from ${videoSourceUrl}...`,
+        90,
+        "in_progress"
+      );
+      try {
+        const criticRecord = await analyzeTrailerVideo(project.id, videoSourceUrl);
+        trailerCriticId = criticRecord.id;
+        await logStep(
+          "validating",
+          `Gemini Video Critic synthesized ${criticRecord.timestampedBeats.length} timestamped narrative beats and craft matrix.`,
+          95,
+          "done"
+        );
+      } catch (criticErr) {
+        console.warn("Video critic analysis notice:", criticErr);
+      }
+    }
+
+    // ----------------------------------------------------
     // STEP 6: Publishing Scout Card
     // ----------------------------------------------------
     const cardId = `card-${project.id}-v1`;
@@ -220,7 +251,7 @@ Output MUST strictly adhere to the following JSON structure:
       projectId: project.id,
       version: 1,
       ...validationResult.sanitizedCard,
-      trailerCriticId: null,
+      trailerCriticId,
       versionProvenance: {
         generatedAt: new Date().toISOString(),
         model: researchModel,
