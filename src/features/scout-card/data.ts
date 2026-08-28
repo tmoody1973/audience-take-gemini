@@ -242,7 +242,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
     return await readPublishedScoutCard(slug, database ?? getAdminFirestore() as unknown as ScoutCardFirestore);
   } catch (error) {
     logPublishedCardLoadFailure(slug, error);
-    return slug === JUNICHIO_SLUG || slug === JUNICHIO_LIVE_SLUG
+    return slug === JUNICHIO_SLUG || slug === JUNICHIO_LIVE_SLUG || slug === "proj-junichiro"
       ? fixtures.fallback
       : null;
   }

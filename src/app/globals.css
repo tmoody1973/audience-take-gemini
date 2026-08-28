@@ -3,11 +3,13 @@
  * contrast: pass (40–41) · slop: pass (42–45) · honest: pass (46) · chrome: pass (47)
  * tokens: pass (48) · responsive/mobile: pass (34, 49–57) · icons: pass (30)
  */
+@import url("https://fonts.googleapis.com/css2?family=League+Gothic&family=JetBrains+Mono:wght@400;500;600;700;800;900&display=swap");
+
 @font-face {
   font-family: "League Gothic AT";
   src: url("/fonts/league-gothic-latin.woff2") format("woff2");
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
 }
 
@@ -23,9 +25,9 @@
   --error-red: #951c13;
   --rule: 3px solid var(--ink);
   --shadow: 6px 7px 0 var(--ink);
-  --display: "League Gothic AT", "Arial Narrow", sans-serif;
+  --display: "League Gothic AT", "League Gothic", Impact, "Arial Narrow Bold", "Arial Narrow", sans-serif;
   --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --meta: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --meta: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --space-2xs: 4px;
   --space-xs: 8px;
   --space-sm: 12px;
