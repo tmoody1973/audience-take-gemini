@@ -20,10 +20,6 @@ let appCheckStarted = false;
 let appCheckInstance: AppCheck | null = null;
 
 function getClientApp() {
-  if (!hasFirebaseClientConfig()) {
-    throw new Error("Firebase client configuration is not available.");
-  }
-
   return getApps().length > 0 ? getApp() : initializeApp(firebaseClientConfig);
 }
 
