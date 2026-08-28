@@ -4,7 +4,7 @@
  * step-wise task checkpointing, and deterministic TypeScript post-validation.
  */
 
-import { GoogleGenAI } from "@google/genai";
+import { getGoogleGenAIClient } from "@/lib/google/genai-client";
 import { fetchSafeWebContent } from "@/services/ssrf-guard";
 import { parallelClient } from "@/services/parallel-client";
 import { validateScoutProposal } from "./deterministic-validator";
@@ -88,16 +88,15 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
     );
 
     // ----------------------------------------------------
-    // STEP 3: Gemini 3.5 Flash Synthesis (Classification & Evidence Extraction)
+    // STEP 3: Gemini Synthesis (Vertex AI / Gemini API)
     // ----------------------------------------------------
     await logStep("classifying", `Gemini (${researchModel}) analyzing narrative context, medium, and creators...`, 60, "in_progress");
 
-    const apiKey = process.env.GEMINI_API_KEY;
     let proposalData: any = null;
+    const ai = getGoogleGenAIClient();
 
-    if (apiKey && apiKey !== "AIzaDummyApiKeyForTesting" && !apiKey.startsWith("demo_")) {
+    if (ai) {
       try {
-        const ai = new GoogleGenAI({ apiKey });
         
         const systemInstruction = `
 You are the Audience Take Scout Research Agent powered by Google Gemini.

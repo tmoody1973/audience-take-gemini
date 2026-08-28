@@ -3,7 +3,7 @@
  * Analyzes video craft, sound design, pacing, and narrative beats using Gemini 3.7 Flash Video Understanding.
  */
 
-import { GoogleGenAI } from "@google/genai";
+import { getGoogleGenAIClient } from "@/lib/google/genai-client";
 import { dataRepo } from "@/services/firestore-repo";
 import type { TrailerCritic } from "@/domain";
 
@@ -13,12 +13,11 @@ export async function analyzeAnyTrailerVideo(
   medium: string = "short"
 ): Promise<TrailerCritic> {
   const criticModel = process.env.AUDIENCE_TAKE_CRITIC_MODEL || "gemini-3.7-flash";
-  const apiKey = process.env.GEMINI_API_KEY;
   let criticData: any = null;
+  const ai = getGoogleGenAIClient();
 
-  if (apiKey && apiKey !== "AIzaDummyApiKeyForTesting" && !apiKey.startsWith("demo_")) {
+  if (ai) {
     try {
-      const ai = new GoogleGenAI({ apiKey });
 
       const systemInstruction = `
 You are the Audience Take Senior Cinema & Trailer Critic powered by Google Gemini 3.7.
@@ -137,12 +136,11 @@ export async function analyzeTrailerVideo(
   if (!project) throw new Error("Project not found");
 
   const criticModel = process.env.AUDIENCE_TAKE_CRITIC_MODEL || "gemini-3.7-flash";
-  const apiKey = process.env.GEMINI_API_KEY;
   let criticData: any = null;
+  const ai = getGoogleGenAIClient();
 
-  if (apiKey && apiKey !== "AIzaDummyApiKeyForTesting" && !apiKey.startsWith("demo_")) {
+  if (ai) {
     try {
-      const ai = new GoogleGenAI({ apiKey });
 
       const systemInstruction = `
 You are the Audience Take Senior Cinema & Trailer Critic powered by Google Gemini 3.7.
