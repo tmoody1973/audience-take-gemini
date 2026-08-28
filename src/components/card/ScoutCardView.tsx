@@ -15,6 +15,7 @@ import {
   TrendingUp,
   FileText,
   Briefcase,
+  Printer,
 } from "lucide-react";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -83,6 +84,16 @@ export function ScoutCardView({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="text-xs font-mono gap-1"
+            title="Print or Save PDF One-Sheet"
+          >
+            <Printer className="w-3.5 h-3.5" /> PRINT ONE-SHEET
+          </Button>
+
           <Button
             variant="outline"
             size="sm"

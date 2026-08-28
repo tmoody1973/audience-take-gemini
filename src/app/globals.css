@@ -86,3 +86,27 @@ body {
     animation: none;
   }
 }
+
+/* Print Optimization for Festival Scout One-Sheets */
+@media print {
+  header,
+  footer,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  article,
+  section {
+    box-shadow: none !important;
+    border-color: #000000 !important;
+    page-break-inside: avoid;
+  }
+}

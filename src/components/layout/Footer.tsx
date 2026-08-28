@@ -69,6 +69,11 @@ export function Footer() {
                   <span>04 Creator Desk</span>
                 </Link>
               </li>
+              <li>
+                <Link href="/critic" className="text-paper hover:text-acid-yellow transition-colors flex items-center gap-1">
+                  <span>05 Trailer Critic</span>
+                </Link>
+              </li>
             </ul>
           </div>
 

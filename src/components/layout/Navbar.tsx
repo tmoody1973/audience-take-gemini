@@ -47,10 +47,17 @@ export function Navbar({ user, onSignOut }: NavbarProps) {
           </Link>
           <Link
             href="/nominate"
-            className="px-5 h-full flex items-center gap-2 text-ink hover:bg-acid-yellow transition-colors"
+            className="px-5 h-full flex items-center gap-2 text-ink hover:bg-acid-yellow transition-colors border-r-2 border-ink"
           >
             <span className="text-muted-ink">03</span>
             <span>Nominate Work</span>
+          </Link>
+          <Link
+            href="/critic"
+            className="px-5 h-full flex items-center gap-2 text-ink hover:bg-acid-yellow transition-colors"
+          >
+            <span className="text-muted-ink">04</span>
+            <span>Trailer Critic</span>
           </Link>
         </nav>
 
@@ -119,9 +126,16 @@ export function Navbar({ user, onSignOut }: NavbarProps) {
           <Link
             href="/nominate"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 border-2 border-ink bg-signal-coral text-white hover:bg-electric-blue"
+            className="block px-3 py-2 border-2 border-ink bg-field-paper hover:bg-acid-yellow"
           >
             03 Nominate Work
+          </Link>
+          <Link
+            href="/critic"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 border-2 border-ink bg-acid-yellow text-ink hover:bg-white"
+          >
+            04 Trailer Critic
           </Link>
           <div className="pt-2">
             {user ? (
