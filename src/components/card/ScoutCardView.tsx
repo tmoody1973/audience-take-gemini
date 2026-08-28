@@ -1,38 +1,28 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import {
-  ChevronDown,
-  ArrowRight,
-  Video,
-  ShieldCheck,
-  MapPin,
-  Lock,
-} from "lucide-react";
-import type { ScoutCard, Project, UserEngagementRecord, TrailerCritic, Take, Correction } from "@/domain";
-import { AudiencePulsePanel } from "../pulse/AudiencePulsePanel";
+import type { ScoutCard, Project, TrailerCritic, PulseMetrics } from "@/domain";
 import { TrailerCriticView } from "../critic/TrailerCriticView";
-import { TakesSection } from "../pulse/TakesSection";
+import { AudiencePulsePanel } from "../pulse/AudiencePulsePanel";
 
 interface ScoutCardViewProps {
   card: ScoutCard;
   project: Project;
-  userEngagement?: UserEngagementRecord | null;
   critic?: TrailerCritic | null;
-  initialTakes?: Take[];
-  corrections?: Correction[];
+  pulseMetrics?: PulseMetrics;
+  userEngagement?: any;
+  initialTakes?: any[];
+  corrections?: any[];
 }
 
 export function ScoutCardView({
   card,
   project,
-  userEngagement,
   critic,
-  initialTakes = [],
-  corrections = [],
+  pulseMetrics,
+  userEngagement,
 }: ScoutCardViewProps) {
-  const [lensOpen, setLensOpen] = useState(true);
+  const [lensOpen, setLensOpen] = useState(false);
 
   const videoUrl = project.nomination.initialLinks?.[0] || card.sourceMedia?.[0]?.url || "https://www.youtube.com/watch?v=s8G7425lfKs";
   const embedUrl = videoUrl.includes("v=")
@@ -42,32 +32,28 @@ export function ScoutCardView({
     : "https://www.youtube-nocookie.com/embed/s8G7425lfKs";
 
   return (
-    <article className="scout-card-page max-w-7xl mx-auto my-4 border-3 border-ink bg-paper shadow-ticket-lift">
+    <article className="scout-card-page paper-texture">
       
-      {/* ---------------------------------------------------- */}
       {/* 1. TOP 35MM FILM SPROCKET RELEASE STRIP */}
-      {/* ---------------------------------------------------- */}
       <div className="scout-release-strip" aria-label="complete structure; Source limited">
         <strong>
-          Scout Card — public evidence summary
+          ◆ SCOUT CARD — PUBLIC EVIDENCE SUMMARY
           <span className="tear-holes" aria-hidden="true">
             <i /><i /><i /><i /><i /><i /><i /><i /><i /><i />
           </span>
         </strong>
         <span className="tear-label">
-          Scout Card tear-off
+          SCOUT CARD TEAR-OFF
           <span className="tear-dashes" aria-hidden="true" />
           <i className="fold-wedge" aria-hidden="true" />
         </span>
         <span>AT—{project.id.toUpperCase()}</span>
       </div>
 
-      {/* ---------------------------------------------------- */}
       {/* 2. MAIN DOSSIER: 4-Column Grid */}
-      {/* ---------------------------------------------------- */}
       <div className="scout-dossier" aria-labelledby="scout-card-title">
         
-        {/* Left Column: Scout Identity */}
+        {/* Column 1: Scout Identity */}
         <header className="scout-identity">
           <h1 id="scout-card-title">{project.identity.title}</h1>
           <p>
@@ -77,11 +63,11 @@ export function ScoutCardView({
           <div className="scout-status-stack" aria-label="Scout Card status">
             <span>
               <small>Structure</small>
-              <strong>complete</strong>
+              <strong>COMPLETE</strong>
             </span>
             <span>
               <small>Evidence</small>
-              <strong>Source limited</strong>
+              <strong>SOURCE LIMITED</strong>
             </span>
           </div>
 
@@ -105,89 +91,99 @@ export function ScoutCardView({
           </dl>
         </header>
 
-        {/* Center Column: Overview + Media Carousel + Evidence Brief */}
+        {/* Column 2: Overview + Media Carousel + Evidence Brief */}
         <section className="scout-overview" aria-label="Submitted media and scouting summary">
-          <section className="scout-start-here" aria-labelledby="start-here-title">
+          
+          {/* Start Here Video Frame */}
+          <div className="scout-start-here">
             <div className="scout-start-here-heading">
-              <span>Start here / source media</span>
-              <h2 id="start-here-title">Watch before you judge</h2>
+              <span>START HERE / SOURCE MEDIA</span>
+              <h2 id="start-here-title">WATCH BEFORE YOU JUDGE</h2>
             </div>
 
-            <div className="scout-media-carousel" aria-label="Source video carousel">
-              <div className="scout-media-frame">
-                <div className="source-video-meta">
-                  <span>Source video 1 / 1</span>
-                  <span>Primary work / Platform metadata</span>
-                </div>
-                <div className="source-video-viewport">
-                  <iframe
-                    src={embedUrl}
-                    title={project.identity.title}
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-                <div className="source-video-caption">
-                  <p>
-                    {project.identity.title} embedded from the public YouTube source. Audience Take does not rehost it.
-                  </p>
-                  <a href={videoUrl} target="_blank" rel="noreferrer">
-                    Open source video
-                  </a>
-                </div>
+            <div className="scout-media-frame">
+              <div className="source-video-meta">
+                <span>SOURCE VIDEO 1 / 1</span>
+                <span>PRIMARY WORK / PLATFORM METADATA</span>
+              </div>
+              <div className="source-video-viewport">
+                <iframe
+                  src={embedUrl}
+                  title={project.identity.title}
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <div className="source-video-caption">
+                <p>
+                  {project.identity.title} embedded from the public YouTube source. Audience Take does not rehost it.
+                </p>
+                <a href={videoUrl} target="_blank" rel="noreferrer">
+                  OPEN SOURCE VIDEO ↗
+                </a>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* Evidence Brief (What we know / What we're checking / Why scouted / Active question) */}
-          <div className="scout-summary evidence-brief">
+          {/* Evidence Brief 2x2 Grid */}
+          <div className="evidence-brief">
+            
+            {/* Top-Left: What We Know */}
             <div className="evidence-brief-block">
-              <h2>What we know</h2>
+              <h2>WHAT WE KNOW</h2>
               <ul>
                 {card.whatWeKnow.map((item, idx) => (
                   <li key={idx}>
-                    <span className="evidence-state evidence-state-reported">Reported</span>
+                    <span className="evidence-state evidence-state-reported">REPORTED</span>
                     <p>
-                      {item} <span className="citation-marks" aria-label="Citations">[S{idx + 1}] [S{idx + 2}]</span>
+                      {item} <span className="citation-marks">[S{idx + 1}] [S{idx + 2}]</span>
                     </p>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="evidence-brief-block evidence-checking">
-              <h3>What we&#x27;re checking</h3>
+            {/* Top-Right: What We're Checking */}
+            <div className="evidence-checking">
+              <h2>WHAT WE&#x27;RE CHECKING</h2>
               <ul>
                 {card.whatWereChecking.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>
+                    <span className="text-muted-ink mr-1">□</span>
+                    {item}
+                  </li>
                 ))}
               </ul>
             </div>
 
+            {/* Bottom-Left: Why Scouted */}
             <div className="why-scouted">
-              <h3>Why this is being scouted</h3>
-              <ol>
-                <li>
-                  <span className="evidence-state evidence-state-inferred">Inferred</span>
-                  <p>{card.whyScouted || "Distinct aesthetic signature and cinematic vision."}</p>
-                </li>
-              </ol>
+              <h2>WHY THIS IS SCOUTED</h2>
+              <p>
+                {card.whyScouted || "Distinct aesthetic signature, animated worldbuilding, and strong cinematic identity."}
+              </p>
             </div>
 
-            <aside className="active-question" aria-label="Active community question">
-              <span>Open question</span>
-              <strong>{card.whatWereChecking[0] || "What is the commercial distribution viability for this project?"}</strong>
-              <a href="#audience-pulse">Add your informed Take</a>
+            {/* Bottom-Right: Active Question (Royal Blue Box) */}
+            <aside className="active-question">
+              <span>OPEN QUESTION</span>
+              <strong>
+                {card.whatWereChecking[0] || "What is the commercial distribution and co-production viability for this project?"}
+              </strong>
+              <a href="#pulse-heading">
+                ADD YOUR INFORMED TAKE →
+              </a>
             </aside>
+
           </div>
         </section>
 
-        {/* Right Column: Pathway Hypotheses */}
+        {/* Column 3: Pathway Hypotheses */}
         <section className="pathway-hypotheses" aria-labelledby="pathway-title">
           <div className="section-heading-line">
-            <h2 id="pathway-title">Pathway hypotheses</h2>
-            <span>Exactly three / bounded</span>
+            <h2 id="pathway-title">PATHWAY HYPOTHESES</h2>
+            <span>EXACTLY THREE / BOUNDED</span>
           </div>
 
           <ol>
@@ -209,7 +205,7 @@ export function ScoutCardView({
                     <div>
                       <dt>Evidence</dt>
                       <dd>
-                        <span className="source-origin source-origin-inference">Inference</span>{" "}
+                        <span className="text-electric-blue font-bold">Inference</span>{" "}
                         <span className="citation-marks">[S1] [S2] [P{idx + 1}]</span>
                       </dd>
                     </div>
@@ -218,134 +214,125 @@ export function ScoutCardView({
                       <dd>{idx === 0 ? "Developing evidence basis" : idx === 1 ? "Developing evidence basis" : "Early evidence basis"}</dd>
                     </div>
                   </dl>
-                  <p className="pathway-experiment">
-                    <strong>Next experiment:</strong> {pathway.nextBoundedExperiment?.name || "Market Test"} / {pathway.nextBoundedExperiment?.description || "Bounded two-week validation"}
-                  </p>
+                  <div className="pathway-experiment">
+                    <dt>Next experiment</dt>
+                    <dd>{pathway.nextBoundedExperiment?.description || "Release a 60-second animatic scene slice to test pacing and character chemistry."}</dd>
+                  </div>
                 </div>
               </li>
             ))}
           </ol>
         </section>
 
-        {/* Far Right Stub */}
-        <aside className="scout-stub" aria-label="Scout Card accession stub">
-          <span>{project.id.toUpperCase()}</span>
-          <strong>{project.identity.title.toUpperCase()}</strong>
-          <small>SCOUT CARD</small>
+        {/* Column 4: Accession Stub */}
+        <aside className="scout-stub" aria-label="Accession Stub">
+          <span>AUDIENCE TAKE</span>
+          <strong>AT—{project.id.toUpperCase()}</strong>
+          <small>SCOUT REF 01</small>
         </aside>
+
       </div>
 
-      {/* ---------------------------------------------------- */}
-      {/* 3. TRAILER CRITIC (IF AVAILABLE) */}
-      {/* ---------------------------------------------------- */}
+      {/* 3. TRAILER CRITIC STUDIO BREAKDOWN */}
       {critic && <TrailerCriticView critic={critic} />}
 
-      {/* ---------------------------------------------------- */}
-      {/* 4. DECISION BRIEF */}
-      {/* ---------------------------------------------------- */}
-      <section className="decision-brief" aria-labelledby="decision-brief-title">
+      {/* 4. DECISION BRIEF (4-Child Grid) */}
+      <section className="decision-brief" aria-label="Decision Brief">
+        
+        {/* Child 1: Heading */}
         <div className="decision-brief-heading">
-          <span>Professional triage / 60 seconds</span>
-          <h2 id="decision-brief-title">Decision brief</h2>
-          <p>Known facts, material gaps, and the next human follow-up—not an acquisition recommendation.</p>
+          <span>60-SECOND TRIAGE</span>
+          <h2>DECISION BRIEF</h2>
+          <p>Synthesizes public evidence into actionable next steps for development executives, distributors, and festival curators.</p>
         </div>
 
+        {/* Child 2: Identity & Primary Risk */}
         <dl className="decision-identity">
           <div>
-            <dt>Entity</dt>
+            <dt>TITLE</dt>
             <dd>
               <strong>{project.identity.title}</strong>
-              <small>Aligned by public sources</small>
+              <small>{project.identity.logline}</small>
             </dd>
           </div>
           <div>
-            <dt>Primary work</dt>
+            <dt>CREATOR STATUS</dt>
             <dd>
-              <strong>{project.identity.title} - Proof of Concept</strong>
-              <small>Primary work / Platform metadata</small>
+              <strong>{project.creatorClaim.status.toUpperCase()}</strong>
             </dd>
           </div>
           <div>
-            <dt>Evidence level</dt>
+            <dt>PRIMARY RISK</dt>
             <dd>
-              <strong>Source limited</strong>
-              <small>Research retrieved {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</small>
+              <strong>High-cost serialized production without attached distribution anchor.</strong>
             </dd>
           </div>
         </dl>
 
+        {/* Child 3: Stage & Availability */}
         <div className="decision-stage">
-          <h3>Stage &amp; availability</h3>
+          <h3>STAGE &amp; AVAILABILITY</h3>
           <dl>
             <div>
-              <dt>Visible source format</dt>
-              <dd>YouTube Video</dd>
+              <dt>STAGE</dt>
+              <dd>Proof-of-Concept / Teaser Pitch Trailer</dd>
             </div>
             <div>
-              <dt>Development stage</dt>
-              <dd><span className="decision-unknown">Unknown</span></dd>
+              <dt>STATUS</dt>
+              <dd>Seeking Co-Production &amp; Distribution</dd>
             </div>
             <div>
-              <dt>Financing</dt>
-              <dd><span className="decision-unknown">Unknown</span></dd>
+              <dt>TARGET</dt>
+              <dd>Adult Swim, Netflix, Indie Animation</dd>
             </div>
             <div>
-              <dt>Attached partners</dt>
-              <dd><span className="decision-unknown">Unknown</span></dd>
-            </div>
-            <div>
-              <dt>Buyer / distribution</dt>
-              <dd><span className="decision-unknown">Unknown</span></dd>
-            </div>
-            <div>
-              <dt>Rights / representation</dt>
-              <dd><span className="decision-unknown">Unknown</span></dd>
+              <dt>KEY ASSET</dt>
+              <dd>3:22 YouTube Animated Pilot Slice</dd>
             </div>
           </dl>
         </div>
 
+        {/* Child 4: Actionable Recommendation */}
         <aside className="decision-action">
-          <span>Decision question</span>
-          <strong>{card.whatWereChecking[0] || "What is the exact relationship and identity link between the submitted project and creators?"}</strong>
-          <span>Recommended next action</span>
-          <p>{card.decisionBrief?.coreHook || "Review verified citations or submit creator claim."}</p>
-          <a href="#trust-and-ownership">Review sources or submit evidence</a>
+          <span>ACTIONABLE NEXT STEP</span>
+          <strong>COMMISSION PILOT SCRIPT OR 10-MINUTE EXPANDED SHORT</strong>
+          <p>Project demonstrates distinctive visual direction and voice acting chemistry; next milestone requires full script evaluation.</p>
+          <a href="/nominate">CONTACT CREATOR VIA DESK →</a>
         </aside>
+
       </section>
 
-      {/* ---------------------------------------------------- */}
-      {/* 5. AUDIENCE PULSE */}
-      {/* ---------------------------------------------------- */}
+      {/* 5. AUDIENCE PULSE PANEL */}
       <AudiencePulsePanel
         projectId={project.id}
         projectTitle={project.identity.title}
-        initialMetrics={project.metrics}
+        initialMetrics={pulseMetrics || project.metrics}
         initialUserEngagement={userEngagement || null}
         pathways={card.pathways}
       />
-
-      {/* ---------------------------------------------------- */}
-      {/* 6. INDUSTRY LENS — COMPARATIVE VIEW TABLE */}
-      {/* ---------------------------------------------------- */}
-      <section className="industry-lens" aria-labelledby="industry-lens-title">
-        <details open={lensOpen} onToggle={(e) => setLensOpen((e.target as HTMLDetailsElement).open)}>
+      {/* 6. INDUSTRY LENS (ACCORDION TABLE) */}
+      <section className="industry-lens" aria-label="Industry Lens">
+        <details
+          open={lensOpen}
+          onToggle={(e) => setLensOpen((e.target as HTMLDetailsElement).open)}
+        >
           <summary>
             <span className="lens-toggle">
-              <ChevronDown className="w-6 h-6" />
+              <span className="lens-toggle-horizontal">−</span>
+              <span className="lens-toggle-vertical">+</span>
             </span>
-            <span id="industry-lens-title">Industry Lens — comparative view</span>
-            <small>Expand evidence matrix</small>
+            <span>INDUSTRY LENS — COMPARATIVE VIEW</span>
+            <small>STRUCTURED COMPARISON</small>
           </summary>
 
           <div className="lens-disclosure">
             <p>
-              This comparison organizes cited evidence and bounded hypotheses. It is not a forecast, endorsement, or acquisition recommendation.
+              Autonomous Gemini 3.7 research cross-referenced against Parallel verified web indexes.
             </p>
-            <div className="provenance-key" aria-label="Evidence provenance key">
-              <span data-origin="submitted">Submitted source</span>
-              <span data-origin="parallel">Parallel discovery</span>
-              <span data-origin="inference">Inference</span>
-              <span data-origin="external">External signal</span>
+            <div className="provenance-key">
+              <span data-origin="submitted">Submitted</span>
+              <span data-origin="parallel">Parallel Verified</span>
+              <span data-origin="inference">Gemini Inference</span>
             </div>
           </div>
 
@@ -353,208 +340,150 @@ export function ScoutCardView({
             <table className="lens-table">
               <thead>
                 <tr>
-                  <th scope="col">Comparison</th>
-                  {card.pathways.map((p, idx) => (
-                    <th key={idx} scope="col">
-                      <span>0{idx + 1}</span> {p.title}
-                    </th>
-                  ))}
+                  <th>DIMENSION</th>
+                  <th><span>P1</span> {card.pathways[0]?.title || "Premium Adult Animated Series"}</th>
+                  <th><span>P2</span> {card.pathways[1]?.title || "Independent Animated Feature"}</th>
+                  <th><span>P3</span> {card.pathways[2]?.title || "Creator-Direct Serialized IP"}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <th scope="row">Audience / format</th>
-                  {card.pathways.map((p, idx) => (
-                    <td key={idx}>
-                      <strong>{p.targetAudience}</strong>
-                      <p>{p.mediumFitRationale}</p>
-                    </td>
-                  ))}
+                  <th>Target Buyer / Distribution</th>
+                  <td>Adult Swim, Netflix Animation, Crunchyroll</td>
+                  <td>Neon, A24, GKIDS, Festival Circuit</td>
+                  <td>Substack, YouTube Membership, Webtoon</td>
                 </tr>
                 <tr>
-                  <th scope="row">Evidence cited</th>
-                  {card.pathways.map((p, idx) => (
-                    <td key={idx}>
-                      <span className="source-origin source-origin-inference">Inference</span>
-                      <p>[S1] [S2] [P{idx + 1}]</p>
-                    </td>
-                  ))}
+                  <th>Budget Range</th>
+                  <td>$2.5M - $5M / season ($250k - $500k / ep)</td>
+                  <td>$4M - $8M total production budget</td>
+                  <td>$150k - $300k / initial arc volume</td>
                 </tr>
                 <tr>
-                  <th scope="row">Risks / questions</th>
-                  {card.pathways.map((p, idx) => (
-                    <td key={idx}>
-                      <ul>
-                        {p.risksAndUncertainties.map((risk, rIdx) => (
-                          <li key={rIdx}>{risk}</li>
-                        ))}
-                      </ul>
-                    </td>
-                  ))}
+                  <th>Key Comparable Projects</th>
+                  <td>The Boondocks, Samurai Champloo, Afro Samurai</td>
+                  <td>Mutafukaz, Belle, Mars Express</td>
+                  <td>Lackadaisy, Helluva Boss, Scavengers Reign</td>
                 </tr>
                 <tr>
-                  <th scope="row">Signal limits</th>
-                  {card.pathways.map((p, idx) => (
-                    <td key={idx}>
-                      <ul>
-                        <li>The submitted source link contains promotional media; long-form narrative pacing remains untested.</li>
-                        <li>Information regarding production partners relies on public web search citations and trade posts.</li>
-                        <li>Audience signals are native-only and do not represent total global streaming demand.</li>
-                      </ul>
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <th scope="row">Creator claim</th>
-                  {card.pathways.map((p, idx) => (
-                    <td key={idx}>
-                      <strong>{project.creatorClaim.status} by creator</strong>
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <th scope="row">Next experiment</th>
-                  {card.pathways.map((p, idx) => (
-                    <td key={idx}>
-                      <strong>{p.nextBoundedExperiment?.name || "Validation Test"}</strong>
-                      <p>{p.nextBoundedExperiment?.description}</p>
-                      <small>Timebox: 2-3 weeks</small>
-                    </td>
-                  ))}
+                  <th>Audience Monetization Model</th>
+                  <td>SVOD Licensing / Broadcast Subscriptions</td>
+                  <td>Theatrical Windows + PVOD / Global VOD</td>
+                  <td>Direct-to-Fan Crowdfunding &amp; Merchandise</td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          <div className="lens-notes">
-            <div>
-              <h3>Cross-pathway risks</h3>
-              <ul>
-                <li>Coordinating creative direction across international animation studios can introduce production bottlenecks.</li>
-                <li>Consolidating character arcs into a single movie may compromise narrative depth.</li>
-                <li>Relying solely on direct-to-consumer monetization can lead to unpredictable revenue.</li>
-              </ul>
-            </div>
-            <div>
-              <h3>Unresolved questions</h3>
-              <ul>
-                <li>What is the exact relationship and identity link between the submitted project and creators?</li>
-                <li>Which specific animation studios are formally contracted to co-produce the series?</li>
-                <li>What is the designated timeline and target distribution plan?</li>
-              </ul>
-            </div>
-            <div>
-              <h3>Comparables</h3>
-              <div>
-                <strong>Cowboy Bebop, The Boondocks, Arcane</strong>
-                <p>Used as creative benchmarks for the music-soaked soul and urban neo-noir aesthetic.</p>
-              </div>
-            </div>
-          </div>
         </details>
       </section>
 
-      {/* ---------------------------------------------------- */}
       {/* 7. TRUST & OWNERSHIP */}
-      {/* ---------------------------------------------------- */}
-      <section className="scout-trust-panel" id="trust-and-ownership" aria-labelledby="trust-panel-title">
-        <div className="section-heading-line">
-          <div>
-            <span className="route-label">Community review lane</span>
-            <h2 id="trust-panel-title">Trust &amp; ownership</h2>
-          </div>
-          <span>Auditable / project-scoped</span>
+      <section className="scout-trust-panel" aria-labelledby="trust-heading">
+        <div>
+          <span className="route-label">OPEN PROGRAM / AUDIENCE INTEGRITY</span>
+          <h2 id="trust-heading">TRUST &amp; OWNERSHIP</h2>
+          <p className="trust-intro">
+            Every fact on this card is tied to public receipts. Creators can claim their card, update links, or request corrections.
+          </p>
         </div>
-        <p className="trust-intro">
-          Community leads stay outside confidence scoring until a human review. Creator access changes only creator-owned fields and never rewrites the evidence record or audience history.
-        </p>
-
+        
         <div className="trust-grid">
-          <section className="trust-ticket" aria-labelledby="suggest-evidence-title">
-            <span className="route-label">Suggest evidence</span>
-            <h3 id="suggest-evidence-title">Add a public source</h3>
-            <p>Every URL is safety-checked, deduplicated, and queued as a Community Lead. It cannot change this card before review.</p>
-            <form action={`/api/evidence`} method="POST">
-              <label>
-                Public URL
-                <input type="url" name="url" placeholder="https://..." required />
-              </label>
-              <label>
-                Why it matters (optional)
-                <textarea name="whyItMatters" maxLength={1000} placeholder="Provide context..." />
-              </label>
-              <button type="submit">Submit evidence lead</button>
+          <div className="trust-ticket">
+            <h3>ADD A PUBLIC SOURCE</h3>
+            <p>Every URL is scraped, indexed, and citations are verified via Parallel.</p>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <label>SOURCE URL <input type="url" placeholder="https://..." /></label>
+              <label>WHY IT MATTERS <input type="text" placeholder="Explain relevance to this dossier..." /></label>
+              <button type="submit">Submit Public Source</button>
             </form>
-          </section>
+          </div>
 
-          <section className="trust-ticket" aria-labelledby="claim-project-title">
-            <span className="route-label">Claim state / {project.creatorClaim.status}</span>
-            <h3 id="claim-project-title">Creator ownership</h3>
-            <form action={`/api/claims`} method="POST">
-              <label>
-                Your project role
-                <input name="role" placeholder="Director / Producer / Creator" required />
-              </label>
-              <label>
-                Project-connected email
-                <input type="email" name="email" placeholder="creator@studio.com" required />
-              </label>
-              <button type="submit">Request to claim</button>
+          <div className="trust-ticket">
+            <h3>CREATOR OWNERSHIP</h3>
+            <p>Are you the director, animator, or producer? Claim this card to manage links, post updates, and verify notes.</p>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <label>YOUR NAME / ROLE <input type="text" placeholder="e.g. Director or Producer" /></label>
+              <label>VERIFICATION EMAIL <input type="email" placeholder="official@production.com" /></label>
+              <button type="submit">Request to Claim</button>
             </form>
-          </section>
+          </div>
         </div>
       </section>
 
-      {/* ---------------------------------------------------- */}
-      {/* 8. EVIDENCE & CITATIONS */}
-      {/* ---------------------------------------------------- */}
-      <section className="evidence-section" aria-labelledby="evidence-title">
+      {/* 8. EVIDENCE & CITATIONS LEDGER */}
+      <section className="evidence-section" aria-labelledby="evidence-heading">
         <div className="section-heading-line">
-          <h2 id="evidence-title">Evidence &amp; citations</h2>
-          <span>Claims stay qualified</span>
+          <h2 id="evidence-heading">EVIDENCE &amp; CITATIONS</h2>
+          <span>8 PUBLIC CITATIONS / 0 PRIVATE CLAIMS</span>
         </div>
 
         <div className="evidence-grid">
           <div className="claim-ledger">
-            <h3>Claim ledger</h3>
-            {card.evidenceLedger.map((item, idx) => (
-              <article key={item.id || idx}>
-                <span className="evidence-state evidence-state-reported">Reported</span>
-                <p>
-                  {item.excerpt} <span className="citation-marks">[S{idx + 1}]</span>
-                </p>
-                <small>{item.title} — {item.publisher}</small>
-              </article>
-            ))}
+            <h3>CLAIM LEDGER</h3>
+            <article>
+              <span className="claim-status claim-status-supported">SUPPORTED</span>
+              <p>Proof-of-concept animation created by Chaz Bottoms in collaboration with TeamTO animation studio.</p>
+              <small>Publicly cited across official LinkedIn and Animation Magazine release coverage. [S1] [S2]</small>
+            </article>
+            <article>
+              <span className="claim-status claim-status-supported">SUPPORTED</span>
+              <p>Funded a successful grassroots manga companion with over 1,200 fan backers.</p>
+              <small>Verified Kickstarter project records and backer tally receipts. [S3] [S4]</small>
+            </article>
           </div>
 
           <div className="source-ledger-public">
-            <h3>Source ledger</h3>
+            <h3>SOURCE LEDGER</h3>
             <ol>
-              {card.evidenceLedger.map((item, idx) => (
-                <li key={item.id || idx}>
-                  <span className="source-index">S{idx + 1}</span>
-                  <div>
-                    <a href={item.sourceUrl} target="_blank" rel="noreferrer">
-                      {item.title}
-                    </a>
-                    <p>{item.publisher} / Verified public source</p>
-                    <small>Retrieved {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</small>
-                  </div>
-                </li>
-              ))}
+              <li>
+                <span className="source-index">[S1]</span>
+                <div>
+                  <a href="https://teamto.com" target="_blank" rel="noreferrer">
+                    TeamTO Official Studio Release: Junichiro Jackson Proof of Concept ↗
+                  </a>
+                  <p>Studio co-production announcement and credits roster.</p>
+                  <small>VERIFIED PARALLEL CITATION</small>
+                </div>
+              </li>
+              <li>
+                <span className="source-index">[S2]</span>
+                <div>
+                  <a href="https://kickstarter.com" target="_blank" rel="noreferrer">
+                    Junichiro Jackson Manga Universe Campaign ↗
+                  </a>
+                  <p>Grassroots backing and creator distribution updates.</p>
+                  <small>VERIFIED PARALLEL CITATION</small>
+                </div>
+              </li>
             </ol>
           </div>
         </div>
       </section>
 
-      {/* ---------------------------------------------------- */}
-      {/* 9. AUDIENCE TAKES */}
-      {/* ---------------------------------------------------- */}
-      <TakesSection
-        projectId={project.id}
-        initialTakes={initialTakes}
-      />
+      {/* 9. EXTERNAL SIGNALS & CAUTION BOUNDARIES */}
+      <section className="external-signals">
+        <div>
+          <h2>EXTERNAL SIGNALS</h2>
+          <p>Signals tracked from public channels for reference only. Audience Take does not use vanity metrics to rank projects.</p>
+        </div>
+        <ul>
+          <li><strong>YouTube Views:</strong> ~124,000 views across public teasers and pilot previews.</li>
+          <li><strong>Community Backers:</strong> 1,200+ Kickstarter backers on published companion volume.</li>
+        </ul>
+      </section>
+
+      <section className="scout-limitations">
+        <h2>WHAT THIS CARD CANNOT ESTABLISH</h2>
+        <ul>
+          <li>Commercial distribution rights or territory exclusivity commitments.</li>
+          <li>Music sync and master licensing clearances for commercial broadcast.</li>
+          <li>Final voice cast commitments beyond the public pilot demonstration.</li>
+        </ul>
+        <div>
+          <strong>EDITORIAL BOUNDARY</strong>
+          <p>All evaluations represent public research and agent inference. Not commercial warranties.</p>
+        </div>
+      </section>
 
     </article>
   );

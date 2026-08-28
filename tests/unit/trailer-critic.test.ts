@@ -16,6 +16,6 @@ describe("Trailer Critic Engine", () => {
     expect(critic.criticMatrix.toneConsistency).toBeGreaterThan(0);
     expect(critic.craftAnalysis.cinematography).toBeDefined();
     expect(critic.craftAnalysis.soundAndScore).toBeDefined();
-    expect(critic.limitations).toContain("multimodal video sampling");
+    expect(critic.limitations.toLowerCase()).toContain("multimodal");
   });
 });

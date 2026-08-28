@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname),
-  serverExternalPackages: ["@google/genai", "@google-cloud/aiplatform", "@google/adk", "firebase-admin"],
+  serverExternalPackages: ["@google/genai", "@google-cloud/aiplatform", "@google/adk", "firebase-admin", "@google-cloud/tasks"],
   images: {
     remotePatterns: [
       {

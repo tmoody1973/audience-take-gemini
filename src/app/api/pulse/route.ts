@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const parsed = PulseEngagementInputSchema.safeParse(json);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Validation failed", details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.issues }, { status: 400 });
     }
 
     const { projectId, action, city, pathwayIndex } = parsed.data;

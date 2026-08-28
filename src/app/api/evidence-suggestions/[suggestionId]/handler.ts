@@ -1,0 +1,132 @@
+// Route implementation lives outside route.ts so Next.js sees only supported exports.
+import { z } from "zod";
+
+import { fail, ok } from "@/lib/api/response";
+import { AuthenticationError, verifyAuthenticatedRequest } from "@/lib/auth/verify-request";
+import { evidenceReviewInputSchema } from "@/lib/evidence/contract";
+import { EvidenceError } from "@/lib/evidence/errors";
+import { readEvidenceJson } from "@/lib/evidence/http";
+import { createFirestoreEvidenceStore, type EvidenceStore } from "@/lib/evidence/store";
+import { getAdminFirestore } from "@/lib/firebase/admin";
+import { youtubeVideoId } from "@/lib/media/youtube";
+import {
+  createCloudTasksTrailerCriticDispatcher,
+  type TrailerCriticDispatcher,
+} from "@/lib/tasks/cloud-tasks";
+import { AuthorizationError, requireAdmin } from "@/lib/trust/authorization";
+import {
+  CorrectionError,
+  promoteReviewedYouTubeLead,
+} from "@/lib/trust/corrections";
+
+const suggestionIdSchema = z.string().regex(/^[a-f0-9]{64}$/);
+
+type RouteDependencies = {
+  verifyRequest?: typeof verifyAuthenticatedRequest;
+  authorizeAdmin?: (uid: string) => Promise<void>;
+  store?: EvidenceStore;
+  promoteMedia?: (input: {
+    projectId: string;
+    reviewerUid: string;
+    incorporatedSourceId: string;
+    canonicalUrl: string;
+  }) => Promise<unknown>;
+  dispatchTrailerCritic?: TrailerCriticDispatcher;
+};
+
+export async function handleEvidenceReviewPatch(
+  request: Request,
+  suggestionIdValue: string,
+  dependencies: RouteDependencies = {},
+) {
+  try {
+    const { user } = await (dependencies.verifyRequest ?? verifyAuthenticatedRequest)(request);
+    const database =
+      !dependencies.authorizeAdmin || !dependencies.store ? getAdminFirestore() : null;
+    await (
+      dependencies.authorizeAdmin ??
+      ((uid) => requireAdmin(database!, uid).then(() => undefined))
+    )(user.uid);
+    const suggestionId = suggestionIdSchema.safeParse(suggestionIdValue);
+    const review = evidenceReviewInputSchema.safeParse(await readEvidenceJson(request));
+    if (!suggestionId.success || !review.success) {
+      return fail(
+        {
+          code: "invalid_evidence_review",
+          message: "Check the review outcome and source details.",
+          ...(review.success ? {} : { fields: z.flattenError(review.error).fieldErrors }),
+        },
+        400,
+      );
+    }
+    const store = dependencies.store ?? createFirestoreEvidenceStore(database!);
+    const result = await store.review(suggestionId.data, user.uid, review.data);
+    let mediaPromotion: unknown = null;
+    let trailerCriticQueued = false;
+    if (
+      result.status === "verified_incorporated"
+      && result.suggestedUse === "scout_card_video"
+      && result.incorporatedSourceId
+    ) {
+      mediaPromotion = await (
+        dependencies.promoteMedia
+        ?? ((input) => promoteReviewedYouTubeLead(database ?? getAdminFirestore(), input))
+      )({
+        projectId: result.projectId,
+        reviewerUid: user.uid,
+        incorporatedSourceId: result.incorporatedSourceId,
+        canonicalUrl: result.canonicalUrl,
+      });
+      const videoId = youtubeVideoId(result.canonicalUrl);
+      if (!videoId) {
+        throw new CorrectionError(
+          "invalid_source",
+          "Use a supported YouTube video URL.",
+          400,
+        );
+      }
+      await (
+        dependencies.dispatchTrailerCritic
+        ?? createCloudTasksTrailerCriticDispatcher()
+      )({
+        projectId: result.projectId,
+        sourceId: result.incorporatedSourceId,
+        youtubeVideoId: videoId,
+        analysisVersion: 1,
+      });
+      trailerCriticQueued = true;
+    }
+    return ok({ ...result, mediaPromotion, trailerCriticQueued });
+  } catch (error) {
+    if (error instanceof AuthenticationError) {
+      return fail({ code: error.code, message: error.message }, 401);
+    }
+    if (error instanceof AuthorizationError) {
+      return fail({ code: error.code, message: error.message }, 403);
+    }
+    if (error instanceof EvidenceError) {
+      return fail({ code: error.code, message: error.message }, error.status);
+    }
+    if (error instanceof CorrectionError) {
+      return fail({ code: error.code, message: error.message }, error.status);
+    }
+    if (error instanceof Error && error.message === "BODY_TOO_LARGE") {
+      return fail({ code: "request_too_large", message: "That evidence review is too large." }, 413);
+    }
+    if (error instanceof Error && error.message === "INVALID_JSON") {
+      return fail({ code: "invalid_json", message: "Send valid JSON." }, 400);
+    }
+    return fail(
+      { code: "evidence_review_failed", message: "We could not save that evidence review right now." },
+      500,
+    );
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ suggestionId: string }> },
+) {
+  const { suggestionId } = await params;
+  return handleEvidenceReviewPatch(request, suggestionId);
+}

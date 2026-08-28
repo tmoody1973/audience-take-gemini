@@ -62,6 +62,9 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
 
     // 3. Execute the autonomous research agent run
     const completedRun = await executeScoutResearchRun(runId);
+    if (completedRun.currentStep === "failed") {
+      console.error("AGENT RUN ERROR:", completedRun.errorMessage, JSON.stringify(completedRun.stepLogs, null, 2));
+    }
 
     expect(completedRun.currentStep).toBe("complete");
     expect(completedRun.progressPercent).toBe(100);

@@ -1,16 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Eye,
-  DollarSign,
-  MapPin,
-  Sparkles,
-  Vote,
-  CheckCircle2,
-} from "lucide-react";
-import { Button } from "../ui/Button";
-import { CityDemandHeatmap } from "./CityDemandHeatmap";
 import type { PulseMetrics, UserEngagementRecord, PathwayHypothesis } from "@/domain";
 import { clsx } from "clsx";
 
@@ -24,12 +14,12 @@ interface AudiencePulsePanelProps {
 
 export function AudiencePulsePanel({
   projectId,
-  projectTitle = "Independent Screen Project",
   initialMetrics,
   initialUserEngagement,
   pathways,
 }: AudiencePulsePanelProps) {
   const [metrics, setMetrics] = useState<PulseMetrics>(initialMetrics);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [engagement, setEngagement] = useState<UserEngagementRecord>(
     initialUserEngagement || {
       uid: "guest-fan",
@@ -42,9 +32,6 @@ export function AudiencePulsePanel({
       updatedAt: new Date().toISOString(),
     }
   );
-
-  const [isCityPromptOpen, setIsCityPromptOpen] = useState(false);
-  const [cityInput, setCityInput] = useState(engagement.city || "");
 
   const handleAction = async (
     action: "toggle_watch" | "toggle_pay" | "set_city" | "toggle_back" | "vote_pathway",
@@ -67,180 +54,181 @@ export function AudiencePulsePanel({
     }
   };
 
-  const totalVotes = metrics.pathwayVotes.reduce((a, b) => a + b, 0);
-
   return (
-    <section aria-label="Audience Pulse" className="border-3 border-ink bg-paper p-6 sm:p-8 shadow-ticket-lift space-y-6">
+    <section className="scout-social-panel" aria-labelledby="pulse-heading">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b-2 border-ink font-mono">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-headline text-4xl font-normal uppercase text-ink">
-              AUDIENCE PULSE
-            </h3>
-            <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 bg-signal-coral text-white border-2 border-ink">
-              NATIVE COMMITMENTS
-            </span>
-          </div>
-          <p className="text-xs font-bold text-muted-ink mt-1 uppercase">
-            Real fan commitments and pathway voting. Kept strictly separate from external hype metrics.
+      {/* Masthead Header */}
+      <div>
+        <span className="route-label">AUDIENCE TAKE NATIVE</span>
+        <h2 id="pulse-heading">AUDIENCE PULSE</h2>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-2">
+          <p className="social-intro text-xs font-sans max-w-2xl">
+            A public place to show what you would do next. Counts below are Audience Take-native and update live when available.
           </p>
+          <small className="font-mono text-[10px] text-muted-ink uppercase font-bold tracking-wider">
+            PARTICIPATION, NOT PREDICTION
+          </small>
         </div>
       </div>
 
-      {/* Commitment Action Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Red Follow Banner */}
+      <div className="social-primary flex flex-col sm:flex-row items-start sm:items-center gap-4 my-6">
+        <button
+          type="button"
+          onClick={() => setIsFollowing(!isFollowing)}
+          className={clsx(
+            "button-primary text-2xl font-display uppercase tracking-wider px-8 py-3 border-3 border-ink text-white cursor-pointer transition-colors",
+            isFollowing ? "bg-ink" : "bg-signal-coral hover:bg-electric-blue"
+          )}
+        >
+          {isFollowing ? "FOLLOWING PROJECT ✓" : "FOLLOW THIS PROJECT !"}
+        </button>
+        <small className="font-mono text-xs text-muted-ink">
+          Follow is a lightweight signal that you want updates. Commitment signals are shown separately.
+        </small>
+      </div>
+
+      {/* 2-Field Ticket Box */}
+      <div className="social-grid grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* 1. Watch */}
-        <button
-          type="button"
-          onClick={() => handleAction("toggle_watch")}
-          className={clsx(
-            "p-4 border-2 border-ink text-center transition-all flex flex-col items-center justify-center space-y-2",
-            engagement.watch
-              ? "bg-signal-coral text-white font-bold shadow-selected-lift translate-x-[1px] translate-y-[1px]"
-              : "bg-field-paper text-ink hover:bg-paper shadow-action-lift"
-          )}
-        >
-          <Eye className="w-6 h-6" />
-          <span className="text-xs font-mono font-extrabold uppercase tracking-wider">I WOULD WATCH</span>
-          <span className="font-headline text-3xl">{metrics.watchCount}</span>
-        </button>
+        {/* Left Field: Commitments */}
+        <fieldset className="commitment-list p-5 border-2 border-ink bg-paper space-y-3">
+          <legend className="font-display text-3xl uppercase px-2 text-ink">
+            COMMITMENTS
+          </legend>
 
-        {/* 2. Pay */}
-        <button
-          type="button"
-          onClick={() => handleAction("toggle_pay")}
-          className={clsx(
-            "p-4 border-2 border-ink text-center transition-all flex flex-col items-center justify-center space-y-2",
-            engagement.pay
-              ? "bg-electric-blue text-white font-bold shadow-selected-lift translate-x-[1px] translate-y-[1px]"
-              : "bg-field-paper text-ink hover:bg-paper shadow-action-lift"
-          )}
-        >
-          <DollarSign className="w-6 h-6" />
-          <span className="text-xs font-mono font-extrabold uppercase tracking-wider">I WOULD PAY</span>
-          <span className="font-headline text-3xl">{metrics.payCount}</span>
-        </button>
-
-        {/* 3. City Demand */}
-        <button
-          type="button"
-          onClick={() => setIsCityPromptOpen(!isCityPromptOpen)}
-          className={clsx(
-            "p-4 border-2 border-ink text-center transition-all flex flex-col items-center justify-center space-y-2",
-            engagement.city
-              ? "bg-acid-yellow text-ink font-bold shadow-selected-lift translate-x-[1px] translate-y-[1px]"
-              : "bg-field-paper text-ink hover:bg-paper shadow-action-lift"
-          )}
-        >
-          <MapPin className="w-6 h-6" />
-          <span className="text-xs font-mono font-extrabold uppercase tracking-wider">BRING TO CITY</span>
-          <span className="font-headline text-3xl">{metrics.cityDemandCount}</span>
-        </button>
-
-        {/* 4. Back Next Chapter */}
-        <button
-          type="button"
-          onClick={() => handleAction("toggle_back")}
-          className={clsx(
-            "p-4 border-2 border-ink text-center transition-all flex flex-col items-center justify-center space-y-2",
-            engagement.back
-              ? "bg-evidence-mint text-ink font-bold shadow-selected-lift translate-x-[1px] translate-y-[1px]"
-              : "bg-field-paper text-ink hover:bg-paper shadow-action-lift"
-          )}
-        >
-          <Sparkles className="w-6 h-6" />
-          <span className="text-xs font-mono font-extrabold uppercase tracking-wider">BACK CHAPTER</span>
-          <span className="font-headline text-3xl">{metrics.backCount}</span>
-        </button>
-
-      </div>
-
-      {/* Theatrical City Demand Heatmap */}
-      <CityDemandHeatmap
-        projectId={projectId}
-        projectTitle={projectTitle}
-        cities={metrics.cities || {}}
-        onAddCity={(city) => handleAction("set_city", city)}
-        userCity={engagement.city}
-      />
-
-      {/* Pathway Voting Section */}
-      <div className="pt-6 border-t-2 border-ink space-y-4">
-        <div className="flex items-center justify-between font-mono">
-          <h4 className="font-headline text-3xl font-normal uppercase text-ink flex items-center gap-2">
-            <Vote className="w-6 h-6 text-signal-coral" />
-            VOTE ON GROWTH PATHWAY CONSENSUS
-          </h4>
-          <span className="text-xs font-extrabold text-muted-ink">
-            {totalVotes} TOTAL VOTES CAST
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {pathways.map((pathway, idx) => {
-            const isVoted = engagement.votedPathwayIndex === idx;
-            const voteCount = metrics.pathwayVotes[idx] || 0;
-            const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
-
-            return (
-              <div
-                key={idx}
-                className={clsx(
-                  "p-5 border-2 border-ink flex flex-col justify-between space-y-3 transition-all",
-                  isVoted
-                    ? "bg-acid-yellow shadow-selected-lift"
-                    : "bg-field-paper hover:bg-paper"
-                )}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between font-mono">
-                    <span className="text-xs font-headline uppercase text-signal-coral font-bold">
-                      PATHWAY 0{idx + 1}
-                    </span>
-                    {isVoted && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-extrabold text-ink bg-evidence-mint px-1.5 py-0.5 border border-ink">
-                        <CheckCircle2 className="w-3 h-3 text-electric-blue" /> YOUR VOTE
-                      </span>
-                    )}
-                  </div>
-                  <h5 className="font-headline text-2xl font-normal uppercase text-ink leading-tight">
-                    {pathway.title}
-                  </h5>
-                  <p className="text-xs text-muted-ink font-sans leading-relaxed line-clamp-3">
-                    {pathway.mediumFitRationale}
-                  </p>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t-2 border-ink font-mono">
-                  <div className="flex justify-between text-xs font-bold text-ink">
-                    <span>{percentage}% CONSENSUS</span>
-                    <span>{voteCount} VOTES</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-paper border-2 border-ink overflow-hidden flex">
-                    <div
-                      style={{ width: `${percentage}%` }}
-                      className={clsx("h-full", idx === 0 ? "bg-signal-coral" : idx === 1 ? "bg-electric-blue" : "bg-ink")}
-                    />
-                  </div>
-
-                  <Button
-                    variant={isVoted ? "secondary" : "coral"}
-                    size="sm"
-                    className="w-full text-lg mt-1"
-                    onClick={() => handleAction("vote_pathway", undefined, idx)}
-                  >
-                    {isVoted ? "WITHDRAW VOTE" : `VOTE PATHWAY ${idx + 1}`}
-                  </Button>
-                </div>
+          {/* 1. I would watch */}
+          <div className="social-control border-b border-ink pb-3">
+            <button
+              type="button"
+              onClick={() => handleAction("toggle_watch")}
+              aria-pressed={engagement.watch}
+              className={clsx(
+                "w-full flex items-center justify-between p-3 border-2 border-ink text-left transition-all",
+                engagement.watch ? "bg-acid-yellow font-black" : "bg-field-paper hover:bg-paper"
+              )}
+            >
+              <div>
+                <strong className="block font-mono text-xs uppercase text-ink">I would watch</strong>
+                <small className="text-[10px] text-muted-ink font-sans">Signal intent to watch.</small>
               </div>
-            );
-          })}
-        </div>
+              <span className="font-display text-2xl text-ink font-bold">{metrics.watchCount}</span>
+            </button>
+          </div>
+
+          {/* 2. I would pay */}
+          <div className="social-control border-b border-ink pb-3">
+            <button
+              type="button"
+              onClick={() => handleAction("toggle_pay")}
+              aria-pressed={engagement.pay}
+              className={clsx(
+                "w-full flex items-center justify-between p-3 border-2 border-ink text-left transition-all",
+                engagement.pay ? "bg-acid-yellow font-black" : "bg-field-paper hover:bg-paper"
+              )}
+            >
+              <div>
+                <strong className="block font-mono text-xs uppercase text-ink">I would pay</strong>
+                <small className="text-[10px] text-muted-ink font-sans">Signal willingness to pay.</small>
+              </div>
+              <span className="font-display text-2xl text-ink font-bold">{metrics.payCount}</span>
+            </button>
+          </div>
+
+          {/* 3. Bring it to my city */}
+          <div className="social-control border-b border-ink pb-3">
+            <button
+              type="button"
+              onClick={() => {
+                const userCity = prompt("Enter your city name for screening demand:", engagement.city || "Milwaukee, WI");
+                if (userCity) handleAction("set_city", userCity);
+              }}
+              aria-pressed={Boolean(engagement.city)}
+              className={clsx(
+                "w-full flex items-center justify-between p-3 border-2 border-ink text-left transition-all",
+                engagement.city ? "bg-acid-yellow font-black" : "bg-field-paper hover:bg-paper"
+              )}
+            >
+              <div>
+                <strong className="block font-mono text-xs uppercase text-ink">
+                  Bring it to my city {engagement.city && `(${engagement.city})`}
+                </strong>
+                <small className="text-[10px] text-muted-ink font-sans">Tell the team where to bring it.</small>
+              </div>
+              <span className="font-display text-2xl text-ink font-bold">{metrics.cityDemandCount}</span>
+            </button>
+          </div>
+
+          {/* 4. Back next chapter */}
+          <div className="social-control">
+            <button
+              type="button"
+              onClick={() => handleAction("toggle_back")}
+              aria-pressed={engagement.back}
+              className={clsx(
+                "w-full flex items-center justify-between p-3 border-2 border-ink text-left transition-all",
+                engagement.back ? "bg-acid-yellow font-black" : "bg-field-paper hover:bg-paper"
+              )}
+            >
+              <div>
+                <strong className="block font-mono text-xs uppercase text-ink">Back next chapter</strong>
+                <small className="text-[10px] text-muted-ink font-sans">Pledge interest in future crowdfunding or release.</small>
+              </div>
+              <span className="font-display text-2xl text-ink font-bold">{metrics.backCount}</span>
+            </button>
+          </div>
+        </fieldset>
+
+        {/* Right Field: Which Pathway Should Grow? */}
+        <fieldset className="pathway-votes p-5 border-2 border-ink bg-paper flex flex-col justify-between">
+          <div>
+            <legend className="font-display text-3xl uppercase px-2 text-ink">
+              WHICH PATHWAY SHOULD GROW?
+            </legend>
+
+            <div className="space-y-2 mt-2">
+              {pathways.map((pathway, idx) => {
+                const isSelected = engagement.votedPathwayIndex === idx;
+                const voteCount = metrics.pathwayVotes[idx] || 0;
+
+                return (
+                  <label
+                    key={idx}
+                    onClick={() => handleAction("vote_pathway", undefined, idx)}
+                    className={clsx(
+                      "flex items-center justify-between p-3 border-2 border-ink cursor-pointer transition-colors",
+                      isSelected ? "bg-acid-yellow font-bold" : "bg-field-paper hover:bg-paper"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-base font-bold text-ink">
+                        {isSelected ? "●" : "○"}
+                      </span>
+                      <span className="font-mono text-xs uppercase text-ink font-bold">
+                        {pathway.title}
+                      </span>
+                    </div>
+                    <small className="font-mono text-[10px] text-muted-ink uppercase font-bold">
+                      {voteCount} organic {voteCount === 1 ? "vote" : "votes"}
+                    </small>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleAction("vote_pathway", undefined, -1)}
+            className="text-link text-xs font-mono font-bold text-muted-ink hover:text-signal-coral underline mt-4 self-start cursor-pointer"
+          >
+            CLEAR MY VOTE
+          </button>
+        </fieldset>
+
       </div>
 
     </section>
   );
 }
+

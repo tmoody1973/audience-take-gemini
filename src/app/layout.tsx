@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 
 const directionContract = `THESIS: A fan nomination becomes a public scouting object; refuse the generic centered AI hero and floating feature-card grid.
 OWN-WORLD: Warm paper, near-black ink, acid yellow, electric blue, coral, evidence green; contact-sheet seams, program numbers, ticket edges, crop marks, hard rules and controlled offset shadows.
@@ -27,11 +25,7 @@ export const metadata: Metadata = {
     "Nominate overlooked screen projects and turn public evidence into a Scout Card the audience can champion.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
@@ -41,9 +35,7 @@ export default function RootLayout({
         <pre className="direction-contract" data-surface-contract="research" hidden>
           {researchSurfaceContract}
         </pre>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

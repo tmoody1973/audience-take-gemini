@@ -1,25 +1,33 @@
-import React from "react";
-import { NominationForm } from "@/components/nominate/NominationForm";
-import { PlusCircle, ShieldCheck, Compass } from "lucide-react";
+import type { Metadata } from "next";
 
-export default function NominatePage() {
+import { SiteHeader } from "../../components/site-header";
+import { NominationForm } from "./nomination-form";
+
+export const metadata: Metadata = {
+  title: "Nominate a project",
+  description: "Share an overlooked public screen project and tell Audience Take why it should grow.",
+};
+
+export default async function NominatePage({ searchParams }: { searchParams: Promise<{ url?: string | string[] }> }) {
+  const params = await searchParams;
+  const initialUrl = typeof params.url === "string" ? params.url : "";
+
   return (
-    <div className="space-y-8 py-4">
-      {/* Header */}
-      <div className="text-center max-w-xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-cinema-gold/10 border border-cinema-gold/30 text-cinema-gold font-mono text-xs uppercase tracking-wider">
-          <Compass className="w-3.5 h-3.5" />
-          Nomination Intake Desk
-        </div>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">
-          Nominate a Screen Project
-        </h1>
-        <p className="text-sm text-text-secondary leading-relaxed">
-          Submit an overlooked film, documentary, series pitch, or crowdfunding campaign. Our Gemini research agent will build an inspectable, cited Scout Card.
-        </p>
-      </div>
-
-      <NominationForm />
-    </div>
+    <>
+      <SiteHeader />
+      <main className="nominate-page">
+        <header className="nominate-intro paper-texture">
+          <h1>Put a story on the scouting wall.</h1>
+          <p>Start with the public link. Tell us what you see in it. The agents handle the long research pass.</p>
+          <dl>
+            <div><dt>Time</dt><dd>About 2 minutes</dd></div>
+            <div><dt>Needed</dt><dd>One URL + your reason</dd></div>
+            <div><dt>Next</dt><dd>Review before research</dd></div>
+            <div><dt>Call</dt><dd>Public projects</dd></div>
+          </dl>
+        </header>
+        <NominationForm initialUrl={initialUrl} />
+      </main>
+    </>
   );
 }

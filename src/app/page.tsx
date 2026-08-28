@@ -1,361 +1,103 @@
-import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Ticket, Search, Video, Sparkles, ExternalLink } from "lucide-react";
-import { dataRepo } from "@/services/firestore-repo";
-import { ProjectCard } from "@/components/card/ProjectCard";
-import type { MediumType, LifecycleStage } from "@/domain";
 
-interface PageProps {
-  searchParams: Promise<{
-    medium?: string;
-    stage?: string;
-    q?: string;
-  }>;
-}
+import { ArrowIcon, EyeIcon, MegaphoneIcon, SearchIcon, TicketIcon } from "../components/icons";
+import { SiteHeader } from "../components/site-header";
 
-const MEDIUMS: { label: string; value?: MediumType }[] = [
-  { label: "ALL FORMATS", value: undefined },
-  { label: "SHORTS", value: "short" },
-  { label: "FEATURES", value: "feature" },
-  { label: "DOCS", value: "documentary" },
-  { label: "SERIES / PILOTS", value: "series" },
-  { label: "PROOFS OF CONCEPT", value: "proof_of_concept" },
+export const metadata: Metadata = {
+  title: "The audience’s take on what should be made next",
+  description:
+    "Find an overlooked screen story, nominate its public URL, and watch agents turn current public evidence into a Scout Card.",
+};
+
+const steps = [
+  { title: "Nominate", body: "Share one public project link and tell us why the story deserves a wider look.", icon: TicketIcon },
+  { title: "Agents scout", body: "Visible agents read the source, search the public web, check evidence, and cite what they find.", icon: SearchIcon },
+  { title: "Audience takes action", body: "A public Scout Card gives fans useful ways to follow, respond, and champion the next step.", icon: MegaphoneIcon },
 ];
 
-export default async function ScoutingWallPage({ searchParams }: PageProps) {
-  const resolvedParams = await searchParams;
-  const selectedMedium = resolvedParams.medium as MediumType | undefined;
-  const selectedStage = resolvedParams.stage as LifecycleStage | undefined;
-  const searchQuery = resolvedParams.q || "";
+const selects = [
+  {
+    title: "Junichiro Jackson",
+    type: "Complete demonstration card",
+    reason: "Selected to show an evidence-limited project with three bounded pathways and an immutable correction history.",
+    color: "yellow",
+    href: "/projects/junichiro-live-project",
+    status: "Published Scout Card · source-limited evidence",
+  },
+];
 
-  const projects = await dataRepo.getProjects({
-    medium: selectedMedium,
-    stage: selectedStage,
-    query: searchQuery,
-  });
-
-  const featuredProject = projects.find((p) => p.id === "proj-junichiro") || projects[0];
-
-  const featuredVideoUrl = featuredProject?.nomination.initialLinks?.[0] || "https://www.youtube.com/watch?v=s8G7425lfKs";
-  const featuredEmbedUrl = featuredVideoUrl.includes("v=")
-    ? `https://www.youtube-nocookie.com/embed/${featuredVideoUrl.split("v=")[1]?.split("&")[0]}`
-    : featuredVideoUrl.includes("youtu.be/")
-    ? `https://www.youtube-nocookie.com/embed/${featuredVideoUrl.split("youtu.be/")[1]?.split("?")[0]}`
-    : "https://www.youtube-nocookie.com/embed/s8G7425lfKs";
-
+export default function HomePage() {
   return (
-    <div className="max-w-7xl mx-auto my-6 space-y-10 px-4 sm:px-6 lg:px-8">
-      
-      {/* ---------------------------------------------------- */}
-      {/* 1. HERO SECTION: 2-Field Mission & Quick Nomination Ticket */}
-      {/* ---------------------------------------------------- */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 border-3 border-ink shadow-ticket-lift overflow-hidden">
-        
-        {/* Left Field: Mission Declaration on Acid Yellow */}
-        <div className="lg:col-span-7 bg-acid-yellow p-6 sm:p-10 lg:p-12 border-b-3 lg:border-b-0 lg:border-r-3 border-ink flex flex-col justify-between space-y-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2">
-              <span className="px-2.5 py-1 bg-ink text-white font-mono text-[11px] font-black uppercase tracking-wider">
-                PROGRAM NO. 001
-              </span>
-              <span className="font-mono text-xs font-black text-ink uppercase">
-                PUBLIC CINEMA SCOUTING
-              </span>
+    <>
+      <SiteHeader />
+      <main>
+        <section className="hero" aria-labelledby="mission-title">
+          <div className="hero-mission paper-texture">
+            <div className="hero-side-note" aria-hidden="true"><span>Audience take</span><span>Public scouting</span></div>
+            <div className="hero-copy">
+              <h1 id="mission-title">Fans can find the next great screen story <em>first.</em></h1>
+              <p>The audience’s take on what should be made next. Surface an overlooked public project, then watch cited research turn it into something people can act on.</p>
             </div>
-
-            <h1 className="font-display text-5xl sm:text-7xl lg:text-[5.5rem] font-normal uppercase text-ink leading-[0.78] tracking-tight">
-              FANS CAN FIND THE NEXT GREAT SCREEN STORY <span className="text-electric-blue">FIRST.</span>
-            </h1>
-
-            <p className="text-sm sm:text-base font-sans text-ink font-semibold leading-snug max-w-xl">
-              The audience’s take on what should be made next. Surface an overlooked public project, then watch autonomous Gemini research and verified Parallel web citations turn it into an actionable Scout Card.
-            </p>
+            <div className="trust-stamp"><EyeIcon /><span>Public sources. Clear labels. No mystery score.</span></div>
           </div>
 
-          <div className="pt-4 border-t-2 border-ink/40 flex items-center gap-2.5 font-mono text-xs font-black text-ink uppercase">
-            <span className="text-lg leading-none">⌖</span>
-            <span>PUBLIC PRIMARY SOURCES · CLEAR CONFIDENCE LABELS · NO MYSTERY SCORES.</span>
-          </div>
-        </div>
-
-        {/* Right Field: Nomination Ticket Handbill */}
-        <div className="lg:col-span-5 bg-[#fffdf7] p-6 sm:p-10 flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b-2 border-ink pb-2">
-              <h2 className="font-display text-3xl sm:text-4xl text-signal-coral uppercase">
-                NOMINATE A PROJECT
-              </h2>
-              <span className="text-signal-coral font-mono text-xl">⤤</span>
-            </div>
-
-            <p className="text-xs font-mono font-medium text-muted-ink leading-relaxed">
-              Found a trailer, short, series, documentary, creator page, or public campaign that deserves to grow?
-            </p>
-
-            <form action="/nominate" method="GET" className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <label htmlFor="quick-url" className="block text-[11px] font-mono font-black uppercase text-ink">
-                  PUBLIC PROJECT URL
-                </label>
-                <input
-                  id="quick-url"
-                  name="url"
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=... or vimeo.com/..."
-                  required
-                  className="w-full min-h-[50px] px-3.5 bg-paper border-2 border-ink font-mono text-xs text-ink placeholder:text-muted-ink focus:outline-none focus:bg-white"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full min-h-[56px] bg-signal-coral hover:bg-ink text-white font-mono text-sm font-black uppercase flex items-center justify-between px-6 transition-colors border-2 border-ink shadow-action-lift"
-              >
-                <span>START A NOMINATION</span>
-                <ArrowRight className="w-5 h-5" />
-              </button>
+          <div className="nomination-ticket paper-texture">
+            <span className="ticket-hole" aria-hidden="true" />
+            <span className="ticket-notch ticket-notch-top" aria-hidden="true" />
+            <span className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
+            <span className="ticket-crop ticket-crop-top" aria-hidden="true" />
+            <span className="ticket-crop ticket-crop-bottom" aria-hidden="true" />
+            <span className="ticket-edge" aria-hidden="true">AT / OPEN CALL / 001</span>
+            <div className="ticket-heading"><h2>Nominate a project</h2><span aria-hidden="true"><ArrowIcon /></span></div>
+            <p>Found a trailer, short, series, documentary, creator page, or public campaign?</p>
+            <form action="/nominate" method="get" className="quick-form">
+              <label htmlFor="project-url">Public project URL</label>
+              <input id="project-url" name="url" type="url" inputMode="url" autoComplete="url" placeholder="https://youtube.com/watch?v=…" required />
+              <button type="submit">Start a nomination <ArrowIcon /></button>
             </form>
-          </div>
-
-          <p className="text-[11px] font-mono text-muted-ink pt-2">
-            Takes 30 seconds. Gemini & Parallel verify facts from public web sources.
-          </p>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------- */}
-      {/* 2. FEATURED STRIP: Spotlight Scout Card (Black Bar) */}
-      {/* ---------------------------------------------------- */}
-      {featuredProject && (
-        <section className="bg-ink text-paper border-3 border-ink p-6 sm:p-8 shadow-card-lift grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          
-          {/* Left Details */}
-          <div className="lg:col-span-5 space-y-4">
-            <span className="inline-block px-2.5 py-1 bg-acid-yellow text-ink font-mono text-[10px] font-black uppercase tracking-wider">
-              SPOTLIGHT SCOUT CARD
-            </span>
-
-            <h2 className="font-display text-4xl sm:text-6xl uppercase tracking-tight leading-[0.8] text-white">
-              {featuredProject.identity.title}
-            </h2>
-
-            <p className="text-xs font-mono font-bold text-acid-yellow uppercase">
-              {featuredProject.identity.medium.replace("_", " ")} · {featuredProject.identity.creators?.join(", ") || "INDEPENDENT ANIMATION"}
-            </p>
-
-            <p className="text-xs text-[#d7d1c6] font-sans leading-relaxed line-clamp-3">
-              {featuredProject.identity.logline ||
-                featuredProject.nomination.reason ||
-                "A groundbreaking fusion of Japanese anime craft and Midwest urban storytelling that already has a dedicated fanbase."}
-            </p>
-
-            <div className="pt-2 flex items-center gap-3">
-              <Link
-                href={`/scout/${featuredProject.id}`}
-                className="px-5 py-2.5 bg-signal-coral hover:bg-electric-blue text-white font-mono text-xs font-black uppercase inline-flex items-center gap-2 transition-colors border border-white"
-              >
-                <span>OPEN SCOUT CARD</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-              <Link
-                href={`/research/${featuredProject.id}`}
-                className="px-4 py-2.5 bg-transparent hover:bg-paper/10 text-acid-yellow font-mono text-xs font-bold uppercase inline-flex items-center gap-1.5 border border-acid-yellow transition-colors"
-              >
-                <span>⌖ RESEARCH LEDGER</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Center Video Frame */}
-          <div className="lg:col-span-4 aspect-video bg-black border-2 border-[#7b776c] overflow-hidden">
-            <iframe
-              src={featuredEmbedUrl}
-              title={featuredProject.identity.title}
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-
-          {/* Right Verification Receipts */}
-          <div className="lg:col-span-3 border-l lg:border-l border-[#615e56] pl-0 lg:pl-6 space-y-4 font-mono text-xs">
-            <div>
-              <span className="text-[10px] text-[#aaa69e] uppercase block font-bold">PUBLIC EVIDENCE</span>
-              <strong className="text-acid-yellow text-sm font-black uppercase">
-                {featuredProject.nomination.initialLinks?.length || 2} CITED SOURCES
-              </strong>
-            </div>
-            <div>
-              <span className="text-[10px] text-[#aaa69e] uppercase block font-bold">CONFIDENCE</span>
-              <strong className="text-white text-sm font-black uppercase">HIGH (PARALLEL)</strong>
-            </div>
-            <div>
-              <span className="text-[10px] text-[#aaa69e] uppercase block font-bold">COMMERCIAL FIT</span>
-              <strong className="text-acid-yellow text-sm font-black uppercase">PREMIUM ADULT SERIES</strong>
-            </div>
+            <p className="ticket-note">Takes about two minutes. Sign-in is required before research begins.</p>
+            <div className="ticket-perforation" aria-hidden="true" />
           </div>
         </section>
-      )}
 
-      {/* ---------------------------------------------------- */}
-      {/* 3. WORKFLOW: 3 Side-by-Side Steps */}
-      {/* ---------------------------------------------------- */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6" id="how-it-works">
-        {/* Step 1 */}
-        <div className="bg-[#fffdf7] border-3 border-ink p-6 shadow-card-lift space-y-3">
-          <div className="w-9 h-9 bg-acid-yellow text-ink border-2 border-ink flex items-center justify-center font-mono text-sm font-black">
-            01
+        <section className="featured-strip" aria-labelledby="featured-title">
+          <div className="featured-details">
+            <h2 id="featured-title">Junichiro Jackson</h2>
+            <span className="featured-label">Featured nomination · source 01</span>
+            <p className="claim-label">Fan nomination — unclaimed by creator</p>
+            <p className="featured-summary">See the supplied public source, then follow how a nomination becomes a cited Scout Card. No creator endorsement is implied.</p>
+            <a className="button button-inverse" href="https://www.youtube.com/watch?v=s8G7425lfKs">Open public source <ArrowIcon /></a>
+            <Link className="featured-card-link" href="/projects/junichiro-live-project">Open Scout Card <ArrowIcon /></Link>
           </div>
-          <h3 className="font-display text-3xl uppercase text-signal-coral leading-none">
-            NOMINATE
-          </h3>
-          <p className="text-xs text-ink font-medium leading-relaxed">
-            Paste a public URL (YouTube, Vimeo, Kickstarter, film festival page).
-          </p>
-        </div>
-
-        {/* Step 2 */}
-        <div className="bg-[#fffdf7] border-3 border-ink p-6 shadow-card-lift space-y-3">
-          <div className="w-9 h-9 bg-electric-blue text-white border-2 border-ink flex items-center justify-center font-mono text-sm font-black">
-            02
+          <div className="source-frame">
+            <iframe src="https://www.youtube-nocookie.com/embed/s8G7425lfKs" title="Junichiro Jackson public project video on YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
           </div>
-          <h3 className="font-display text-3xl uppercase text-electric-blue leading-none">
-            VISIBLE RESEARCH
-          </h3>
-          <p className="text-xs text-ink font-medium leading-relaxed">
-            Watch autonomous agents investigate public sources, extract facts, and ground citations.
-          </p>
-        </div>
+          <aside className="source-receipt" aria-label="Source status"><span>Source</span><strong>YouTube</strong><span>Card status</span><strong>Published</strong><span>Creator claim</span><strong>Unclaimed</strong></aside>
+        </section>
 
-        {/* Step 3 */}
-        <div className="bg-[#fffdf7] border-3 border-ink p-6 shadow-card-lift space-y-3">
-          <div className="w-9 h-9 bg-evidence-mint text-ink border-2 border-ink flex items-center justify-center font-mono text-sm font-black">
-            03
+        <section className="workflow" aria-labelledby="workflow-title">
+          <div className="workflow-program">
+            <header className="workflow-summary"><h2 id="workflow-title">One link becomes a public object.</h2><p>Evidence, inference, and audience opinion keep their own labels.</p></header>
+            <ol className="workflow-list">
+              {steps.map((step, index) => { const Icon = step.icon; return <li key={step.title}><span className="step-number">0{index + 1}</span><Icon /><div><h3>{step.title}</h3><p>{step.body}</p></div></li>; })}
+            </ol>
           </div>
-          <h3 className="font-display text-3xl uppercase text-ink leading-none">
-            AUDIENCE PULSE
-          </h3>
-          <p className="text-xs text-ink font-medium leading-relaxed">
-            Vote on commercial pathways, commit willingness to pay, and pledge theatrical city demand.
-          </p>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------- */}
-      {/* 4. THE SELECTS: Curated Spotlight Rail */}
-      {/* ---------------------------------------------------- */}
-      <section className="space-y-4" id="the-selects">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b-3 border-ink pb-3">
-          <div>
-            <h2 className="font-display text-5xl sm:text-6xl text-ink uppercase leading-none">
-              THE SELECTS
-            </h2>
-            <p className="text-xs font-mono font-bold text-muted-ink uppercase mt-1">
-              CURATED EDITORIAL SELECTION · THREE COMPELLING CANDIDATES
-            </p>
+          <div className="workflow-cta">
+            <div className="handoff-motion" aria-label="A nomination advances from URL to research to Scout Card"><span>URL</span><ArrowIcon /><span>Research</span><ArrowIcon /><span>Scout Card</span></div>
+            <p><strong>Transparent by design.</strong> Browsing stays public; participation starts after sign-in.</p>
+            <Link href="/nominate" className="text-link">Nominate <ArrowIcon /></Link>
           </div>
-          <span className="px-3 py-1 bg-paper border-2 border-ink font-mono text-xs font-black uppercase text-ink w-fit">
-            CURATED EDITORIAL PROGRAM
-          </span>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {projects.slice(0, 3).map((project, idx) => (
-            <Link
-              key={project.id}
-              href={`/scout/${project.id}`}
-              className="bg-[#fffdf7] border-3 border-ink p-5 hover:bg-acid-yellow/20 transition-all flex flex-col justify-between shadow-card-lift"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 border-2 border-ink flex items-center justify-center font-mono text-sm font-black ${
-                      idx === 0 ? "bg-acid-yellow text-ink" : idx === 1 ? "bg-electric-blue text-white" : "bg-signal-coral text-white"
-                    }`}
-                  >
-                    0{idx + 1}
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-mono font-bold uppercase text-muted-ink block">
-                      {project.identity.medium.replace("_", " ")}
-                    </span>
-                    <h3 className="font-display text-3xl sm:text-4xl text-ink uppercase leading-none">
-                      {project.identity.title}
-                    </h3>
-                  </div>
-                </div>
-                <p className="text-xs text-ink font-sans leading-relaxed line-clamp-3">
-                  {project.identity.logline || project.nomination.reason}
-                </p>
-              </div>
-
-              <div className="pt-3 mt-3 border-t border-ink/40 flex items-center justify-between font-mono text-[11px] font-black text-ink">
-                <span>INSPECT DOSSIER</span>
-                <ArrowRight className="w-3.5 h-3.5 text-signal-coral" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------- */}
-      {/* 5. FILTER BAR & SCOUTING WALL GRID */}
-      {/* ---------------------------------------------------- */}
-      <section className="space-y-6 pt-4" id="scouting-wall">
-        
-        {/* Filters */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {MEDIUMS.map((med) => {
-              const isActive = selectedMedium === med.value;
-              return (
-                <Link
-                  key={med.label}
-                  href={med.value ? `/?medium=${med.value}#scouting-wall` : "/#scouting-wall"}
-                  className={`px-3 py-1.5 font-mono text-xs font-black uppercase border-2 border-ink transition-colors ${
-                    isActive
-                      ? "bg-acid-yellow text-ink shadow-action-lift"
-                      : "bg-[#fffdf7] text-ink hover:bg-acid-yellow"
-                  }`}
-                >
-                  {med.label}
-                </Link>
-              );
-            })}
+        <section className="selects" id="selects" aria-labelledby="selects-title">
+          <header className="selects-header"><div><h2 id="selects-title">The Selects</h2><p>An editorial program, not a leaderboard. Every placement says why it is here.</p></div><div className="selects-actions"><span className="selects-note">Published collection · clearly labeled</span><Link className="text-link" href="/projects">Browse the Scouting Wall <ArrowIcon /></Link></div></header>
+          <div className="selects-rail">
+            {selects.map((item, index) => <Link className={`select-entry select-entry-${index + 1}`} href={item.href} key={item.title}><div className={`editorial-poster poster-${item.color}`} aria-hidden="true"><span>{String(index + 1).padStart(2, "0")}</span><i /><b>AT</b></div><div className="select-copy"><span>{item.type}</span><h3>{item.title}</h3><p>{item.reason}</p><span className="select-status">{item.status}</span></div></Link>)}
           </div>
-
-          <form action="/#scouting-wall" method="GET" className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-80">
-              <input
-                type="text"
-                name="q"
-                defaultValue={searchQuery}
-                placeholder="Search by title, creator, or keyword..."
-                className="w-full px-3 py-1.5 bg-[#fffdf7] border-2 border-ink font-mono text-xs text-ink focus:outline-none focus:bg-white"
-              />
-              <Search className="absolute right-3 top-2.5 w-3.5 h-3.5 text-muted-ink" />
-            </div>
-            <button
-              type="submit"
-              className="px-4 py-1.5 bg-ink text-white font-mono text-xs font-bold uppercase hover:bg-signal-coral border-2 border-ink"
-            >
-              FILTER
-            </button>
-          </form>
-        </div>
-
-        <div className="flex items-center justify-between font-mono text-xs font-bold uppercase text-muted-ink">
-          <span>SHOWING {projects.length} ACTIVE SCOUT DOSSIERS</span>
-        </div>
-
-        {/* 3-Column Scouting Wall Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      </section>
-
-    </div>
+        </section>
+      </main>
+      <footer className="site-footer"><strong>Audience Take</strong><p>Find it early. Scout it in public. Give the next story a real next step.</p><Link href="/nominate">Nominate a project <ArrowIcon /></Link></footer>
+    </>
   );
 }

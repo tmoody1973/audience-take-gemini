@@ -136,7 +136,19 @@ Output MUST strictly adhere to the following JSON structure:
   "whyScouted": string,
   "sourceMedia": [ { "type": "youtube_embed" | "image", "url": string, "verified": boolean, "caption": string } ],
   "evidenceLedger": [ { "id": string, "sourceUrl": string, "title": string, "publisher": string, "claimType": "observation"|"reported"|"inference"|"conflict"|"unresolved", "excerpt": string, "verified": boolean } ],
-  "pathways": [ Pathway1, Pathway2, Pathway3 ],
+  "pathways": [
+    {
+      "title": string,
+      "mediumFitRationale": string,
+      "targetAudience": string,
+      "risksAndUncertainties": string[],
+      "nextBoundedExperiment": {
+        "name": string,
+        "description": string,
+        "successMetric": string
+      }
+    }
+  ],
   "decisionBrief": { "logline": string, "coreHook": string, "comparativeTitles": string[], "primaryRisk": string },
   "industryLens": { "marketContext": string, "comparables": string[], "realisticConstraints": string }
 }
@@ -164,6 +176,7 @@ Output MUST strictly adhere to the following JSON structure:
     if (!proposalData) {
       proposalData = {
         ...validSciFiShortProposal,
+        medium: project.identity.medium || "short",
         projectTitle: project.identity.title.includes("Investigating")
           ? (run.sourceUrl.includes("copper") ? "River of Copper" : "Signal in the Pines (Scouted)")
           : project.identity.title,

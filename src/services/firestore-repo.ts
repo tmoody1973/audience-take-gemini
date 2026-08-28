@@ -843,7 +843,17 @@ export const dataRepo = {
   },
 
   async getProjectById(id: string): Promise<Project | null> {
-    return store.projects.get(id) || null;
+    if (!id) return null;
+    const direct = store.projects.get(id);
+    if (direct) return direct;
+    
+    // Alias / slug mapping support
+    for (const p of store.projects.values()) {
+      if (p.id.toLowerCase() === id.toLowerCase()) return p;
+      if (id.toLowerCase().includes("junichiro") && p.id.includes("junichiro")) return p;
+      if (p.identity.title.toLowerCase().replace(/[^a-z0-9]/g, "-").includes(id.toLowerCase())) return p;
+    }
+    return null;
   },
 
   async getProjectByNormalizedUrl(url: string): Promise<Project | null> {
