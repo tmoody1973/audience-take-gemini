@@ -86,31 +86,87 @@ export function NominationForm({ initialUrl = "" }: { initialUrl?: string }) {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const response = await fetch("/api/nominations", {
+      let headers: Record<string, string> | null = null;
+      try {
+        headers = await nominationCommandHeaders();
+      } catch {
+        // Unauthenticated / demo guest scout
+        headers = null;
+      }
+
+      if (headers) {
+        const response = await fetch("/api/nominations", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            submittedUrl: values.projectUrl.trim(),
+            mediaUrl: values.mediaUrl.trim() || undefined,
+            whyItShouldGrow: values.reason.trim(),
+            submissionType: mode,
+            suggestedFormat: values.potential.trim() || undefined,
+            audienceFit: values.audience.trim() || undefined,
+            supportingUrls: completedSupportingLinks,
+          }),
+        });
+
+        if (response.ok) {
+          const result = (await response.json().catch(() => ({}))) as {
+            data?: { duplicate?: boolean; researchUrl?: string; canonicalUrl?: string };
+          };
+          const destination = result.data?.duplicate
+            ? result.data.canonicalUrl
+            : result.data?.researchUrl;
+          if (destination) {
+            window.location.assign(destination);
+            return;
+          }
+        }
+      }
+
+      // Guest / Direct Scout Agent Intake fallback
+      const fallbackResponse = await fetch("/api/nominate", {
         method: "POST",
-        headers: await nominationCommandHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          submittedUrl: values.projectUrl.trim(),
-          mediaUrl: values.mediaUrl.trim() || undefined,
-          whyItShouldGrow: values.reason.trim(),
-          submissionType: mode,
-          suggestedFormat: values.potential.trim() || undefined,
-          audienceFit: values.audience.trim() || undefined,
-          supportingUrls: completedSupportingLinks,
+          projectUrl: values.projectUrl.trim(),
+          youtubeVideoUrl: values.mediaUrl.trim() || undefined,
+          reason: values.reason.trim(),
+          nominatorRole: mode,
+          formatNotes: values.potential.trim() || undefined,
+          audienceNotes: values.audience.trim() || undefined,
+          supportingLinks: completedSupportingLinks,
         }),
       });
-      const result = (await response.json().catch(() => ({}))) as {
-        data?: { duplicate?: boolean; researchUrl?: string; canonicalUrl?: string };
-        error?: { message?: string };
-      };
-      if (!response.ok) throw new Error(result.error?.message || "The research desk could not start this nomination.");
-      const destination = result.data?.duplicate
-        ? result.data.canonicalUrl
-        : result.data?.researchUrl;
-      if (!destination) throw new Error("The nomination was received, but no research destination was returned.");
-      window.location.assign(destination);
+
+      const fallbackData = await fallbackResponse.json();
+      if (!fallbackResponse.ok) {
+        throw new Error(fallbackData.error || "The research desk could not start this nomination.");
+      }
+
+      // Kick off research run
+      if (fallbackData.runId) {
+        void fetch("/api/agent/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ runId: fallbackData.runId }),
+        }).catch(() => {});
+
+        window.location.assign(`/research/${fallbackData.runId}`);
+        return;
+      }
+
+      if (fallbackData.projectId) {
+        window.location.assign(`/projects/${fallbackData.projectId}`);
+        return;
+      }
+
+      throw new Error("Nomination processed, but no destination returned.");
     } catch (error) {
-      setSubmitError(error instanceof Error ? `${error.message} Your nomination is still here—try again.` : "Research could not start. Your nomination is still here—try again.");
+      setSubmitError(
+        error instanceof Error
+          ? `${error.message} Your nomination is still here—try again.`
+          : "Research could not start. Your nomination is still here—try again."
+      );
     } finally {
       setSubmitting(false);
     }
