@@ -40,8 +40,35 @@ function formatDate(value: string): string {
 }
 
 function SourceMarks({ sourceIds, labels }: { sourceIds: string[]; labels: Map<string, string> }) {
-  const text = citationText(sourceIds, labels);
-  return <span className="citation-marks" aria-label={`Citations ${text}`}>{text}</span>;
+  if (!sourceIds || sourceIds.length === 0) return null;
+  const visible = sourceIds.slice(0, 3);
+  return (
+    <span className="citation-marks-group" aria-label={`Citations ${citationText(sourceIds, labels)}`}>
+      {visible.map((id) => {
+        const label = labels.get(id) || "[S]";
+        const cleanId = `source-${id.replace(/^source-/, "")}`;
+        return (
+          <a
+            key={id}
+            href={`#${cleanId}`}
+            className="citation-badge"
+            title={`View source ${label}`}
+          >
+            {label}
+          </a>
+        );
+      })}
+      {sourceIds.length > 3 ? (
+        <a
+          href="#evidence-title"
+          className="citation-badge-overflow"
+          title={`${sourceIds.length - 3} more sources in source ledger`}
+        >
+          +{sourceIds.length - 3}
+        </a>
+      ) : null}
+    </span>
+  );
 }
 
 function compact(value: string, limit = 132): string {
@@ -98,7 +125,7 @@ export function TrailerCritic({
                   <span className="trailer-critic-scan">
                     <ScanItem label="Genre" value={matrixValue(analysis, "genre")} />
                     <ScanItem label="Form" value={analysis.structuralNarrative.trailerType} />
-                    <ScanItem label="Why it may connect" value={analysis.emotionalRhetorical.emotionalHook} />
+                    <ScanItem label="Why it may connect" value={analysis.marketingPersuasion.uniqueSellingProposition || analysis.emotionalRhetorical.emotionalHook} />
                   </span>
                 </span>
                 <span className="trailer-critic-toggle" aria-hidden="true">
@@ -118,25 +145,28 @@ export function TrailerCritic({
 
                 <div className="trailer-critic-grid">
                   <section className="trailer-critic-structure">
-                    <h3>Structural &amp; narrative</h3>
-                    <dl>
+                    <h3>Structural &amp; narrative timeline</h3>
+                    <dl className="trailer-critic-facts-horizontal">
                       <div><dt>Genre signaling</dt><dd>{analysis.structuralNarrative.genreSignaling}</dd></div>
-                      <div><dt>Narrative delivery</dt><dd>{analysis.structuralNarrative.narrativeDelivery}</dd></div>
-                      <div><dt>Trailer type</dt><dd>{analysis.structuralNarrative.trailerType}</dd></div>
+                      <div><dt>Trailer format</dt><dd>{analysis.structuralNarrative.trailerType}</dd></div>
+                      <div className="trailer-narrative-summary"><dt>Narrative delivery</dt><dd>{analysis.structuralNarrative.narrativeDelivery}</dd></div>
                     </dl>
-                    <ol className="trailer-beats">
-                      {analysis.structuralNarrative.beats.map((beat) => (
-                        <li key={`${beat.start}-${beat.end}-${beat.label}`}>
-                          <span>{beat.start}–{beat.end}</span>
-                          <div><strong>{beat.label}</strong><p>{beat.observation}</p><small>{beat.modality}</small></div>
-                        </li>
-                      ))}
-                    </ol>
+                    <div className="trailer-beats-wrap">
+                      <span className="trailer-beats-kicker">Timestamped narrative beats</span>
+                      <ol className="trailer-beats">
+                        {analysis.structuralNarrative.beats.map((beat) => (
+                          <li key={`${beat.start}-${beat.end}-${beat.label}`}>
+                            <span>{beat.start}–{beat.end}</span>
+                            <div><strong>{beat.label}</strong><p>{beat.observation}</p><small>{beat.modality}</small></div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
                   </section>
 
                   <section className="trailer-critic-craft">
                     <h3>Technical craft</h3>
-                    <dl>
+                    <dl className="trailer-critic-craft-grid">
                       <div><dt>Editing &amp; pace</dt><dd>{analysis.technicalCraft.editingAndPace}</dd></div>
                       <div><dt>Cinematography</dt><dd>{analysis.technicalCraft.cinematographyAndFraming}</dd></div>
                       <div><dt>Sound &amp; score</dt><dd>{analysis.technicalCraft.soundAndScore}</dd></div>
@@ -145,18 +175,18 @@ export function TrailerCritic({
                   </section>
 
                   <section className="trailer-critic-emotion">
-                    <h3>Emotional &amp; rhetorical</h3>
-                    <dl>
+                    <h3>Emotional &amp; rhetorical arc</h3>
+                    <dl className="trailer-critic-emotion-grid">
                       <div><dt>Emotional hook</dt><dd>{analysis.emotionalRhetorical.emotionalHook}</dd></div>
                       <div><dt>Tone &amp; mood</dt><dd>{analysis.emotionalRhetorical.toneAndMoodBalance}</dd></div>
-                      <div><dt>Argument</dt><dd>{analysis.emotionalRhetorical.persuasiveArgument}</dd></div>
+                      <div><dt>Persuasive argument</dt><dd>{analysis.emotionalRhetorical.persuasiveArgument}</dd></div>
                     </dl>
                   </section>
 
                   <section className="trailer-critic-marketing">
-                    <h3>Marketing &amp; persuasion</h3>
-                    <dl>
-                      <div><dt>USP</dt><dd>{analysis.marketingPersuasion.uniqueSellingProposition}</dd></div>
+                    <h3>Marketing, audience &amp; positioning</h3>
+                    <dl className="trailer-critic-marketing-grid">
+                      <div><dt>Unique Selling Proposition</dt><dd>{analysis.marketingPersuasion.uniqueSellingProposition}</dd></div>
                       <div><dt>Audience hypothesis</dt><dd>{analysis.marketingPersuasion.targetAudienceHypothesis}</dd></div>
                       <div><dt>Concept vs. star</dt><dd>{analysis.marketingPersuasion.conceptVsStarEmphasis}</dd></div>
                       <div><dt>Representation caveat</dt><dd>{analysis.marketingPersuasion.representationCaveat}</dd></div>

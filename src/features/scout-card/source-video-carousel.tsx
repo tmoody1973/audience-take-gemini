@@ -65,6 +65,8 @@ export function sourceVideosForCard(card: ScoutCard): SourceVideo[] {
   return videos;
 }
 
+import { AddMediaDialog } from "./add-media-dialog";
+
 export function SourceVideoCarousel({ card }: { card: ScoutCard }) {
   const videos = sourceVideosForCard(card);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -97,28 +99,32 @@ export function SourceVideoCarousel({ card }: { card: ScoutCard }) {
         </div>
       </div>
 
-      {videos.length > 1 ? (
-        <div className="source-video-controls">
-          <button type="button" onClick={() => selectVideo(activeIndex - 1)} disabled={activeIndex === 0} aria-label="Previous source video">Previous</button>
-          <div className="source-video-picker" role="group" aria-label="Choose a source video">
-            {videos.map((video, index) => (
-              <button
-                key={video.id}
-                type="button"
-                className={index === activeIndex ? "is-active" : undefined}
-                aria-pressed={index === activeIndex}
-                aria-label={`Show source video ${index + 1}: ${video.title}`}
-                onClick={() => selectVideo(index)}
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{video.title}</strong>
-              </button>
-            ))}
+      <div className="source-video-controls-row">
+        {videos.length > 1 ? (
+          <div className="source-video-controls">
+            <button type="button" onClick={() => selectVideo(activeIndex - 1)} disabled={activeIndex === 0} aria-label="Previous source video">Previous</button>
+            <div className="source-video-picker" role="group" aria-label="Choose a source video">
+              {videos.map((video, index) => (
+                <button
+                  key={video.id}
+                  type="button"
+                  className={index === activeIndex ? "is-active" : undefined}
+                  aria-pressed={index === activeIndex}
+                  aria-label={`Show source video ${index + 1}: ${video.title}`}
+                  onClick={() => selectVideo(index)}
+                >
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{video.title}</strong>
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => selectVideo(activeIndex + 1)} disabled={activeIndex === videos.length - 1} aria-label="Next source video">Next</button>
+            <p className="sr-only" aria-live="polite" aria-atomic="true">Now showing source video {activeIndex + 1} of {videos.length}: {activeVideo.title}</p>
           </div>
-          <button type="button" onClick={() => selectVideo(activeIndex + 1)} disabled={activeIndex === videos.length - 1} aria-label="Next source video">Next</button>
-          <p className="sr-only" aria-live="polite" aria-atomic="true">Now showing source video {activeIndex + 1} of {videos.length}: {activeVideo.title}</p>
-        </div>
-      ) : null}
+        ) : null}
+
+        <AddMediaDialog projectId={card.projectId || card.slug} />
+      </div>
     </div>
   );
 }

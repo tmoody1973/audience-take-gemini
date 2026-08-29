@@ -195,5 +195,17 @@ export type ScoutCard = {
     recommendedNextExperiment: NextExperiment;
   };
   trailerCritiques?: TrailerCriticAnalysis[];
+  fandomDna?: import("@/critic/audience-comment-analyzer").FandomDnaAnalysis;
+  marketViability?: import("@/critic/market-viability-engine").MarketViabilityReport;
+  livingDossier?: import("@/services/re-scout-engine").LivingDossierRecord;
+  channelEcosystem?: {
+    channelTitle: string;
+    channelHandle?: string;
+    subscribers: number;
+    totalUniverseViews: number;
+    universeVideoCount: number;
+    activeRetentionRate: string;
+    catalogLongevity: string;
+  };
   publishedAt: string;
 };

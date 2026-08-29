@@ -148,7 +148,7 @@ export async function analyzeTrailerVideo(
   const project = await dataRepo.getProjectById(projectId);
   if (!project) throw new Error("Project not found");
 
-  const criticModel = process.env.AUDIENCE_TAKE_CRITIC_MODEL || "gemini-3.7-flash";
+  const criticModel = process.env.AUDIENCE_TAKE_CRITIC_MODEL || "gemini-3.5-flash";
   let criticData: any = null;
   let resolvedTitle = project.identity.title;
   const ai = getGoogleGenAIClient();

@@ -1,5 +1,6 @@
 import { getAdminFirestore } from "../../lib/firebase/admin";
 import {
+  loadPublishedScoutCard,
   parsePublishedCard,
   type ScoutCardFirestore,
 } from "../scout-card/data";
@@ -76,11 +77,14 @@ export async function loadScoutingWallEntries(
 
       const cardSnapshot = await database.collection("scoutCards").doc(projectData.latestCardVersionId).get();
       if (!cardSnapshot.exists) return null;
-      const card = parsePublishedCard(cardSnapshot.data(), {
+      let card = parsePublishedCard(cardSnapshot.data(), {
         cardVersionId: projectData.latestCardVersionId,
         projectId: projectSnapshot.id,
         slug: projectData.slug,
       });
+      if (!card) {
+        card = await loadPublishedScoutCard(projectData.slug, database);
+      }
       if (!card) return null;
       const commitmentCounts = trustedCommitmentCounts(projectData.commitmentCounts);
 

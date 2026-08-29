@@ -1161,4 +1161,31 @@ export const dataRepo = {
   async createCorrection(correction: Correction): Promise<void> {
     store.corrections.set(correction.id, correction);
   },
+
+  async getLivingUpdatesForProject(projectId: string) {
+    try {
+      const db = getAdminFirestore();
+      const snapshot = await db
+        .collection("projectLivingUpdates")
+        .where("projectId", "==", projectId)
+        .get();
+
+      const items = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: String(data.id || doc.id),
+          projectId: String(data.projectId),
+          summary: String(data.summary),
+          eventDate: typeof data.eventDate === "string" ? data.eventDate : null,
+          citations: Array.isArray(data.citations) ? data.citations : [],
+          confidence: typeof data.confidence === "string" ? data.confidence : null,
+          detectedAt: typeof data.detectedAt === "string" ? data.detectedAt : new Date().toISOString(),
+        };
+      });
+
+      return items.sort((a, b) => b.detectedAt.localeCompare(a.detectedAt)).slice(0, 20);
+    } catch {
+      return [];
+    }
+  },
 };

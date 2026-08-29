@@ -21,7 +21,7 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
   const project = await dataRepo.getProjectById(run.projectId);
   if (!project) throw new Error("Project not found");
 
-  const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-3.7-flash";
+  const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-3.5-flash";
 
   // Helper to log progress
   const logStep = async (
@@ -47,10 +47,15 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
     // ----------------------------------------------------
     await logStep("fetching", `Fetching public webpage & media metadata from ${run.sourceUrl}...`, 20, "in_progress");
     
+    const youtubeUrl =
+      (run.sourceUrl.includes("youtube.com") || run.sourceUrl.includes("youtu.be"))
+        ? run.sourceUrl
+        : (project.nomination.initialLinks || []).find((link) => link.includes("youtube.com") || link.includes("youtu.be"));
+
     let ytMeta: YouTubeMetadata | null = null;
-    if (run.sourceUrl.includes("youtube.com") || run.sourceUrl.includes("youtu.be")) {
+    if (youtubeUrl) {
       try {
-        ytMeta = await fetchYouTubeMetadata(run.sourceUrl);
+        ytMeta = await fetchYouTubeMetadata(youtubeUrl);
       } catch {
         ytMeta = null;
       }
@@ -216,7 +221,7 @@ Output MUST strictly adhere to the following JSON structure:
         sourceMedia: [
           {
             type: "youtube_embed" as const,
-            url: run.sourceUrl,
+            url: youtubeUrl || run.sourceUrl,
             verified: true,
             caption: ytMeta?.title || "Official Public Video Source"
           }
@@ -334,9 +339,9 @@ Output MUST strictly adhere to the following JSON structure:
     // ----------------------------------------------------
     let trailerCriticId: string | null = null;
     const videoSourceUrl =
-      (run.sourceUrl.includes("youtube.com") || run.sourceUrl.includes("youtu.be"))
-        ? run.sourceUrl
-        : proposalData.sourceMedia?.find((m: any) => m.type === "youtube_embed" || m.url?.includes("youtube"))?.url;
+      youtubeUrl
+      || (run.sourceUrl.includes("youtube.com") || run.sourceUrl.includes("youtu.be") ? run.sourceUrl : null)
+      || proposalData.sourceMedia?.find((m: any) => m.type === "youtube_embed" || m.url?.includes("youtube"))?.url;
 
     if (videoSourceUrl) {
       await logStep(

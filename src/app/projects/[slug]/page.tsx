@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 
+import type { ProjectLivingUpdate } from "../../../features/scout-card/living-updates";
+import { dataRepo } from "../../../services/firestore-repo";
 import { SiteHeader } from "../../../components/site-header";
 import {
   JUNICHIO_LIVE_SLUG,
@@ -55,5 +57,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   if (aliasedSlug) permanentRedirect(`/projects/${aliasedSlug}`);
   const card = await loadCardForRequest(slug);
   if (!card) notFound();
-  return <><SiteHeader /><ScoutCard card={card} /></>;
+
+  let livingUpdates: ProjectLivingUpdate[] = [];
+  try {
+    livingUpdates = await dataRepo.getLivingUpdatesForProject(card.projectId);
+  } catch {
+    livingUpdates = [];
+  }
+
+  return (
+    <>
+      <SiteHeader />
+      <ScoutCard card={card} livingUpdates={livingUpdates} />
+    </>
+  );
 }
