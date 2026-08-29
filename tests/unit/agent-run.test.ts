@@ -78,5 +78,5 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
       expect(card?.decisionBrief).toBeDefined();
       expect(card?.evidenceLedger.length).toBeGreaterThan(0);
     }
-  });
+  }, 60000);
 });

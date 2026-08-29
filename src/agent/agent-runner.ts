@@ -6,12 +6,12 @@
 
 import { getGoogleGenAIClient } from "@/lib/google/genai-client";
 import { fetchSafeWebContent } from "@/services/ssrf-guard";
+import { fetchYouTubeMetadata, type YouTubeMetadata } from "@/lib/media/youtube";
 import { parallelClient } from "@/services/parallel-client";
 import { validateScoutProposal } from "./deterministic-validator";
 import { dataRepo } from "@/services/firestore-repo";
 import { analyzeTrailerVideo } from "@/critic/trailer-critic-engine";
 import type { ResearchRunState, ScoutCard } from "@/domain";
-import { validSciFiShortProposal } from "@/domain/sample-proposals";
 
 export async function executeScoutResearchRun(runId: string): Promise<ResearchRunState> {
   const run = await dataRepo.getResearchRunById(runId);
@@ -20,7 +20,7 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
   const project = await dataRepo.getProjectById(run.projectId);
   if (!project) throw new Error("Project not found");
 
-  const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-3.5-flash";
+  const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-2.5-flash";
 
   // Helper to log progress
   const logStep = async (
@@ -42,18 +42,32 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
 
   try {
     // ----------------------------------------------------
-    // STEP 1: Safe Public Web Fetching
+    // STEP 1: Safe Public Web & Media Metadata Fetching
     // ----------------------------------------------------
-    await logStep("fetching", `Fetching public webpage from ${run.sourceUrl}...`, 20, "in_progress");
+    await logStep("fetching", `Fetching public webpage & media metadata from ${run.sourceUrl}...`, 20, "in_progress");
     
+    let ytMeta: YouTubeMetadata | null = null;
+    if (run.sourceUrl.includes("youtube.com") || run.sourceUrl.includes("youtu.be")) {
+      try {
+        ytMeta = await fetchYouTubeMetadata(run.sourceUrl);
+      } catch {
+        ytMeta = null;
+      }
+    }
+
     let fetchedText = "";
     try {
       const fetchResult = await fetchSafeWebContent(run.sourceUrl);
       fetchedText = fetchResult.text.slice(0, 10000); // 10kb sample for prompt
-      await logStep("fetching", `Successfully fetched ${fetchResult.text.length} characters of public content.`, 30, "done");
+      await logStep(
+        "fetching",
+        `Successfully fetched public content${ytMeta?.title ? ` (Title: "${ytMeta.title}")` : ""}.`,
+        30,
+        "done"
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      await logStep("fetching", `Web fetching notice: ${msg}. Proceeding with nominated context.`, 30, "warning");
+      await logStep("fetching", `Web fetching notice: ${msg}. Proceeding with metadata context.`, 30, "warning");
       fetchedText = `Nominated Project: ${project.identity.originalUrl}\nReason: ${project.nomination.reason}`;
     }
 
@@ -62,16 +76,18 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
     // ----------------------------------------------------
     await logStep("fetching", `Invoking Parallel Search API for real-time web discovery and trade citations...`, 40, "in_progress");
 
-    const projectQuery = project.identity.title.includes("Investigating")
-      ? (run.sourceUrl.includes("copper") ? "River of Copper film" : "Signal in the Pines film")
-      : project.identity.title;
+    const dynamicProjectTitle = ytMeta?.title
+      ? ytMeta.title.replace(/[\(\)\[\]]/g, " ").trim()
+      : (!project.identity.title.includes("Investigating")
+        ? project.identity.title
+        : project.nomination.reason.slice(0, 60));
 
     const parallelResults = await parallelClient.search({
-      objective: `Find public details, creators, festival announcements, reviews, and reception for "${projectQuery}" or ${run.sourceUrl}`,
+      objective: `Find public details, creators, festival announcements, reviews, and reception for "${dynamicProjectTitle}" or ${run.sourceUrl}`,
       search_queries: [
-        `${projectQuery} film director synopsis`,
-        `${projectQuery} festival premiere reviews`,
-        `${projectQuery} production details crowdfunding`,
+        `${dynamicProjectTitle} film series director synopsis`,
+        `${dynamicProjectTitle} festival premiere reviews`,
+        `${dynamicProjectTitle} production crowdfunding webseries`,
       ],
       mode: "fast",
     });
@@ -100,20 +116,24 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
         
         const systemInstruction = `
 You are the Audience Take Scout Research Agent powered by Google Gemini.
-Analyze the provided public project text and Parallel Search web excerpts to synthesize a structured Scout Proposal JSON.
+Analyze the provided public project text, video metadata, and Parallel Search web excerpts to synthesize a structured Scout Proposal JSON.
 
 STRICT INVARIANTS:
 1. NO greenlight scores or commercial certainty predictions.
 2. NO fake studio/buyer interest (e.g. do not say "Netflix is bidding" unless explicitly in the text).
-3. Concordant medium: If medium is 'documentary', do not invent pure animation pathways.
+3. Concordant medium: If medium is 'webseries', 'series', 'short', 'feature', 'documentary', shape pathways accordingly.
 4. Exactly 3 realistic growth pathways with a concrete next experiment.
 5. Extract evidence items with claim types: 'observation', 'reported', 'inference', 'conflict', 'unresolved'.
 `;
 
         const userPrompt = `
-Synthesize a Scout Proposal JSON for this project using Gemini 3.5.
+Synthesize a Scout Proposal JSON for this project using Gemini.
 
-<primary_source_content uri="${run.sourceUrl}">
+<primary_source_metadata uri="${run.sourceUrl}">
+${ytMeta ? `Video Title: ${ytMeta.title}\nCreator / Channel: ${ytMeta.authorName} (${ytMeta.authorUrl})\nThumbnail: ${ytMeta.thumbnailUrl}` : `URL: ${run.sourceUrl}`}
+</primary_source_metadata>
+
+<primary_source_content>
 ${fetchedText}
 </primary_source_content>
 
@@ -168,19 +188,94 @@ Output MUST strictly adhere to the following JSON structure:
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        await logStep("classifying", `Live Gemini call notice (${msg}). Using grounded candidate proposal.`, 65, "warning");
+        await logStep("classifying", `Live Gemini call notice (${msg}). Synthesizing grounded proposal from source metadata.`, 65, "warning");
       }
     }
 
-    // Deterministic Candidate if in offline/testing mode or Gemini key not set
+    // Dynamic Grounded Candidate if in offline/testing mode or Gemini key not set
     if (!proposalData) {
+      const resolvedTitle = ytMeta?.title || dynamicProjectTitle || "Independent Screen Project";
+      const resolvedCreator = ytMeta?.authorName || "Independent Filmmaker";
       proposalData = {
-        ...validSciFiShortProposal,
-        medium: project.identity.medium || "short",
-        projectTitle: project.identity.title.includes("Investigating")
-          ? (run.sourceUrl.includes("copper") ? "River of Copper" : "Signal in the Pines (Scouted)")
-          : project.identity.title,
-        whyScouted: project.nomination.reason || validSciFiShortProposal.whyScouted,
+        projectTitle: resolvedTitle,
+        medium: (resolvedTitle.toLowerCase().includes("series") || resolvedTitle.toLowerCase().includes("show")) ? "series" : "short",
+        stage: "production" as const,
+        creators: [resolvedCreator],
+        whatWeKnow: [
+          `Public project source located at ${run.sourceUrl}.`,
+          ytMeta ? `Released by channel/creator ${ytMeta.authorName}.` : "Public screen proof of concept submitted for scouting.",
+          `Nominated by audience member with contextual hook: "${project.nomination.reason}".`
+        ],
+        whatWereChecking: [
+          "Current production financing and rights availability.",
+          "Confirmed distribution partners or planned festival premiere roadmap."
+        ],
+        whyScouted: project.nomination.reason || `A distinct independent screen project demonstrating clear vision and audience potential.`,
+        sourceMedia: [
+          {
+            type: "youtube_embed" as const,
+            url: run.sourceUrl,
+            verified: true,
+            caption: ytMeta?.title || "Official Public Video Source"
+          }
+        ],
+        evidenceLedger: [
+          {
+            id: "ev-dyn-1",
+            sourceUrl: run.sourceUrl,
+            title: ytMeta?.title || "Primary Project Media Source",
+            publisher: ytMeta?.authorName || "Public Web",
+            claimType: "observation" as const,
+            excerpt: `Primary verified video asset available publicly at ${run.sourceUrl}.`,
+            verified: true
+          }
+        ],
+        pathways: [
+          {
+            title: "Direct-to-Audience Digital Premiere & Community Scaling",
+            mediumFitRationale: "Leveraging organic engagement across digital platforms to build dedicated viewership and prove market demand.",
+            targetAudience: "Digital-native cinephiles and niche genre communities.",
+            risksAndUncertainties: ["Platform algorithm volatility and discoverability."],
+            nextBoundedExperiment: {
+              name: "Targeted Community Teaser Drop",
+              description: "Publish a high-impact character or tonal excerpt to measure organic retention.",
+              successMetric: "Achieve strong audience retention (>60% average watch time) and community re-shares."
+            }
+          },
+          {
+            title: "Curated Festival Circuit & Specialty Acquisition",
+            mediumFitRationale: "Positioning the project for premiere in specialized festival programming tracks to attract boutique distributors.",
+            targetAudience: "Festival programmers, boutique acquisitions executives, and cinephiles.",
+            risksAndUncertainties: ["Festival programming slots are highly competitive with long submission lead times."],
+            nextBoundedExperiment: {
+              name: "Programmer Screener Submission Round",
+              description: "Submit rough cut or completed proof to 3 targeted category-specific festivals.",
+              successMetric: "Secure at least one festival screening invitation or industry programmer consultation."
+            }
+          },
+          {
+            title: "Expanded Episodic or Multi-Part Co-Production",
+            mediumFitRationale: "Developing the premise into an expanded episodic series through independent co-production partners.",
+            targetAudience: "Streaming audiences looking for fresh, diverse voices and authentic serialized narratives.",
+            risksAndUncertainties: ["Requires pitch bible packaging and financing commitments."],
+            nextBoundedExperiment: {
+              name: "Series Bible & Proof Table Read",
+              description: "Assemble a concise 5-page pitch document and host a community table read.",
+              successMetric: "Complete pitch packaging with verified audience feedback and partner outreach."
+            }
+          }
+        ],
+        decisionBrief: {
+          logline: project.nomination.reason.slice(0, 140) || `An innovative independent screen project exploring compelling narrative themes.`,
+          coreHook: `Authentic indie filmmaking driven by distinct voice and grassroots audience demand.`,
+          comparativeTitles: ["Independent Screen Breakthroughs", "Broad City", "Atlanta"],
+          primaryRisk: "Securing finishing funding and maintaining creative momentum without studio dilution."
+        },
+        industryLens: {
+          marketContext: "Modern buyers increasingly source original IP from grassroots creators who demonstrate organic community resonance before pitching.",
+          comparables: ["Broad City (web to series)", "Insecure (independent digital to premium network)"],
+          realisticConstraints: "Independent production requires disciplined budget allocation and creative autonomy."
+        }
       };
 
       // Enrich evidence ledger with Parallel Search items if needed
@@ -189,9 +284,9 @@ Output MUST strictly adhere to the following JSON structure:
           id: `ev-parallel-${i + 1}`,
           sourceUrl: r.url,
           title: r.title,
-          publisher: r.url.includes("variety") ? "Variety" : "Deadline Hollywood",
+          publisher: r.url.includes("variety") ? "Variety" : (r.url.includes("deadline") ? "Deadline" : "Web Citation"),
           claimType: "reported" as const,
-          excerpt: r.excerpts[0] || "Reported festival reception and distribution prospects.",
+          excerpt: r.excerpts[0] || "Public reporting and audience reception details.",
           verified: true,
         }));
         proposalData.evidenceLedger = [...proposalData.evidenceLedger, ...parallelEvidence];

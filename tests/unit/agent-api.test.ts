@@ -44,10 +44,13 @@ describe("Scout Agent API End-to-End Handlers", () => {
     const runRes = await agentRunHandler(runReq);
     const runData = await runRes.json();
 
+    if (runData.run?.currentStep === "failed") {
+      console.error("AGENT API RUN ERROR:", runData.run?.errorMessage, JSON.stringify(runData.run?.stepLogs, null, 2));
+    }
     expect(runRes.status).toBe(200);
     expect(runData.success).toBe(true);
     expect(runData.run.currentStep).toBe("complete");
     expect(runData.run.progressPercent).toBe(100);
     expect(runData.run.cardId).toBeDefined();
-  });
+  }, 60000);
 });

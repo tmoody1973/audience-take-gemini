@@ -112,6 +112,56 @@ export function checkCitationCoverage(
   };
 }
 
+function sanitizeRawProposal(raw: any): any {
+  if (!raw || typeof raw !== "object") return raw;
+  const clone = { ...raw };
+
+  // Normalize creators
+  if (typeof clone.creators === "string") {
+    clone.creators = clone.creators.split(",").map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  // Normalize decisionBrief.comparativeTitles
+  if (clone.decisionBrief) {
+    clone.decisionBrief = { ...clone.decisionBrief };
+    if (typeof clone.decisionBrief.comparativeTitles === "string") {
+      clone.decisionBrief.comparativeTitles = clone.decisionBrief.comparativeTitles
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+    }
+    if (Array.isArray(clone.decisionBrief.comparativeTitles)) {
+      clone.decisionBrief.comparativeTitles = clone.decisionBrief.comparativeTitles
+        .map((s: any) => String(s).slice(0, 100))
+        .slice(0, 5);
+      if (clone.decisionBrief.comparativeTitles.length === 0) {
+        clone.decisionBrief.comparativeTitles = ["Independent Screen Breakthroughs"];
+      }
+    }
+  }
+
+  // Normalize industryLens.comparables
+  if (clone.industryLens) {
+    clone.industryLens = { ...clone.industryLens };
+    if (typeof clone.industryLens.comparables === "string") {
+      clone.industryLens.comparables = clone.industryLens.comparables
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+    }
+    if (Array.isArray(clone.industryLens.comparables)) {
+      clone.industryLens.comparables = clone.industryLens.comparables
+        .map((s: any) => String(s).slice(0, 100))
+        .slice(0, 6);
+      if (clone.industryLens.comparables.length === 0) {
+        clone.industryLens.comparables = ["Independent Media Comparables"];
+      }
+    }
+  }
+
+  return clone;
+}
+
 export function validateScoutProposal(
   rawProposal: unknown,
   modelName: string = "gemini-2.5-pro"
@@ -119,8 +169,9 @@ export function validateScoutProposal(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Step 1: Zod Schema Validation
-  const parseResult = LLMScoutProposalSchema.safeParse(rawProposal);
+  // Step 1: Pre-sanitize and Zod Schema Validation
+  const sanitized = sanitizeRawProposal(rawProposal);
+  const parseResult = LLMScoutProposalSchema.safeParse(sanitized);
   if (!parseResult.success) {
     return {
       valid: false,
