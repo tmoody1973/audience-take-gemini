@@ -106,7 +106,15 @@ Unlike traditional platforms that rely on hollow, easily manipulated upvotes, Au
 - **Creator Desk (`/creator`)**: Verified creators can claim their projects, publish official production dispatches, and engage directly with their verified scout base.
 - **Data Integrity & Demo Separation**: Real-time Firebase Firestore synchronization that strictly separates organic verified commitments from demo test counters (`counterKind: "organic"` vs `"demo"`).
 
-### 7. Evidence & Citation Ledger
+### 7. The 2-Speaker Gemini Audio Scout Brief (Executive Podcast Briefing)
+A failure-isolated, 3-to-5 minute two-speaker audio briefing attached as an immutable sidecar artifact to each published Scout Card:
+- **Two Distinct Personas**:
+  - **`Scout`** (Voiced by `Kore` / energetic, culture-first): Walks through the narrative hook, character lore, grassroots fan velocity, and YouTube comment resonance.
+  - **`Analyst`** (Voiced by `Puck` / rigorous, institutional): Breaks down production unit costs (€/min), crowdfunding backer counts, trade press validation, and the 3 development pathways.
+- **Closed-World Verifiability**: Powered by **Gemini 3.5 Flash** for structured script synthesis (strictly bounded by card facts with zero hallucinations) and **Gemini 3.1 Flash TTS Preview** for multi-speaker speech synthesis.
+- **Accessible HTML5 Player**: Features playback rate options (`0.75×`, `1×`, `1.25×`, `1.5×`, `2×`), time scrubber, volume toggle, strictly NO autoplay, and an expandable speaker-labeled transcript drawer with interactive citation pills.
+
+### 8. Evidence & Citation Ledger
 Zero black-box assertions. Every claim in the dossier is backed by named source badges (`S1 · The Hive Studio`, `S2 · C21Media`, `S3 · Kickstarter`) linked directly to the public evidence ledger.
 
 ---
