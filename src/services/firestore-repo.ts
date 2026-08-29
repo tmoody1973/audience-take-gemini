@@ -20,6 +20,7 @@ import type {
   MediumType,
   LifecycleStage,
 } from "@/domain";
+import { getAdminFirestore } from "@/lib/firebase/admin";
 
 class InMemoryStore {
   projects = new Map<string, Project>();
@@ -846,6 +847,17 @@ export const dataRepo = {
     if (!id) return null;
     const direct = store.projects.get(id);
     if (direct) return direct;
+
+    // Check Firestore directly
+    try {
+      const db = getAdminFirestore();
+      const doc = await db.collection("projects").doc(id).get();
+      if (doc.exists) {
+        const p = doc.data() as Project;
+        store.projects.set(p.id, p);
+        return p;
+      }
+    } catch {}
     
     // Alias / slug mapping support
     for (const p of store.projects.values()) {
@@ -860,16 +872,49 @@ export const dataRepo = {
     for (const p of store.projects.values()) {
       if (p.identity.normalizedUrl === url) return p;
     }
+    try {
+      const db = getAdminFirestore();
+      const snapshot = await db.collection("projects").where("identity.normalizedUrl", "==", url).limit(1).get();
+      if (!snapshot.empty) {
+        const p = snapshot.docs[0].data() as Project;
+        store.projects.set(p.id, p);
+        return p;
+      }
+    } catch {}
     return null;
   },
 
   async createProject(project: Project): Promise<void> {
     store.projects.set(project.id, project);
+    try {
+      const db = getAdminFirestore();
+      await db.collection("projects").doc(project.id).set({
+        ...project,
+        slug: project.id,
+        publicationStatus: project.publishedCardId ? "published" : "draft",
+        latestCardVersionId: project.publishedCardId || null,
+        claimStatus: project.creatorClaim?.status || "unclaimed",
+        updatedAt: project.updatedAt || new Date().toISOString(),
+      }, { merge: true });
+    } catch (err) {
+      console.warn("Could not persist project to Firestore:", err);
+    }
   },
 
   // Scout Cards
   async getScoutCardById(cardId: string): Promise<ScoutCard | null> {
-    return store.scoutCards.get(cardId) || null;
+    const memory = store.scoutCards.get(cardId);
+    if (memory) return memory;
+    try {
+      const db = getAdminFirestore();
+      const doc = await db.collection("scoutCards").doc(cardId).get();
+      if (doc.exists) {
+        const c = doc.data() as ScoutCard;
+        store.scoutCards.set(c.id, c);
+        return c;
+      }
+    } catch {}
+    return null;
   },
 
   async publishScoutCard(card: ScoutCard): Promise<void> {
@@ -879,24 +924,73 @@ export const dataRepo = {
       project.publishedCardId = card.id;
       project.updatedAt = new Date().toISOString();
     }
+    try {
+      const db = getAdminFirestore();
+      await db.collection("scoutCards").doc(card.id).set({
+        ...card,
+        visibility: "public",
+      }, { merge: true });
+      await db.collection("projects").doc(card.projectId).set({
+        publishedCardId: card.id,
+        latestCardVersionId: card.id,
+        publicationStatus: "published",
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+    } catch (err) {
+      console.warn("Could not persist scout card to Firestore:", err);
+    }
   },
 
   // Trailer Critics
   async getTrailerCriticById(criticId: string): Promise<TrailerCritic | null> {
-    return store.trailerCritics.get(criticId) || null;
+    const memory = store.trailerCritics.get(criticId);
+    if (memory) return memory;
+    try {
+      const db = getAdminFirestore();
+      const doc = await db.collection("videoAnalyses").doc(criticId).get();
+      if (doc.exists) {
+        const tc = doc.data() as TrailerCritic;
+        store.trailerCritics.set(tc.id, tc);
+        return tc;
+      }
+    } catch {}
+    return null;
   },
 
   async saveTrailerCritic(critic: TrailerCritic): Promise<void> {
     store.trailerCritics.set(critic.id, critic);
+    try {
+      const db = getAdminFirestore();
+      await db.collection("videoAnalyses").doc(critic.id).set(critic, { merge: true });
+    } catch (err) {
+      console.warn("Could not persist trailer critic to Firestore:", err);
+    }
   },
 
   // Research Runs
   async getResearchRunById(runId: string): Promise<ResearchRunState | null> {
-    return store.researchRuns.get(runId) || null;
+    const memory = store.researchRuns.get(runId);
+    if (memory) return memory;
+    try {
+      const db = getAdminFirestore();
+      const doc = await db.collection("researchRuns").doc(runId).get();
+      if (doc.exists) {
+        const r = doc.data() as ResearchRunState;
+        store.researchRuns.set(r.id, r);
+        return r;
+      }
+    } catch {}
+    return null;
   },
 
   async saveResearchRun(run: ResearchRunState): Promise<void> {
     store.researchRuns.set(run.id, run);
+    try {
+      const db = getAdminFirestore();
+      await db.collection("researchRuns").doc(run.id).set(run, { merge: true });
+    } catch (err) {
+      console.warn("Could not persist research run to Firestore:", err);
+    }
   },
 
   // Audience Pulse & Engagements

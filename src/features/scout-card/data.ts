@@ -193,9 +193,17 @@ export function parsePublishedCard(value: unknown, expected: { cardVersionId: st
 }
 
 async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore): Promise<ScoutCard | null> {
+  let projectSnapshot: DocumentSnapshotLike | undefined;
   const projects = await database.collection("projects").where("slug", "==", slug).limit(2).get();
-  if (projects.docs.length !== 1) return null;
-  const projectSnapshot = projects.docs[0];
+  if (projects.docs.length === 1) {
+    projectSnapshot = projects.docs[0];
+  } else {
+    const directDoc = await database.collection("projects").doc(slug).get();
+    if (directDoc.exists) {
+      projectSnapshot = directDoc;
+    }
+  }
+  if (!projectSnapshot) return null;
   const project = projectSnapshot.data();
   if (!project || typeof project !== "object") return null;
   const projectData = project as Record<string, unknown>;
@@ -265,34 +273,38 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         const sourceIds = sourceLedgerEntries.map((s) => s.id);
         const claimIds = dynamicCard.evidenceLedger.map((ev, idx) => ev.id || `claim-${idx + 1}`);
 
-        return {
-          cardVersionId: dynamicCard.id,
-          runId: "run-dynamic",
-          researchVersion: 1,
-          projectId: dynamicProject.id,
-          slug: dynamicProject.id,
-          title: dynamicProject.identity.title,
-          hook: dynamicProject.identity.logline || dynamicCard.whyScouted,
-          projectType: (dynamicProject.identity.medium === "series" ? "series" : "film") as any,
-          submissionLabel: dynamicProject.creatorClaim.status === "verified" ? "Creator submission" : "Fan nomination — unclaimed by creator",
-          claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
-          completeness: "complete" as const,
-          fallbackUsed: false,
-          provenance: {
-            submissionType: "fan" as const,
-            submittedSourceUrl: dynamicProject.identity.originalUrl,
-            nominationLabel: "Fan-submitted public project source",
-            nominatedByLabel: "Community scout",
-            researchedAt: dynamicProject.createdAt || new Date().toISOString(),
-          },
-          media: {
-            state: "authorized_embed" as const,
+          const mediaUrl = dynamicCard.sourceMedia?.[0]?.url || dynamicProject.identity.originalUrl;
+          const vidId = youtubeVideoId(mediaUrl);
+          const resolvedEmbedUrl = vidId ? `https://www.youtube-nocookie.com/embed/${vidId}` : mediaUrl;
+
+          return {
+            cardVersionId: dynamicCard.id,
+            runId: "run-dynamic",
+            researchVersion: 1,
+            projectId: dynamicProject.id,
+            slug: dynamicProject.id,
             title: dynamicProject.identity.title,
-            sourceUrl: dynamicProject.identity.originalUrl,
-            embedUrl: dynamicCard.sourceMedia?.[0]?.url || `https://www.youtube-nocookie.com/embed/${youtubeVideoId(dynamicProject.identity.originalUrl) || ""}`,
-            attribution: dynamicProject.identity.creators?.[0] || "Public Source",
-            accessibleFallback: `Public video for ${dynamicProject.identity.title}`,
-          },
+            hook: dynamicProject.identity.logline || dynamicCard.whyScouted,
+            projectType: (dynamicProject.identity.medium === "series" ? "series" : "film") as any,
+            submissionLabel: dynamicProject.creatorClaim.status === "verified" ? "Creator submission" : "Fan nomination — unclaimed by creator",
+            claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
+            completeness: "complete" as const,
+            fallbackUsed: false,
+            provenance: {
+              submissionType: "fan" as const,
+              submittedSourceUrl: dynamicProject.identity.originalUrl,
+              nominationLabel: "Fan-submitted public project source",
+              nominatedByLabel: "Community scout",
+              researchedAt: dynamicProject.createdAt || new Date().toISOString(),
+            },
+            media: {
+              state: "authorized_embed" as const,
+              title: dynamicProject.identity.title,
+              sourceUrl: dynamicProject.identity.originalUrl,
+              embedUrl: resolvedEmbedUrl,
+              attribution: dynamicProject.identity.creators?.[0] || "Public Source",
+              accessibleFallback: `Public video for ${dynamicProject.identity.title}`,
+            },
           storyContext: {
             summary: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
             storyworld: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
