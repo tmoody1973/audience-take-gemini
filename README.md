@@ -93,7 +93,19 @@ Full-width audiovisual breakdown including:
 - **Multi-Video In-Player Picker**: Toggle seamlessly between the **Pilot Teaser**, **Lore Origin Shorts**, and **Production Devlogs**.
 - **`+ Add Video / Devlog` Workflow**: Interactive modal + API endpoint (`/api/projects/[id]/media`) allowing creators and scouts to submit media updates post-publication.
 
-### 6. Evidence & Citation Ledger
+### 6. The Social Layer: Audience Pulse, Intent Commitments & Structured Takes
+Unlike traditional platforms that rely on hollow, easily manipulated upvotes, Audience Take introduces a high-signal, anti-bot social architecture:
+- **High-Intent Commitments ("Skin in the Game")**:
+  - `I would watch`: Direct viewership demand velocity.
+  - `I would pay`: Direct validation of commercial monetization readiness.
+  - `Bring it to my city`: Aggregates geospatial screening demand with city-level targeting for theatrical/festival tours.
+  - `Back the next chapter`: Direct signal for crowdfunding and episodic expansion.
+- **Pathway Voting (Format Guidance for Buyers)**: Community scouts vote on the 3 agent-generated development pathways (e.g. *Pathway 01: Premium Series vs. Pathway 02: Theatrical Feature vs. Pathway 03: Transmedia Universe*), providing studio executives with concrete data on what format the audience wants to consume.
+- **Structured Takes & Threaded Peer Discourse**: Instead of toxic or unhelpful comment sections, scouts publish structured arguments (*Why it should grow*, *Aligned pathway*, *Audience notes*), fostering deep, analytical debate with real-time threaded replies.
+- **Creator Desk (`/creator`)**: Verified creators can claim their projects, publish official production dispatches, and engage directly with their verified scout base.
+- **Data Integrity & Demo Separation**: Real-time Firebase Firestore synchronization that strictly separates organic verified commitments from demo test counters (`counterKind: "organic"` vs `"demo"`).
+
+### 7. Evidence & Citation Ledger
 Zero black-box assertions. Every claim in the dossier is backed by named source badges (`S1 · The Hive Studio`, `S2 · C21Media`, `S3 · Kickstarter`) linked directly to the public evidence ledger.
 
 ---
