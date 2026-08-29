@@ -412,7 +412,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           sourceId: sourceIds[0] || "source-1",
           youtubeUrl: dynamicCritic.sourceVideoUrl,
           youtubeVideoId: youtubeVideoId(dynamicCritic.sourceVideoUrl) || "M2djoKmnOTY",
-          modelId: dynamicCritic.model || "gemini-2.5-flash",
+          modelId: dynamicCritic.model || "gemini-3.7-flash",
           analysisVersion: 1,
           cardVersionId: dynamicCard.id,
           structuralNarrative: {
