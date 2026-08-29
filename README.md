@@ -26,9 +26,10 @@ Audience Take solves both problems through **Autonomous Agent Intelligence**, **
 
 | User Persona | Value Proposition |
 | :--- | :--- |
-| **🎬 Studio Acquisitions & Development Executives** *(Amazon Prime Video, Adult Swim / Max, A24, Netflix, Neon, Hulu)* | Instant, objective, de-risked IP intelligence. Evaluates production unit economics (€/min), trade press diffusion, demographic fandom overlap, and platform programming slate alignment. |
-| **🎨 Independent Filmmakers, Animators & Creators** | Institutional validation that proves authentic market viability beyond raw vanity metrics. Supports multi-asset media showcases (pilots, pitch videos, devlogs) that auto-update as projects hit milestones. |
-| **🔍 Cultural Scouts, Film Curators & Superfans** | Discover overlooked masterpieces, nominate public web links, inspect verified citation ledgers, register screening demand, and cast pathway votes. |
+| **🍿 Fans, Superfans & Audience Communities** | **Real power to champion projects they love**. Fans move beyond passive consumption—signaling high-intent willingness to watch, pay, or back creators, rallying local demand to bring screenings to their cities, and voting on creative pathways to shape how stories grow. |
+| **🔍 Cultural Scouts & Film Curators** | **Be the first to spot breakout hits**. Nominate public web links (YouTube, Vimeo, Kickstarter), verify citation ledgers, author analytical Takes, and establish a public reputation as trusted tastemakers. |
+| **🎨 Independent Filmmakers, Animators & Creators** | **Institutional visibility with proof of demand**. Receive an autonomous, grounded Scout Card that quantifies true commercial viability beyond raw vanity metrics. Showcase full media arsenals (pilots, pitch videos, devlogs) that auto-update as projects hit milestones. |
+| **🎬 Studio Acquisitions & Development Executives** *(Amazon Prime Video, Adult Swim / Max, A24, Netflix, Neon, Hulu)* | **De-risked, data-backed IP discovery**. Bounded buyer sanity checks that analyze production unit costs (€/min), trade press diffusion, demographic fandom overlap, and platform programming slate alignment. |
 
 ---
 
