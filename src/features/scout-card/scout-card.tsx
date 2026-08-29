@@ -9,17 +9,43 @@ import {
   structureStatus,
 } from "./evidence-display";
 import type { ScoutCard as ScoutCardModel } from "./types";
+import type { ProjectLivingUpdate } from "./living-updates";
+import { LivingUpdates } from "./living-updates";
 import { ScoutSocialPanel } from "../social/scout-social-panel";
 import { ScoutTrustPanel } from "../trust/scout-trust-panel";
 import { SourceVideoCarousel } from "./source-video-carousel";
 import { TrailerCritic } from "./trailer-critic";
+import { FandomDnaSection } from "./fandom-dna-section";
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(value));
 }
 
 function SourceMarks({ sourceIds, labels }: { sourceIds: string[]; labels: Map<string, string> }) {
-  return <span className="citation-marks" aria-label={`Citations ${citationText(sourceIds, labels)}`}>{citationText(sourceIds, labels)}</span>;
+  if (!sourceIds || sourceIds.length === 0) return null;
+  const visible = sourceIds.slice(0, 3);
+  return (
+    <span className="citation-marks-group" aria-label={`Citations ${citationText(sourceIds, labels)}`}>
+      {visible.map((id) => {
+        const label = labels.get(id) || "[S]";
+        return (
+          <a
+            key={id}
+            href={`#source-${id.replace(/^source-/, "")}`}
+            className="citation-badge"
+            title={`View source ${label}`}
+          >
+            {label}
+          </a>
+        );
+      })}
+      {sourceIds.length > 3 ? (
+        <span className="citation-badge-overflow" title={`${sourceIds.length - 3} more sources in source ledger`}>
+          +{sourceIds.length - 3}
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 function ScoutMediaContent({ card }: { card: ScoutCardModel }) {
@@ -61,34 +87,38 @@ function claimSourceIds(card: ScoutCardModel, claimIds: string[]): string[] {
 function EvidenceBrief({ card, sourceLabels }: { card: ScoutCardModel; sourceLabels: Map<string, string> }) {
   const knownClaims = card.evidenceClaims.filter((claim) => (
     claimEvidenceState(claim, card.sourceLedger) !== "unknown"
-  )).slice(0, 2);
+  )).slice(0, 4);
   const checking = card.industryLens.unresolvedQuestions.slice(0, 2);
-  const observationSourceIds = claimSourceIds(card, card.storyContext.claimIds);
+  const observationSourceIds = claimSourceIds(card, card.storyContext.claimIds).slice(0, 2);
   const hooks = card.storyContext.audienceHooks.slice(0, 3);
   const activeQuestion = checking[0] ?? card.limitations[0];
 
   return (
     <div className="scout-summary evidence-brief">
-      <div className="evidence-brief-block">
-        <h2>What we know</h2>
-        {knownClaims.length ? <ul>{knownClaims.map((claim) => {
-          const state = claimEvidenceState(claim, card.sourceLedger);
-          return <li key={claim.id}><span className={`evidence-state evidence-state-${state}`}>{evidenceStateLabel(state)}</span><p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} /></p></li>;
-        })}</ul> : <p>No public claim has enough usable source support yet.</p>}
+      <div className="evidence-main-col">
+        <div className="evidence-brief-block">
+          <h2>What we know</h2>
+          {knownClaims.length ? <ul>{knownClaims.map((claim) => {
+            const state = claimEvidenceState(claim, card.sourceLedger);
+            return <li key={claim.id}><span className={`evidence-state evidence-state-${state}`}>{evidenceStateLabel(state)}</span><p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} /></p></li>;
+          })}</ul> : <p>No public claim has enough usable source support yet.</p>}
+        </div>
       </div>
-      <div className="evidence-brief-block evidence-checking">
-        <h3>What we&apos;re checking</h3>
-        <ul>{checking.map((question) => <li key={question}>{question}</li>)}</ul>
+      <div className="evidence-side-col">
+        <div className="why-scouted">
+          <h3>Why this is being scouted</h3>
+          <ol>{hooks.map((hook) => <li key={hook}><span className="evidence-state evidence-state-inferred">Inferred</span><p>{hook} <SourceMarks sourceIds={observationSourceIds} labels={sourceLabels} /></p></li>)}</ol>
+        </div>
+        <div className="evidence-brief-block evidence-checking">
+          <h3>What we&apos;re checking</h3>
+          <ul>{checking.map((question) => <li key={question}>{question}</li>)}</ul>
+        </div>
+        <aside className="active-question" aria-label="Active community question">
+          <span>Open question</span>
+          <strong>{activeQuestion}</strong>
+          <a href="#audience-pulse">Add your informed Take</a>
+        </aside>
       </div>
-      <div className="why-scouted">
-        <h3>Why this is being scouted</h3>
-        <ol>{hooks.map((hook) => <li key={hook}><span className="evidence-state evidence-state-inferred">Inferred</span><p>{hook} <SourceMarks sourceIds={observationSourceIds} labels={sourceLabels} /></p></li>)}</ol>
-      </div>
-      <aside className="active-question" aria-label="Active community question">
-        <span>Open question</span>
-        <strong>{activeQuestion}</strong>
-        <a href="#audience-pulse">Add your informed Take</a>
-      </aside>
     </div>
   );
 }
@@ -111,7 +141,13 @@ function CardStatus({ card }: { card: ScoutCardModel }) {
   return null;
 }
 
-export function ScoutCard({ card }: { card: ScoutCardModel }) {
+export function ScoutCard({
+  card,
+  livingUpdates,
+}: {
+  card: ScoutCardModel;
+  livingUpdates?: ProjectLivingUpdate[];
+}) {
   if (card.pathways.length !== 3) throw new Error("A Scout Card requires exactly three pathways.");
   const sourceLabels = createCitationLabels(card.sourceLedger);
   const cardStructureStatus = structureStatus(card);
@@ -133,6 +169,12 @@ export function ScoutCard({ card }: { card: ScoutCardModel }) {
           <div className="scout-status-stack" aria-label="Scout Card status">
             <span><small>Structure</small><strong>{cardStructureStatus}</strong></span>
             <span><small>Evidence</small><strong>{cardEvidenceLabel}</strong></span>
+            {card.marketViability ? (
+              <>
+                <span className="status-heat"><small>Audience Heat</small><strong>{card.marketViability.audienceHeatScore}/100</strong></span>
+                <span className="status-viability"><small>Market Viability</small><strong>{card.marketViability.marketReadinessScore}/100</strong></span>
+              </>
+            ) : null}
           </div>
           {card.identity?.relationshipStatus === "unresolved" ? <p className="identity-caution">Identity relationship remains unresolved; similar names are not silently merged.</p> : null}
           <p className="scout-hook">{card.hook}</p>
@@ -176,10 +218,17 @@ export function ScoutCard({ card }: { card: ScoutCardModel }) {
       </article>
 
       <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
+      <FandomDnaSection
+        fandomDna={card.fandomDna}
+        marketViability={card.marketViability}
+        livingDossier={card.livingDossier}
+        channelEcosystem={card.channelEcosystem}
+      />
 
       <DecisionBrief card={card} />
       <ScoutSocialPanel card={card} />
       <IndustryLens card={card} />
+      <LivingUpdates updates={livingUpdates ?? []} />
       <ScoutTrustPanel card={card} />
 
       <section className="evidence-section" aria-labelledby="evidence-title">
@@ -199,7 +248,7 @@ export function ScoutCard({ card }: { card: ScoutCardModel }) {
             <h3>Source ledger</h3>
             <ol>
               {card.sourceLedger.map((source) => (
-                <li key={source.id}>
+                <li key={source.id} id={`source-${source.id.replace(/^source-/, "")}`}>
                   <span className="source-index">{sourceLabels.get(source.id)}</span>
                   <div><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a><p>{sourcePresentation(source).role} / {sourcePresentation(source).tier} / {source.availability}</p><small>Retrieved {formatDate(source.retrievedAt)}</small></div>
                 </li>

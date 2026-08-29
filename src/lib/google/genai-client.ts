@@ -19,7 +19,7 @@ export function getGoogleGenAIClient(): GoogleGenAI | null {
     process.env.GOOGLE_CLOUD_LOCATION ||
     process.env.GCP_LOCATION ||
     process.env.GOOGLE_CLOUD_REGION ||
-    "us-central1";
+    "northamerica-northeast1";
 
   if (useVertex) {
     return new GoogleGenAI({ vertexai: true, project, location });

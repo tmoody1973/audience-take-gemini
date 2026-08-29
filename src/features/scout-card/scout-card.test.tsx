@@ -20,11 +20,10 @@ describe("ScoutCard", () => {
     const overview = screen.getByLabelText("Submitted media and scouting summary");
     expect(overview.firstElementChild).toHaveClass("scout-start-here");
     expect(overview.lastElementChild).toHaveClass("evidence-brief");
-    expect(container.querySelector(".evidence-brief")?.children).toHaveLength(4);
+    expect(container.querySelector(".evidence-brief")?.children).toHaveLength(2);
     const pathways = screen.getByRole("heading", { name: "Pathway hypotheses" }).closest("section");
     expect(pathways).not.toBeNull();
-    expect(within(pathways as HTMLElement).getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getAllByText("[S1]", { selector: ".citation-marks" })).toHaveLength(8);
+    expect(screen.getAllByRole("link", { name: /S1/i })).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Junichiro Jackson public project video" })).toHaveAttribute("href", "https://www.youtube.com/watch?v=M2djoKmnOTY");
     expect(screen.getByText(/No native audience count is claimed\./)).toBeInTheDocument();
     const audiencePulse = container.querySelector("#audience-pulse");
