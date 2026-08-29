@@ -20,7 +20,7 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
   const project = await dataRepo.getProjectById(run.projectId);
   if (!project) throw new Error("Project not found");
 
-  const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-2.5-flash";
+  const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-3.7-flash";
 
   // Helper to log progress
   const logStep = async (

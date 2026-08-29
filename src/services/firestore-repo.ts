@@ -177,7 +177,7 @@ class InMemoryStore {
       },
       limitations: "Sampled from the official 90-second proof of concept video.",
       analyzedAt: "2026-08-28T10:15:00Z",
-      model: "gemini-2.5-flash"
+      model: "gemini-3.7-flash"
     };
 
     const p1: Project = {
@@ -341,7 +341,7 @@ class InMemoryStore {
       },
       limitations: "Analyzed from official 2-minute festival retrospective preview.",
       analyzedAt: "2026-08-28T10:20:00Z",
-      model: "gemini-2.5-flash"
+      model: "gemini-3.7-flash"
     };
 
     const p2: Project = {
@@ -633,7 +633,7 @@ class InMemoryStore {
       },
       limitations: "Analysis based on multimodal video sampling of the 24-second festival teaser.",
       analyzedAt: "2026-08-28T10:15:00Z",
-      model: "gemini-2.5-flash"
+      model: "gemini-3.7-flash"
     };
 
     const p4: Project = {
