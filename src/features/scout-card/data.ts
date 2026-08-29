@@ -268,18 +268,21 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
       const dynamicCritic = await dataRepo.getTrailerCriticById(dynamicProject?.id || slug);
       const originalUrl = dynamicProject?.identity?.originalUrl || dynamicCard.sourceMedia?.[0]?.url || dynamicCard.evidenceLedger?.[0]?.sourceUrl || "https://www.youtube.com";
 
-      const sourceLedgerEntries = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ({
-        id: ev.id || `source-${idx + 1}`,
-        origin: "submitted" as const,
-        title: ev.title || "Verified Source",
-        url: ev.sourceUrl || originalUrl,
-        publishedAt: new Date().toISOString(),
-        retrievedAt: new Date().toISOString(),
-        availability: "available" as const,
-        verificationStatus: "verified" as const,
-        supportsClaimIds: [ev.id || `claim-${idx + 1}`],
-        externalCommentary: false,
-      }));
+      const sourceLedgerEntries = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => {
+        const isSubmitted = ev.sourceUrl === originalUrl || (ev.sourceUrl && originalUrl.includes(ev.sourceUrl)) || (originalUrl && ev.sourceUrl.includes(originalUrl));
+        return {
+          id: ev.id || `source-${idx + 1}`,
+          origin: isSubmitted ? ("submitted" as const) : ("parallel" as const),
+          title: ev.title || (isSubmitted ? "Submitted Project Media" : "Parallel Web Discovery"),
+          url: ev.sourceUrl || originalUrl,
+          publishedAt: new Date().toISOString(),
+          retrievedAt: new Date().toISOString(),
+          availability: "available" as const,
+          verificationStatus: "verified" as const,
+          supportsClaimIds: [ev.id || `claim-${idx + 1}`],
+          externalCommentary: false,
+        };
+      });
       const sourceIds = sourceLedgerEntries.map((s: any) => s.id);
       const claimIds = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ev.id || `claim-${idx + 1}`);
 

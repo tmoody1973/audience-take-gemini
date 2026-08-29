@@ -219,17 +219,7 @@ Output MUST strictly adhere to the following JSON structure:
             caption: ytMeta?.title || "Official Public Video Source"
           }
         ],
-        evidenceLedger: [
-          {
-            id: "ev-dyn-1",
-            sourceUrl: run.sourceUrl,
-            title: ytMeta?.title || "Primary Project Media Source",
-            publisher: ytMeta?.authorName || "Public Web",
-            claimType: "observation" as const,
-            excerpt: `Primary verified video asset available publicly at ${run.sourceUrl}.`,
-            verified: true
-          }
-        ],
+        evidenceLedger: [],
         pathways: [
           {
             title: "Direct-to-Audience Digital Premiere & Community Scaling",
@@ -277,21 +267,36 @@ Output MUST strictly adhere to the following JSON structure:
           realisticConstraints: "Independent production requires disciplined budget allocation and creative autonomy."
         }
       };
-
-      // Enrich evidence ledger with Parallel Search items if needed
-      if (parallelResults.results.length > 0) {
-        const parallelEvidence = parallelResults.results.map((r, i) => ({
-          id: `ev-parallel-${i + 1}`,
-          sourceUrl: r.url,
-          title: r.title,
-          publisher: r.url.includes("variety") ? "Variety" : (r.url.includes("deadline") ? "Deadline" : "Web Citation"),
-          claimType: "reported" as const,
-          excerpt: r.excerpts[0] || "Public reporting and audience reception details.",
-          verified: true,
-        }));
-        proposalData.evidenceLedger = [...proposalData.evidenceLedger, ...parallelEvidence];
-      }
     }
+
+    // Build verified Evidence Ledger from primary source + real Parallel Search discoveries
+    const primaryVideoEvidence = {
+      id: "ev-source-video",
+      sourceUrl: run.sourceUrl,
+      title: ytMeta?.title || proposalData.projectTitle || "Submitted Video Source",
+      publisher: ytMeta?.authorName || "YouTube",
+      claimType: "observation" as const,
+      excerpt: `Primary verified video asset: "${ytMeta?.title || proposalData.projectTitle}" available at ${run.sourceUrl}.`,
+      verified: true,
+    };
+
+    const parallelEvidence = (parallelResults.results || []).slice(0, 4).map((r, i) => {
+      let host = "Web Citation";
+      try {
+        host = new URL(r.url).hostname.replace(/^www\./, "");
+      } catch {}
+      return {
+        id: `ev-parallel-${i + 1}`,
+        sourceUrl: r.url,
+        title: r.title,
+        publisher: host,
+        claimType: "reported" as const,
+        excerpt: r.excerpts?.[0] || r.title,
+        verified: true,
+      };
+    });
+
+    proposalData.evidenceLedger = [primaryVideoEvidence, ...parallelEvidence];
 
     await logStep("extracting_evidence", `Synthesized evidence ledger with ${proposalData.evidenceLedger.length} verified primary citations (including Parallel Search results).`, 75, "done");
 

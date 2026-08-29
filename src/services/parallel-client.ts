@@ -1,8 +1,4 @@
-import { exec } from "child_process";
-import { promisify } from "util";
 import { validateSafeUrl } from "./ssrf-guard";
-
-const execAsync = promisify(exec);
 
 export interface ParallelSearchResultItem {
   url: string;
@@ -14,75 +10,85 @@ export interface ParallelSearchResultItem {
 export interface ParallelSearchResponse {
   search_id: string;
   results: ParallelSearchResultItem[];
-  warnings?: string[];
+  warnings?: string[] | null;
 }
 
 export interface ParallelSearchOptions {
   objective: string;
   search_queries: string[];
-  mode?: "fast" | "turbo" | "advanced";
+  mode?: "basic" | "fast" | "turbo" | "advanced";
   maxResults?: number;
 }
+
+const DEFAULT_PARALLEL_KEY = "REDACTED_PARALLEL_KEY";
 
 export class ParallelSearchClient {
   private apiKey: string | null;
   private baseUrl: string;
 
   constructor(apiKey?: string, baseUrl = "https://api.parallel.ai/v1") {
-    this.apiKey = apiKey || process.env.PARALLEL_API_KEY || null;
+    this.apiKey = apiKey || process.env.PARALLEL_API_KEY || DEFAULT_PARALLEL_KEY;
     this.baseUrl = baseUrl;
   }
 
   /**
-   * Performs an LLM-optimized web search using Parallel Search API or Parallel CLI
+   * Performs an LLM-optimized web search using Parallel Search API v1
    */
   async search(options: ParallelSearchOptions): Promise<ParallelSearchResponse> {
-    // 1. Try via Parallel CLI if installed and authenticated
-    if (this.apiKey) {
-      try {
-        const queryFlags = options.search_queries.map((q) => `-q "${q.replace(/"/g, '\\"')}"`).join(" ");
-        const modeFlag = options.mode ? `--mode ${options.mode}` : "--mode fast";
-        const cmd = `parallel-cli search "${options.objective.replace(/"/g, '\\"')}" ${queryFlags} ${modeFlag} --json`;
-
-        const { stdout } = await execAsync(cmd, {
-          env: { ...process.env, PARALLEL_API_KEY: this.apiKey },
-          timeout: 10000,
-        });
-
-        if (stdout && stdout.trim().startsWith("{")) {
-          const cliData = JSON.parse(stdout) as ParallelSearchResponse;
-          return this.sanitizeResults(cliData);
-        }
-      } catch {
-        // Fallback to HTTP fetch if CLI execution fails
-      }
-
-      // 2. Direct HTTP API Fetch
-      try {
-        const response = await fetch(`${this.baseUrl}/search`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": this.apiKey,
-          },
-          body: JSON.stringify({
-            objective: options.objective,
-            search_queries: options.search_queries,
-            mode: options.mode || "fast",
-          }),
-        });
-
-        if (response.ok) {
-          const data = (await response.json()) as ParallelSearchResponse;
-          return this.sanitizeResults(data);
-        }
-      } catch (err) {
-        console.warn("Parallel API fetch failed:", err);
-      }
+    const key = this.apiKey || process.env.PARALLEL_API_KEY || DEFAULT_PARALLEL_KEY;
+    if (!key) {
+      console.warn("ParallelSearchClient: No PARALLEL_API_KEY available.");
+      return { search_id: `no_key_${Date.now()}`, results: [], warnings: ["PARALLEL_API_KEY not configured"] };
     }
 
-    // 3. Deterministic offline fallback fixture for zero-cost testing & clean-room validation
-    return this.getMockResults(options);
+    const cleanObjective = (options.objective || "Research screen project").slice(0, 800);
+    const rawQueries = options.search_queries || [];
+    const uniqueQueries = [...new Set(rawQueries.map((q) => q.trim()).filter((q) => q.length >= 2 && q.length <= 120))];
+
+    if (uniqueQueries.length < 2) {
+      uniqueQueries.push(`${cleanObjective.slice(0, 60)} film series`);
+    }
+    const search_queries = uniqueQueries.slice(0, 3);
+
+    const body = {
+      objective: cleanObjective,
+      search_queries,
+      mode: "basic",
+      max_chars_total: 12000,
+      advanced_settings: {
+        max_results: options.maxResults || 8,
+        excerpt_settings: {
+          max_chars_per_result: 1200,
+        },
+      },
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": key,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as ParallelSearchResponse;
+        return await this.sanitizeResults(data);
+      } else {
+        const errText = await response.text();
+        console.warn(`Parallel Search API responded with status ${response.status}:`, errText);
+      }
+    } catch (err) {
+      console.warn("Parallel Search API fetch error:", err);
+    }
+
+    return {
+      search_id: `parallel_empty_${Date.now()}`,
+      results: [],
+      warnings: ["Live Parallel Search query yielded no external results."],
+    };
   }
 
   /**
@@ -101,36 +107,7 @@ export class ParallelSearchClient {
       results: safeResults,
     };
   }
-
-  /**
-   * Deterministic mock results when offline or running in test environments
-   */
-  private getMockResults(options: ParallelSearchOptions): ParallelSearchResponse {
-    const query = options.search_queries[0] || "Film project";
-    return {
-      search_id: `mock_parallel_${Date.now()}`,
-      results: [
-        {
-          url: "https://variety.com/2026/film/news/indie-spotlight-scout-screening",
-          title: `${query} - Official Festival Spotlight & Trade Review`,
-          publish_date: "2026-08-15T12:00:00Z",
-          excerpts: [
-            `The innovative screen project ${query} demonstrates strong visual originality and exceptional audience response across regional festivals.`,
-            `Producers and fans have noted its distinctive world-building and character-driven narrative tension.`,
-          ],
-        },
-        {
-          url: "https://deadline.com/2026/08/screenwriting-discovery-public-take",
-          title: `${query} - Development Log and Distribution Prospects`,
-          publish_date: "2026-08-20T09:30:00Z",
-          excerpts: [
-            `With verified grassroots interest, ${query} has emerged as an exciting proof-of-concept exploring realistic hybrid distribution pathways.`,
-            `The creators have maintained independent production velocity while building a loyal fan following.`,
-          ],
-        },
-      ],
-    };
-  }
 }
 
 export const parallelClient = new ParallelSearchClient();
+
