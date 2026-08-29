@@ -65,10 +65,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     livingUpdates = [];
   }
 
+  let scoutBrief = null;
+  try {
+    const { loadScoutBriefForCard } = await import("../../../features/scout-brief/data");
+    scoutBrief = await loadScoutBriefForCard(card);
+  } catch {
+    scoutBrief = null;
+  }
+
   return (
     <>
       <SiteHeader />
-      <ScoutCard card={card} livingUpdates={livingUpdates} />
+      <ScoutCard card={card} livingUpdates={livingUpdates} scoutBrief={scoutBrief} />
     </>
   );
 }

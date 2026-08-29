@@ -875,4 +875,349 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 .btn-submit { padding: 8px 16px; background: var(--blue); color: #ffffff; border: 1px solid var(--ink); font-family: var(--meta); font-size: 0.68rem; font-weight: 900; text-transform: uppercase; cursor: pointer; }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Scout Brief Player Styles */
+.scout-brief-player-container {
+  margin: 24px clamp(18px, 4vw, 48px);
+  padding: 22px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.scout-brief-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.brief-title-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brief-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--yellow);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.brief-heading {
+  margin: 4px 0 0;
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.brief-subheading {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.brief-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.brief-meta-item {
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  color: #444;
+  background: #f0ede6;
+  padding: 4px 8px;
+  border: 1px solid #d0c8b8;
+}
+
+.brief-unclaimed-badge {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+  padding: 4px 8px;
+}
+
+.brief-error-banner {
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+}
+
+.brief-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  background: #f5f2ea;
+  border: 1px solid var(--ink);
+  padding: 10px 14px;
+}
+
+.brief-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: var(--ink);
+  color: var(--yellow);
+  border: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+
+.brief-play-btn:hover {
+  transform: scale(1.05);
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.brief-scrubber-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.brief-time-label {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 36px;
+}
+
+.brief-scrubber {
+  flex: 1;
+  accent-color: var(--coral);
+  cursor: pointer;
+}
+
+.brief-speed-group {
+  display: flex;
+  border: 1px solid var(--ink);
+  background: #ffffff;
+}
+
+.brief-speed-btn {
+  padding: 4px 8px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--ink);
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.brief-speed-btn:last-child {
+  border-right: 0;
+}
+
+.brief-speed-btn.active {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.brief-mute-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+}
+
+.brief-transcript-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border: 1px solid var(--ink);
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.brief-transcript-btn.active {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.brief-transcript-drawer {
+  margin-top: 16px;
+  padding: 18px;
+  background: #fdfcf9;
+  border: 1px solid var(--ink);
+}
+
+.transcript-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.transcript-header-row h4 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.transcript-disclosure {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  color: #666;
+}
+
+.transcript-dialogue-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transcript-segment-card {
+  padding: 12px 14px;
+  background: #ffffff;
+  border-left: 4px solid var(--ink);
+  border: 1px solid #e0dcce;
+  border-left-width: 4px;
+}
+
+.transcript-segment-card.speaker-scout {
+  border-left-color: var(--coral);
+}
+
+.transcript-segment-card.speaker-analyst {
+  border-left-color: var(--blue);
+}
+
+.segment-speaker-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.speaker-tag {
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.speaker-tag.speaker-scout {
+  background: #ffe8e0;
+  color: #9c2706;
+}
+
+.speaker-tag.speaker-analyst {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.section-tag {
+  font-family: var(--meta);
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #888;
+}
+
+.segment-text {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #222;
+}
+
+.segment-citations {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed #eee;
+}
+
+.segment-citations small {
+  font-family: var(--meta);
+  font-size: 0.6rem;
+  color: #777;
+  text-transform: uppercase;
+}
+
+.segment-source-pill {
+  font-family: var(--meta);
+  font-size: 0.6rem;
+  font-weight: 850;
+  padding: 1px 5px;
+  background: #eef2ff;
+  color: var(--blue);
+  border: 1px solid #c7d2fe;
+  border-radius: 2px;
+}
+
+.transcript-limitations-box {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: #fff8f0;
+  border: 1px solid #fed7aa;
+  font-size: 0.78rem;
+}
+
+.transcript-limitations-box strong {
+  display: block;
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #c2410c;
+  margin-bottom: 4px;
+}
+
+.transcript-limitations-box ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+
 

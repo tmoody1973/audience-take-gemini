@@ -16,6 +16,8 @@ import { ScoutTrustPanel } from "../trust/scout-trust-panel";
 import { SourceVideoCarousel } from "./source-video-carousel";
 import { TrailerCritic } from "./trailer-critic";
 import { FandomDnaSection } from "./fandom-dna-section";
+import type { ScoutBrief } from "../scout-brief/types";
+import { ScoutBriefPlayer } from "../scout-brief/scout-brief-player";
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(value));
@@ -144,9 +146,11 @@ function CardStatus({ card }: { card: ScoutCardModel }) {
 export function ScoutCard({
   card,
   livingUpdates,
+  scoutBrief,
 }: {
   card: ScoutCardModel;
   livingUpdates?: ProjectLivingUpdate[];
+  scoutBrief?: ScoutBrief | null;
 }) {
   if (card.pathways.length !== 3) throw new Error("A Scout Card requires exactly three pathways.");
   const sourceLabels = createCitationLabels(card.sourceLedger);
@@ -216,6 +220,8 @@ export function ScoutCard({
           <span>{card.cardVersionId}</span><strong>{card.title}</strong><small>Scout Card</small>
         </aside>
       </article>
+
+      {scoutBrief && <ScoutBriefPlayer brief={scoutBrief} unclaimed={card.claimStatus === "unclaimed"} />}
 
       <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
       <FandomDnaSection
