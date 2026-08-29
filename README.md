@@ -163,12 +163,21 @@ Audience Take leverages Google's latest next-generation reasoning and multimodal
 ---
 
 ### 3. How We Use Parallel Systems (Hackathon Partner) in Detail
-Parallel Systems serves as the **Real-Time Web Intelligence & Trade Discovery Engine** that powers the agent's external fact-checking and macro-market validation:
+Parallel Systems serves as the **Real-Time Web Intelligence, Extraction & Autonomous Monitoring Engine** that powers the agent's external fact-checking and Living Dossier freshness:
 
-- **Parallel Search API (`https://api.parallel.ai/v1/search`)**:
+- **1. Parallel Search API (`https://api.parallel.ai/v1/search`) — Targeted Trade Discovery**:
   - Executes targeted multi-query fanouts (`"Daria Cohen" "The Vampair Series" Kickstarter "The Hive Studio"`) to crawl and index live web pages beyond static search engine caches.
   - **Discovered Closed Campaign Metrics**: Crawled Kickstarter to extract exact closed totals: **€225,460 pledged of €135,000 goal (167% funded) across 3,512 verified fan backers (€64.19 ARPU)**.
   - **Trade Press Validation**: Located critical international co-production reporting in *Animation Magazine* and *C21Media*, proving the project had broken out of insular online bubbles.
+
+- **2. Parallel Fetch API (`https://api.parallel.ai/v1/fetch`) — Headless DOM Extraction**:
+  - Headless JavaScript rendering and clean markdown extraction (`parallel-web-extract`).
+  - Converts complex, dynamic creator link-trees, Kickstarter reward tiers, festival catalogs, and PDF pitch decks into clean, token-efficient Markdown for Gemini 3.5 Flash without HTML clutter or scraper blocks.
+
+- **3. Parallel Monitor API (`https://api.parallel.ai/v1/monitor`) — Living Dossier Sensors**:
+  - Configures automated webhooks and scheduled monitors on creator URLs, crowdfunding campaigns, and trade RSS feeds.
+  - **Drives Anti-Data Decay**: Whenever Parallel Monitor detects milestone changes (e.g. stretch goals reached, new trade announcement in *Variety* / *Deadline*, new festival laurels), it sends a webhook that triggers the **Living Dossier Auto-Re-Scout Engine** to append to the immutable changelog in real time.
+
 - **Parallel CLI (`parallel-cli` v0.9.3)**:
   - Used for rapid developer inspection, data enrichment, and test-suite verification.
 - **Autonomous Agent Skills Utilized**:
