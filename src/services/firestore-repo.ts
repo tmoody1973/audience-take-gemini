@@ -821,6 +821,10 @@ class InMemoryStore {
 
 const store = new InMemoryStore();
 
+function cleanFirestoreObject<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}
+
 export const dataRepo = {
   // Projects
   async getProjects(filters?: { medium?: MediumType; stage?: LifecycleStage; query?: string }): Promise<Project[]> {
@@ -888,14 +892,15 @@ export const dataRepo = {
     store.projects.set(project.id, project);
     try {
       const db = getAdminFirestore();
-      await db.collection("projects").doc(project.id).set({
+      const payload = cleanFirestoreObject({
         ...project,
         slug: project.id,
         publicationStatus: project.publishedCardId ? "published" : "draft",
         latestCardVersionId: project.publishedCardId || null,
         claimStatus: project.creatorClaim?.status || "unclaimed",
         updatedAt: project.updatedAt || new Date().toISOString(),
-      }, { merge: true });
+      });
+      await db.collection("projects").doc(project.id).set(payload, { merge: true });
     } catch (err) {
       console.warn("Could not persist project to Firestore:", err);
     }
@@ -926,16 +931,16 @@ export const dataRepo = {
     }
     try {
       const db = getAdminFirestore();
-      await db.collection("scoutCards").doc(card.id).set({
+      await db.collection("scoutCards").doc(card.id).set(cleanFirestoreObject({
         ...card,
         visibility: "public",
-      }, { merge: true });
-      await db.collection("projects").doc(card.projectId).set({
+      }), { merge: true });
+      await db.collection("projects").doc(card.projectId).set(cleanFirestoreObject({
         publishedCardId: card.id,
         latestCardVersionId: card.id,
         publicationStatus: "published",
         updatedAt: new Date().toISOString(),
-      }, { merge: true });
+      }), { merge: true });
     } catch (err) {
       console.warn("Could not persist scout card to Firestore:", err);
     }
@@ -961,7 +966,7 @@ export const dataRepo = {
     store.trailerCritics.set(critic.id, critic);
     try {
       const db = getAdminFirestore();
-      await db.collection("videoAnalyses").doc(critic.id).set(critic, { merge: true });
+      await db.collection("videoAnalyses").doc(critic.id).set(cleanFirestoreObject(critic), { merge: true });
     } catch (err) {
       console.warn("Could not persist trailer critic to Firestore:", err);
     }
@@ -987,7 +992,7 @@ export const dataRepo = {
     store.researchRuns.set(run.id, run);
     try {
       const db = getAdminFirestore();
-      await db.collection("researchRuns").doc(run.id).set(run, { merge: true });
+      await db.collection("researchRuns").doc(run.id).set(cleanFirestoreObject(run), { merge: true });
     } catch (err) {
       console.warn("Could not persist research run to Firestore:", err);
     }

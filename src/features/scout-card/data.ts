@@ -252,195 +252,214 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
     if (fromFirestore) return fromFirestore;
 
     // Check dataRepo for in-memory or dynamically scouted projects in live environment
-    if (!database) {
-      const dynamicProject = await dataRepo.getProjectById(slug);
+    const dynamicProject = await dataRepo.getProjectById(slug);
+    let dynamicCard: any = null;
     if (dynamicProject?.publishedCardId) {
-      const dynamicCard = await dataRepo.getScoutCardById(dynamicProject.publishedCardId);
-      const dynamicCritic = await dataRepo.getTrailerCriticById(dynamicProject.id);
-      if (dynamicCard) {
-        const sourceLedgerEntries = dynamicCard.evidenceLedger.map((ev, idx) => ({
-          id: ev.id || `source-${idx + 1}`,
-          origin: "submitted" as const,
-          title: ev.title || "Verified Source",
-          url: ev.sourceUrl || dynamicProject.identity.originalUrl,
-          publishedAt: new Date().toISOString(),
-          retrievedAt: new Date().toISOString(),
-          availability: "available" as const,
-          verificationStatus: "verified" as const,
-          supportsClaimIds: [ev.id || `claim-${idx + 1}`],
-          externalCommentary: false,
-        }));
-        const sourceIds = sourceLedgerEntries.map((s) => s.id);
-        const claimIds = dynamicCard.evidenceLedger.map((ev, idx) => ev.id || `claim-${idx + 1}`);
-
-          const mediaUrl = dynamicCard.sourceMedia?.[0]?.url || dynamicProject.identity.originalUrl;
-          const vidId = youtubeVideoId(mediaUrl);
-          const resolvedEmbedUrl = vidId ? `https://www.youtube-nocookie.com/embed/${vidId}` : mediaUrl;
-
-          return {
-            cardVersionId: dynamicCard.id,
-            runId: "run-dynamic",
-            researchVersion: 1,
-            projectId: dynamicProject.id,
-            slug: dynamicProject.id,
-            title: dynamicProject.identity.title,
-            hook: dynamicProject.identity.logline || dynamicCard.whyScouted,
-            projectType: (dynamicProject.identity.medium === "series" ? "series" : "film") as any,
-            submissionLabel: dynamicProject.creatorClaim.status === "verified" ? "Creator submission" : "Fan nomination — unclaimed by creator",
-            claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
-            completeness: "complete" as const,
-            fallbackUsed: false,
-            provenance: {
-              submissionType: "fan" as const,
-              submittedSourceUrl: dynamicProject.identity.originalUrl,
-              nominationLabel: "Fan-submitted public project source",
-              nominatedByLabel: "Community scout",
-              researchedAt: dynamicProject.createdAt || new Date().toISOString(),
-            },
-            media: {
-              state: "authorized_embed" as const,
-              title: dynamicProject.identity.title,
-              sourceUrl: dynamicProject.identity.originalUrl,
-              embedUrl: resolvedEmbedUrl,
-              attribution: dynamicProject.identity.creators?.[0] || "Public Source",
-              accessibleFallback: `Public video for ${dynamicProject.identity.title}`,
-            },
-          storyContext: {
-            summary: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
-            storyworld: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
-            themes: ["independent cinema", "creative vision"],
-            currentFormat: dynamicProject.identity.medium,
-            audienceHooks: ["independent creators", "unique storytelling"],
-            claimIds,
-          },
-          creatorContext: {
-            displayName: dynamicProject.identity.creators?.[0] || null,
-            claimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
-            summary: dynamicCard.whyScouted,
-            sourceIds,
-            limitations: ["Based on public web reporting and submitted video evidence."],
-          },
-          sourceIds,
-          claimIds,
-          evidenceClaims: dynamicCard.evidenceLedger.map((ev, idx) => ({
-            id: ev.id || `claim-${idx + 1}`,
-            statement: ev.excerpt || ev.title,
-            status: "supported" as const,
-            sourceIds: [ev.id || `source-${idx + 1}`],
-            qualification: null,
-          })),
-          externalSignals: [],
-          pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
-          pathways: (dynamicCard.pathways || []).slice(0, 3).map((pw, idx) => ({
-            id: `pathway-${idx + 1}`,
-            order: idx + 1,
-            label: pw.title,
-            format: pw.title,
-            audience: pw.targetAudience,
-            rationale: pw.mediumFitRationale,
-            supportingClaimIds: [claimIds[0] || "claim-1"],
-            comparableSourceIds: [],
-            strengths: [pw.mediumFitRationale],
-            risks: pw.risksAndUncertainties,
-            openQuestions: ["How will audience feedback shape development?"],
-            confidence: "high" as const,
-            nextExperiment: {
-              title: pw.nextBoundedExperiment?.name || "Audience Feedback Pulse",
-              hypothesis: pw.nextBoundedExperiment?.description || "Audience will validate interest",
-              method: "Collect structured feedback on Audience Take",
-              participantAction: "Vote and submit Takes",
-              signal: pw.nextBoundedExperiment?.successMetric || "50+ positive takes",
-              timebox: "14 days",
-            },
-          })),
-          sourceLedger: sourceLedgerEntries,
-          missingSections: [],
-          limitations: ["Based on public web reporting and submitted video evidence."],
-          industryLens: {
-            pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
-            comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((title) => ({
-              title,
-              relevance: "Comparable market trajectory and audience crossover.",
-              sourceIds: [sourceIds[0] || "source-1"],
-              limitations: ["Market conditions differ."],
-            })),
-            risks: [dynamicCard.decisionBrief?.primaryRisk || "Financing and distribution alignment."],
-            unresolvedQuestions: ["Distribution rights exclusivity."],
-            signalLimitations: ["Early audience demand signals."],
-            creatorClaimStatus: dynamicProject.creatorClaim.status as ClaimStatus,
-            recommendedNextExperiment: {
-              title: "Community Proof of Concept",
-              hypothesis: "Demonstrates core fan demographic engagement",
-              method: "Track audience commitments and pulse",
-              participantAction: "Commit support",
-              signal: "100+ community signals",
-              timebox: "30 days",
-            },
-          },
-          publishedAt: dynamicProject.updatedAt || new Date().toISOString(),
-          trailerCritiques: dynamicCritic ? [{
-            artifactId: dynamicCritic.id,
-            projectId: dynamicProject.id,
-            sourceId: sourceIds[0] || "source-1",
-            youtubeUrl: dynamicCritic.sourceVideoUrl,
-            youtubeVideoId: youtubeVideoId(dynamicCritic.sourceVideoUrl) || "M2djoKmnOTY",
-            modelId: dynamicCritic.model || "gemini-2.5-flash",
-            analysisVersion: 1,
-            cardVersionId: dynamicCard.id,
-            structuralNarrative: {
-              genreSignaling: dynamicCritic.genreAndForm,
-              narrativeDelivery: dynamicCritic.summary,
-              trailerType: "Concept Pitch",
-              beats: (dynamicCritic.timestampedBeats || []).slice(0, 4).map((b) => ({
-                label: b.label || b.description.slice(0, 30) || "Narrative Beat",
-                start: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:00",
-                end: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:30",
-                observation: b.description,
-                modality: "audiovisual" as const,
-              })),
-            },
-            technicalCraft: {
-              editingAndPace: dynamicCritic.craftAnalysis?.editingAndPacing || "Rhythmic sync to audio cue.",
-              cinematographyAndFraming: dynamicCritic.craftAnalysis?.cinematography || "Cinematic aspect ratio.",
-              soundAndScore: dynamicCritic.craftAnalysis?.soundAndScore || "Original score blend.",
-              graphicsAndTitles: dynamicCritic.craftAnalysis?.graphicsAndText || "Clean typography.",
-            },
-            marketingPersuasion: {
-              uniqueSellingProposition: dynamicCritic.whyItMayConnect,
-              targetAudienceHypothesis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Core animation community.",
-              conceptVsStarEmphasis: "Concept and aesthetic led.",
-              representationCaveat: "Authentic subcultural representation.",
-            },
-            emotionalRhetorical: {
-              emotionalHook: dynamicCritic.persuasionAndEmotion?.emotionalArc || "Engaging hook.",
-              toneAndMoodBalance: "Balanced tone and pacing.",
-              persuasiveArgument: dynamicCritic.persuasionAndEmotion?.callToAction || "Call to follow project.",
-            },
-            matrix: [
-              { category: "genre" as const, analysis: dynamicCritic.genreAndForm },
-              { category: "narrative_stance" as const, analysis: dynamicCritic.summary },
-              { category: "usp" as const, analysis: dynamicCritic.whyItMayConnect },
-              { category: "target_audience" as const, analysis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Target audience." },
-              { category: "sound_music" as const, analysis: dynamicCritic.craftAnalysis?.soundAndScore || "Sound design." },
-              { category: "camera_editing" as const, analysis: dynamicCritic.craftAnalysis?.cinematography || "Visual framing." },
-            ],
-            sourceIds,
-            limitations: ["Based on multimodal audiovisual stream analysis."],
-            analyzedAt: dynamicProject.updatedAt || new Date().toISOString(),
-            visibility: "public" as const,
-          }] : [],
-        };
-      }
+      dynamicCard = await dataRepo.getScoutCardById(dynamicProject.publishedCardId);
     }
-  }
+    if (!dynamicCard) {
+      dynamicCard = await dataRepo.getScoutCardById(`card-${slug}-v1`);
+    }
+    if (!dynamicCard) {
+      dynamicCard = await dataRepo.getScoutCardById(slug);
+    }
 
-  return null;
-} catch (error) {
-    logPublishedCardLoadFailure(slug, error);
-    return slug === JUNICHIO_SLUG || slug === JUNICHIO_LIVE_SLUG || slug === "proj-junichiro"
-      ? fixtures.fallback
-      : null;
+    if (dynamicCard) {
+      const dynamicCritic = await dataRepo.getTrailerCriticById(dynamicProject?.id || slug);
+      const originalUrl = dynamicProject?.identity?.originalUrl || dynamicCard.sourceMedia?.[0]?.url || dynamicCard.evidenceLedger?.[0]?.sourceUrl || "https://www.youtube.com";
+
+      const sourceLedgerEntries = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ({
+        id: ev.id || `source-${idx + 1}`,
+        origin: "submitted" as const,
+        title: ev.title || "Verified Source",
+        url: ev.sourceUrl || originalUrl,
+        publishedAt: new Date().toISOString(),
+        retrievedAt: new Date().toISOString(),
+        availability: "available" as const,
+        verificationStatus: "verified" as const,
+        supportsClaimIds: [ev.id || `claim-${idx + 1}`],
+        externalCommentary: false,
+      }));
+      const sourceIds = sourceLedgerEntries.map((s: any) => s.id);
+      const claimIds = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ev.id || `claim-${idx + 1}`);
+
+      const mediaUrl = dynamicCard.sourceMedia?.[0]?.url || originalUrl;
+      const vidId = youtubeVideoId(mediaUrl);
+      const resolvedEmbedUrl = vidId ? `https://www.youtube-nocookie.com/embed/${vidId}` : mediaUrl;
+
+      const title = dynamicProject?.identity?.title
+        || dynamicCard.evidenceLedger?.find((e: any) => e.sourceUrl.includes("youtube.com") || e.sourceUrl.includes("youtu.be"))?.title?.replace(/^Video Title:\s*/i, "")
+        || dynamicCard.evidenceLedger?.find((e: any) => e.title.includes("Trailer") || e.title.includes("Official"))?.title?.replace(/^Video Title:\s*/i, "")
+        || (dynamicCard as any).projectTitle
+        || (dynamicCard as any).decisionBrief?.logline
+        || "Independent Screen Project";
+
+      const hook = dynamicProject?.identity?.logline
+        || (dynamicCard as any).decisionBrief?.coreHook
+        || dynamicCard.whyScouted;
+
+      const medium = dynamicProject?.identity?.medium || (dynamicCard as any).medium || "series";
+      const creators = dynamicProject?.identity?.creators || (dynamicCard as any).creators || ["Independent Filmmaker"];
+      const claimStatusVal = (dynamicProject?.creatorClaim?.status || "unclaimed") as ClaimStatus;
+
+      return {
+        cardVersionId: dynamicCard.id,
+        runId: "run-dynamic",
+        researchVersion: 1,
+        projectId: dynamicProject?.id || slug,
+        slug: dynamicProject?.id || slug,
+        title,
+        hook,
+        projectType: (medium === "series" ? "series" : "film") as any,
+        submissionLabel: (claimStatusVal as string) === "approved" || (claimStatusVal as string) === "verified" ? "Creator submission" : "Fan nomination — unclaimed by creator",
+        claimStatus: claimStatusVal,
+        completeness: "complete" as const,
+        fallbackUsed: false,
+        provenance: {
+          submissionType: "fan" as const,
+          submittedSourceUrl: originalUrl,
+          nominationLabel: "Fan-submitted public project source",
+          nominatedByLabel: "Community scout",
+          researchedAt: dynamicProject?.createdAt || new Date().toISOString(),
+        },
+        media: {
+          state: "authorized_embed" as const,
+          title,
+          sourceUrl: originalUrl,
+          embedUrl: resolvedEmbedUrl,
+          attribution: creators[0] || "Public Source",
+          accessibleFallback: `Public video for ${title}`,
+        },
+        storyContext: {
+          summary: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
+          storyworld: Array.isArray(dynamicCard.whatWeKnow) ? dynamicCard.whatWeKnow.join(" ") : (dynamicCard.whatWeKnow || dynamicCard.whyScouted),
+          themes: ["independent cinema", "creative vision"],
+          currentFormat: medium,
+          audienceHooks: ["independent creators", "unique storytelling"],
+          claimIds,
+        },
+        creatorContext: {
+          displayName: creators[0] || null,
+          claimStatus: claimStatusVal,
+          summary: dynamicCard.whyScouted,
+          sourceIds,
+          limitations: ["Based on public web reporting and submitted video evidence."],
+        },
+        sourceIds,
+        claimIds,
+        evidenceClaims: (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ({
+          id: ev.id || `claim-${idx + 1}`,
+          statement: ev.excerpt || ev.title,
+          status: "supported" as const,
+          sourceIds: [ev.id || `source-${idx + 1}`],
+          qualification: null,
+        })),
+        externalSignals: [],
+        pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
+        pathways: (dynamicCard.pathways || []).slice(0, 3).map((pw: any, idx: number) => ({
+          id: `pathway-${idx + 1}`,
+          order: idx + 1,
+          label: pw.title,
+          format: pw.title,
+          audience: pw.targetAudience,
+          rationale: pw.mediumFitRationale,
+          supportingClaimIds: [claimIds[0] || "claim-1"],
+          comparableSourceIds: [],
+          strengths: [pw.mediumFitRationale],
+          risks: pw.risksAndUncertainties,
+          openQuestions: ["How will audience feedback shape development?"],
+          confidence: "high" as const,
+          nextExperiment: {
+            title: pw.nextBoundedExperiment?.name || "Audience Feedback Pulse",
+            hypothesis: pw.nextBoundedExperiment?.description || "Audience will validate interest",
+            method: "Collect structured feedback on Audience Take",
+            participantAction: "Vote and submit Takes",
+            signal: pw.nextBoundedExperiment?.successMetric || "50+ positive takes",
+            timebox: "14 days",
+          },
+        })),
+        sourceLedger: sourceLedgerEntries,
+        missingSections: [],
+        limitations: ["Based on public web reporting and submitted video evidence."],
+        industryLens: {
+          pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
+          comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((cmpTitle: string) => ({
+            title: cmpTitle,
+            relevance: "Comparable market trajectory and audience crossover.",
+            sourceIds: [sourceIds[0] || "source-1"],
+            limitations: ["Market conditions differ."],
+          })),
+          risks: [dynamicCard.decisionBrief?.primaryRisk || "Financing and distribution alignment."],
+          unresolvedQuestions: ["Distribution rights exclusivity."],
+          signalLimitations: ["Early audience demand signals."],
+          creatorClaimStatus: claimStatusVal,
+          recommendedNextExperiment: {
+            title: "Community Proof of Concept",
+            hypothesis: "Demonstrates core fan demographic engagement",
+            method: "Track audience commitments and pulse",
+            participantAction: "Commit support",
+            signal: "100+ community signals",
+            timebox: "30 days",
+          },
+        },
+        publishedAt: dynamicProject?.updatedAt || new Date().toISOString(),
+        trailerCritiques: dynamicCritic ? [{
+          artifactId: dynamicCritic.id,
+          projectId: dynamicProject?.id || slug,
+          sourceId: sourceIds[0] || "source-1",
+          youtubeUrl: dynamicCritic.sourceVideoUrl,
+          youtubeVideoId: youtubeVideoId(dynamicCritic.sourceVideoUrl) || "M2djoKmnOTY",
+          modelId: dynamicCritic.model || "gemini-2.5-flash",
+          analysisVersion: 1,
+          cardVersionId: dynamicCard.id,
+          structuralNarrative: {
+            genreSignaling: dynamicCritic.genreAndForm,
+            narrativeDelivery: dynamicCritic.summary,
+            trailerType: "Concept Pitch",
+            beats: (dynamicCritic.timestampedBeats || []).slice(0, 4).map((b: any) => ({
+              label: b.label || b.description?.slice(0, 30) || "Narrative Beat",
+              start: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:00",
+              end: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:30",
+              observation: b.description || "Audiovisual scene development",
+              modality: "audiovisual" as const,
+            })),
+          },
+          technicalCraft: {
+            editingAndPace: dynamicCritic.craftAnalysis?.editingAndPacing || "Rhythmic sync to audio cue.",
+            cinematographyAndFraming: dynamicCritic.craftAnalysis?.cinematography || "Cinematic aspect ratio.",
+            soundAndScore: dynamicCritic.craftAnalysis?.soundAndScore || "Original score blend.",
+            graphicsAndTitles: dynamicCritic.craftAnalysis?.graphicsAndText || "Clean typography.",
+          },
+          marketingPersuasion: {
+            uniqueSellingProposition: dynamicCritic.whyItMayConnect || "Independent cinematic voice.",
+            targetAudienceHypothesis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Core independent film community.",
+            conceptVsStarEmphasis: "Concept and aesthetic led.",
+            representationCaveat: "Authentic subcultural representation.",
+          },
+          emotionalRhetorical: {
+            emotionalHook: dynamicCritic.persuasionAndEmotion?.emotionalArc || "Engaging emotional hook.",
+            toneAndMoodBalance: "Balanced tone and pacing.",
+            persuasiveArgument: dynamicCritic.persuasionAndEmotion?.callToAction || "Call to follow project.",
+          },
+          matrix: [
+            { category: "genre" as const, analysis: dynamicCritic.genreAndForm },
+            { category: "narrative_stance" as const, analysis: dynamicCritic.summary },
+            { category: "usp" as const, analysis: dynamicCritic.whyItMayConnect || "Unique voice." },
+            { category: "target_audience" as const, analysis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Independent audiences." },
+            { category: "sound_music" as const, analysis: dynamicCritic.craftAnalysis?.soundAndScore || "Sound design." },
+            { category: "camera_editing" as const, analysis: dynamicCritic.craftAnalysis?.cinematography || "Visual framing." },
+          ],
+          sourceIds,
+          limitations: ["Based on multimodal audiovisual stream analysis."],
+          analyzedAt: dynamicProject?.updatedAt || new Date().toISOString(),
+          visibility: "public" as const,
+        }] : [],
+      };
+    }
+  } catch (err) {
+    console.error("loadPublishedScoutCard error:", err);
   }
+  return null;
 }
 
 /** Contract fixtures are explicit test/local-preview helpers and are never the route's live data source. */

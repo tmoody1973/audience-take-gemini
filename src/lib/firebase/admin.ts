@@ -68,7 +68,13 @@ export function getAdminAppCheck() {
 }
 
 export function getAdminFirestore() {
-  return getFirestore(getAdminApp());
+  const db = getFirestore(getAdminApp());
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // ignore if already configured
+  }
+  return db;
 }
 
 export function getAdminStorage() {
