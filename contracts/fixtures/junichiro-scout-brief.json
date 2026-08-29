@@ -78,7 +78,7 @@
   "claimIds": ["claim-1", "claim-2", "claim-3"],
   "pathwayIds": ["pathway-1", "pathway-2", "pathway-3"],
   "storagePath": "public/projects/proj-junichiro/scout-briefs/card-proj-junichiro-v1/g1.wav",
-  "audioUrl": "https://storage.googleapis.com/test-app-mkark4.appspot.com/public/projects/proj-junichiro/scout-briefs/card-proj-junichiro-v1/g1.wav",
+  "audioUrl": "/api/scout-briefs/scout-brief-card-proj-1788033835868-tfn0k-v1-g1/audio",
   "mimeType": "audio/wav",
   "sizeBytes": 10752044,
   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",

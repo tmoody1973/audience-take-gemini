@@ -19,6 +19,13 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
   const [showTranscript, setShowTranscript] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
+  const fallbackAudioSrc = `/api/scout-briefs/${brief.artifactId}/audio`;
+  const initialAudioSrc = brief.audioUrl?.startsWith("http") && !brief.audioUrl.includes("/api/")
+    ? fallbackAudioSrc
+    : (brief.audioUrl || fallbackAudioSrc);
+
+  const [currentAudioSrc, setCurrentAudioSrc] = useState(initialAudioSrc);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -31,8 +38,17 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
     };
     const handleEnded = () => setIsPlaying(false);
     const handleError = () => {
-      setIsPlaying(false);
-      setErrorStatus("Audio stream playback failed. Please view transcript.");
+      if (currentAudioSrc !== fallbackAudioSrc) {
+        // Fallback to local audio API endpoint
+        setCurrentAudioSrc(fallbackAudioSrc);
+        if (audioRef.current) {
+          audioRef.current.src = fallbackAudioSrc;
+          audioRef.current.load();
+        }
+      } else {
+        setIsPlaying(false);
+        setErrorStatus("Audio stream playback unavailable. You can read the full transcript below.");
+      }
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
@@ -46,7 +62,7 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
-  }, []);
+  }, [currentAudioSrc, fallbackAudioSrc]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;
@@ -61,7 +77,19 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
         setErrorStatus(null);
       }).catch((err) => {
         console.warn("[ScoutBrief] Audio play failed:", err);
-        setErrorStatus("Playback error. You can read the full transcript below.");
+        if (currentAudioSrc !== fallbackAudioSrc) {
+          setCurrentAudioSrc(fallbackAudioSrc);
+          audio.src = fallbackAudioSrc;
+          audio.load();
+          audio.play().then(() => {
+            setIsPlaying(true);
+            setErrorStatus(null);
+          }).catch(() => {
+            setErrorStatus("Audio stream playback unavailable. You can read the full transcript below.");
+          });
+        } else {
+          setErrorStatus("Playback error. You can read the full transcript below.");
+        }
       });
     }
   };
@@ -101,7 +129,7 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
     <section className="scout-brief-player-container" aria-label="Audio Scout Briefing">
       <audio
         ref={audioRef}
-        src={brief.audioUrl}
+        src={currentAudioSrc}
         preload="metadata"
       />
 

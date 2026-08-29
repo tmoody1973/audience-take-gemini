@@ -52,9 +52,10 @@ export async function generateAndPublishScoutBrief(
 
   // 5. Stage 3: Process Audio & Packaging (PCM to WAV)
   const processedAudio = wrapPcmToWav(ttsResult.base64Pcm, ttsResult.sampleRate);
+  scoutBriefStore.saveAudioBuffer(artifactId, processedAudio.wavBuffer);
 
   const storagePath = `public/projects/${card.projectId}/scout-briefs/${card.cardVersionId}/g${generationVersion}.wav`;
-  const audioUrl = `https://storage.googleapis.com/test-app-mkark4.appspot.com/${storagePath}`;
+  const audioUrl = `/api/scout-briefs/${artifactId}/audio`;
 
   // 6. Build immutable public ScoutBrief record
   const scoutBrief: ScoutBrief = {

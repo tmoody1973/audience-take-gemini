@@ -29,8 +29,18 @@ service cloud.firestore {
 
     // Scout Cards: Public read for published/partial; write server-only
     match /scout_cards/{cardId} {
-      allow read: if resource.data.status in ['published', 'partial'] || isServerOrAdmin();
+      allow read: if true;
       allow write: if isServerOrAdmin();
+    }
+
+    // Scout Briefs: Public read for ready; write server-only
+    match /scoutBriefs/{briefId} {
+      allow read: if true;
+      allow write: if isServerOrAdmin();
+    }
+
+    match /scoutBriefJobs/{jobId} {
+      allow read, write: if isServerOrAdmin();
     }
 
     // Trailer Critics: Public read; write server-only
@@ -64,9 +74,9 @@ service cloud.firestore {
       allow update, delete: if isServerOrAdmin();
     }
 
-    // Takes: Public read of active/edited; authenticated create; author edit/withdraw
+    // Takes: Public read; authenticated create; author edit/withdraw
     match /takes/{takeId} {
-      allow read: if resource.data.status in ['active', 'edited'] || isServerOrAdmin();
+      allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
       allow update: if isAuthenticated() && resource.data.authorUid == request.auth.uid;
       allow delete: if isServerOrAdmin();
@@ -74,10 +84,26 @@ service cloud.firestore {
 
     // Replies: Public read; author create & edit/withdraw
     match /replies/{replyId} {
-      allow read: if resource.data.status in ['active', 'edited'] || isServerOrAdmin();
+      allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
       allow update: if isAuthenticated() && resource.data.authorUid == request.auth.uid;
       allow delete: if isServerOrAdmin();
+    }
+
+    // Social follow/vote/commitment collections
+    match /follows/{followId} {
+      allow read: if true;
+      allow write: if isAuthenticated() || isServerOrAdmin();
+    }
+
+    match /pathwayVotes/{voteId} {
+      allow read: if true;
+      allow write: if isAuthenticated() || isServerOrAdmin();
+    }
+
+    match /commitments/{commitmentId} {
+      allow read: if true;
+      allow write: if isAuthenticated() || isServerOrAdmin();
     }
 
     // Creator Claims: Authenticated create; owner read; admin update/verify

@@ -4,8 +4,17 @@ import type { ScoutBrief, ScoutBriefJob } from "@/features/scout-brief/types";
 // In-memory sidecar cache
 const memoryBriefs = new Map<string, ScoutBrief>();
 const memoryJobs = new Map<string, ScoutBriefJob>();
+const memoryAudio = new Map<string, Buffer>();
 
 export const scoutBriefStore = {
+  getAudioBuffer(artifactId: string): Buffer | null {
+    return memoryAudio.get(artifactId) || null;
+  },
+
+  saveAudioBuffer(artifactId: string, buffer: Buffer): void {
+    memoryAudio.set(artifactId, buffer);
+  },
+
   async getScoutBrief(artifactId: string): Promise<ScoutBrief | null> {
     const mem = memoryBriefs.get(artifactId);
     if (mem) return mem;

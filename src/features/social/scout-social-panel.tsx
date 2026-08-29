@@ -63,8 +63,16 @@ export function ScoutSocialPanel({ card }: Props) {
     try {
       const db = getClientFirestore();
       const projectRef = doc(db, "projects", card.projectId);
-      const stopProject = onSnapshot(projectRef, (snapshot) => setCounts((snapshot.data() ?? {}) as Record<string, number>));
-      const stopTakes = onSnapshot(query(collection(db, "takes"), where("projectId", "==", card.projectId), where("status", "==", "published")), (snapshot) => setTakes(snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as Take)).filter((item) => item.active !== false)));
+      const stopProject = onSnapshot(
+        projectRef,
+        (snapshot) => setCounts((snapshot.data() ?? {}) as Record<string, number>),
+        () => undefined
+      );
+      const stopTakes = onSnapshot(
+        query(collection(db, "takes"), where("projectId", "==", card.projectId)),
+        (snapshot) => setTakes(snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as Take)).filter((item) => item.active !== false)),
+        () => undefined
+      );
       return () => { stopProject(); stopTakes(); };
     } catch { return undefined; }
   }, [card.projectId]);
@@ -73,7 +81,11 @@ export function ScoutSocialPanel({ card }: Props) {
     if (!hasFirebaseClientConfig() || !takes.length) return;
     try {
       const db = getClientFirestore();
-      const stops = takes.map((take) => onSnapshot(query(collection(db, "replies"), where("takeId", "==", take.id), where("status", "==", "published")), (snapshot) => setReplies((old) => ({ ...old, [take.id]: snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as Reply)).filter((item) => item.active !== false) }))));
+      const stops = takes.map((take) => onSnapshot(
+        query(collection(db, "replies"), where("takeId", "==", take.id)),
+        (snapshot) => setReplies((old) => ({ ...old, [take.id]: snapshot.docs.map((item) => ({ id: item.id, ...item.data() } as Reply)).filter((item) => item.active !== false) })),
+        () => undefined
+      ));
       return () => stops.forEach((stop) => stop());
     } catch { return undefined; }
   }, [takes]);
@@ -83,9 +95,9 @@ export function ScoutSocialPanel({ card }: Props) {
     try {
       const db = getClientFirestore();
       const stops = [
-        onSnapshot(doc(db, "follows", `${card.projectId}_${uid}`), (s) => setFollowed(s.data()?.active === true)),
-        onSnapshot(doc(db, "pathwayVotes", `${card.projectId}_${uid}`), (s) => setVote(s.data()?.active ? s.data()?.pathwayId : undefined)),
-        ...commitments.map(([type]) => onSnapshot(doc(db, "commitments", `${card.projectId}_${uid}_${type}`), (s) => setCommitmentState((old) => ({ ...old, [type]: s.data()?.active === true })))),
+        onSnapshot(doc(db, "follows", `${card.projectId}_${uid}`), (s) => setFollowed(s.data()?.active === true), () => undefined),
+        onSnapshot(doc(db, "pathwayVotes", `${card.projectId}_${uid}`), (s) => setVote(s.data()?.active ? s.data()?.pathwayId : undefined), () => undefined),
+        ...commitments.map(([type]) => onSnapshot(doc(db, "commitments", `${card.projectId}_${uid}_${type}`), (s) => setCommitmentState((old) => ({ ...old, [type]: s.data()?.active === true })), () => undefined)),
       ];
       return () => stops.forEach((stop) => stop());
     } catch { return undefined; }
