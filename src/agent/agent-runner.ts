@@ -11,6 +11,7 @@ import { parallelClient } from "@/services/parallel-client";
 import { validateScoutProposal } from "./deterministic-validator";
 import { dataRepo } from "@/services/firestore-repo";
 import { analyzeTrailerVideo } from "@/critic/trailer-critic-engine";
+import { cleanTextExcerpt } from "@/features/scout-card/evidence-display";
 import type { ResearchRunState, ScoutCard } from "@/domain";
 
 export async function executeScoutResearchRun(runId: string): Promise<ResearchRunState> {
@@ -124,6 +125,7 @@ STRICT INVARIANTS:
 3. Concordant medium: If medium is 'webseries', 'series', 'short', 'feature', 'documentary', shape pathways accordingly.
 4. Exactly 3 realistic growth pathways with a concrete next experiment.
 5. Extract evidence items with claim types: 'observation', 'reported', 'inference', 'conflict', 'unresolved'.
+6. CLEAN TEXT ONLY: Never output raw markdown links [text](url), headers #, image tags ![], or website navigation boilerplate in whatWeKnow or evidenceLedger. Synthesize clean, professional, factual 1-2 sentence statements.
 `;
 
         const userPrompt = `
@@ -280,21 +282,37 @@ Output MUST strictly adhere to the following JSON structure:
       verified: true,
     };
 
-    const parallelEvidence = (parallelResults.results || []).slice(0, 4).map((r, i) => {
-      let host = "Web Citation";
-      try {
-        host = new URL(r.url).hostname.replace(/^www\./, "");
-      } catch {}
-      return {
-        id: `ev-parallel-${i + 1}`,
-        sourceUrl: r.url,
-        title: r.title,
-        publisher: host,
-        claimType: "reported" as const,
-        excerpt: r.excerpts?.[0] || r.title,
-        verified: true,
-      };
-    });
+    const titleTokens = (proposalData.projectTitle || "")
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t: string) => t.length > 2);
+
+    const parallelEvidence = (parallelResults.results || [])
+      .filter((r) => {
+        const fullText = `${r.title} ${r.excerpts?.join(" ") || ""}`.toLowerCase();
+        return titleTokens.length === 0 || titleTokens.some((tok: string) => fullText.includes(tok));
+      })
+      .slice(0, 3)
+      .map((r, i) => {
+        let host = "Web Citation";
+        try {
+          host = new URL(r.url).hostname.replace(/^www\./, "");
+        } catch {}
+        const geminiMatched = (proposalData.evidenceLedger || []).find(
+          (e: any) => e.sourceUrl === r.url || e.title?.toLowerCase() === r.title?.toLowerCase()
+        );
+        const rawExcerpt = geminiMatched?.excerpt || r.excerpts?.[0] || r.title;
+        const cleaned = cleanTextExcerpt(rawExcerpt, r.title);
+        return {
+          id: `ev-parallel-${i + 1}`,
+          sourceUrl: r.url,
+          title: r.title,
+          publisher: host,
+          claimType: "reported" as const,
+          excerpt: cleaned || r.title,
+          verified: true,
+        };
+      });
 
     proposalData.evidenceLedger = [primaryVideoEvidence, ...parallelEvidence];
 

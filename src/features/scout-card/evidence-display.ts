@@ -110,3 +110,82 @@ export function sourcePresentation(source: SourceLedgerEntry): { role: string; t
         : "Unverified source";
   return { role, tier };
 }
+
+export function cleanTextExcerpt(raw: string, fallbackTitle?: string): string {
+  if (!raw && !fallbackTitle) return "";
+  let text = raw || "";
+  // Remove markdown image syntax ![alt](url)
+  text = text.replace(/!\[.*?\]\(.*?\)/g, "");
+  // Replace markdown link syntax [text](url) with just text (or remove if navigational/boilerplate)
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, (_, linkText) => {
+    const lower = linkText.toLowerCase();
+    if (
+      lower.includes("subscribe") ||
+      lower.includes("home") ||
+      lower.includes("homepage") ||
+      lower.includes("password") ||
+      lower.includes("sign in") ||
+      lower.includes("login") ||
+      lower.includes("cookie") ||
+      lower.includes("read more") ||
+      lower.includes("share")
+    ) {
+      return "";
+    }
+    return linkText;
+  });
+
+  // Remove leading partial url slugs like "com/foo-bar/?share=abc)"
+  text = text.replace(/^[a-z0-9_.-]*\.(com|ie|org|net|co|io|uk|ai|tv)\/[^\s\)]*\)?\s*/gi, "");
+  text = text.replace(/^[^\s\(\[]*\)\s*/g, "");
+
+  // Remove Markdown headers (#, ##, etc.)
+  text = text.replace(/#+\s+/g, "");
+  // Remove Markdown bold/italics
+  text = text.replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, "$1");
+  // Remove repeated whitespace and list markers
+  text = text.replace(/^[\s*•-]+/g, "").replace(/\s+/g, " ").trim();
+  // Filter out leading boilerplate words
+  text = text.replace(/^(subscribe|sign in|forgot your password|read more|image:?|you may also like:?)\s*/i, "");
+
+  // Remove trailing "You may also like..." or listicle junk
+  text = text.replace(/\b(you may also like|related articles|share this|read next|more stories).*/i, "").trim();
+
+  // Find sentences and exclude non-content snippets
+  const sentences = text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(
+      (s) =>
+        s.length > 20 &&
+        !s.toLowerCase().includes("subscribe") &&
+        !s.toLowerCase().includes("password") &&
+        !s.toLowerCase().includes("cookie policy") &&
+        !/\d+\+\s+(best|top|of)/i.test(s) &&
+        !/best\s+.*\s+of\s+all\s+time/i.test(s) &&
+        !/woman holding/i.test(s)
+    );
+
+  if (sentences.length > 0) {
+    text = sentences.slice(0, 2).join(" ");
+  } else if (fallbackTitle) {
+    text = fallbackTitle.replace(/#+\s+/g, "").replace(/[*_]/g, "").trim();
+  }
+
+  // If text became too short or lost meaning, fallback to title
+  if (text.length < 25 && fallbackTitle) {
+    text = fallbackTitle.replace(/#+\s+/g, "").replace(/[*_]/g, "").trim();
+  }
+
+  if (text.length > 250) {
+    const truncated = text.slice(0, 250);
+    const lastPeriod = truncated.lastIndexOf(".");
+    if (lastPeriod > 120) {
+      text = truncated.slice(0, lastPeriod + 1);
+    } else {
+      const lastSpace = truncated.lastIndexOf(" ");
+      text = (lastSpace > 50 ? truncated.slice(0, lastSpace) : truncated) + "...";
+    }
+  }
+  return text.trim();
+}

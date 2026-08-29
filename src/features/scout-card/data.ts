@@ -7,6 +7,7 @@ import unavailableMediaFixture from "./fixtures/junichiro-card-unavailable-media
 import { getAdminFirestore } from "../../lib/firebase/admin";
 import { youtubeVideoId } from "../../lib/media/youtube";
 import { dataRepo } from "../../services/firestore-repo";
+import { cleanTextExcerpt } from "./evidence-display";
 import type { ClaimStatus, ScoutCard } from "./types";
 
 export const JUNICHIO_SLUG = "junichiro-jackson";
@@ -350,13 +351,21 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         },
         sourceIds,
         claimIds,
-        evidenceClaims: (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ({
-          id: ev.id || `claim-${idx + 1}`,
-          statement: ev.excerpt || ev.title,
-          status: "supported" as const,
-          sourceIds: [ev.id || `source-${idx + 1}`],
-          qualification: null,
-        })),
+        evidenceClaims: (() => {
+          const rawClaims = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ({
+            id: ev.id || `claim-${idx + 1}`,
+            statement: cleanTextExcerpt(ev.excerpt || ev.title, ev.title),
+            status: "supported" as const,
+            sourceIds: [ev.id || `source-${idx + 1}`],
+            qualification: null,
+          }));
+          const seen = new Set<string>();
+          return rawClaims.filter((c: any) => {
+            if (!c.statement || seen.has(c.statement.toLowerCase())) return false;
+            seen.add(c.statement.toLowerCase());
+            return true;
+          });
+        })(),
         externalSignals: [],
         pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
         pathways: (dynamicCard.pathways || []).slice(0, 3).map((pw: any, idx: number) => ({
