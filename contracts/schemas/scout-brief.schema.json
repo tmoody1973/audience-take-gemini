@@ -1,0 +1,193 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ScoutBrief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactId",
+    "projectId",
+    "cardVersionId",
+    "runId",
+    "researchVersion",
+    "generationVersion",
+    "status",
+    "visibility",
+    "language",
+    "title",
+    "durationMs",
+    "wordCount",
+    "scriptModelId",
+    "ttsModelId",
+    "speakers",
+    "transcript",
+    "sourceIds",
+    "claimIds",
+    "pathwayIds",
+    "storagePath",
+    "audioUrl",
+    "mimeType",
+    "sizeBytes",
+    "sha256",
+    "generatedAt"
+  ],
+  "properties": {
+    "artifactId": {
+      "type": "string",
+      "pattern": "^scout-brief-[a-zA-Z0-9_-]+$"
+    },
+    "projectId": {
+      "type": "string"
+    },
+    "cardVersionId": {
+      "type": "string"
+    },
+    "runId": {
+      "type": "string"
+    },
+    "researchVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generationVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "generating_script", "script_ready", "generating_audio", "ready", "failed"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "private", "unlisted"]
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en-US"]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 60000,
+      "maximum": 600000
+    },
+    "wordCount": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 1200
+    },
+    "scriptModelId": {
+      "type": "string"
+    },
+    "ttsModelId": {
+      "type": "string"
+    },
+    "speakers": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["speaker", "voice"],
+        "properties": {
+          "speaker": {
+            "type": "string",
+            "enum": ["Scout", "Analyst"]
+          },
+          "voice": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "transcript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["segments", "limitations", "disclosure"],
+      "properties": {
+        "segments": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["order", "section", "speaker", "text", "claimIds", "sourceIds"],
+            "properties": {
+              "order": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "section": {
+                "type": "string",
+                "enum": ["hook", "project", "evidence", "uncertainty", "pathways", "next_move"]
+              },
+              "speaker": {
+                "type": "string",
+                "enum": ["Scout", "Analyst"]
+              },
+              "text": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 2000
+              },
+              "claimIds": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "sourceIds": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "disclosure": {
+          "type": "string"
+        }
+      }
+    },
+    "sourceIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "claimIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "pathwayIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "storagePath": {
+      "type": "string"
+    },
+    "audioUrl": {
+      "type": "string"
+    },
+    "mimeType": {
+      "type": "string",
+      "enum": ["audio/wav", "audio/mpeg", "audio/mp4", "audio/aac"]
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 1000
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

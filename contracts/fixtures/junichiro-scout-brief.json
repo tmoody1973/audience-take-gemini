@@ -1,0 +1,86 @@
+{
+  "artifactId": "scout-brief-card-proj-junichiro-v1-g1",
+  "projectId": "proj-junichiro",
+  "cardVersionId": "card-proj-junichiro-v1",
+  "runId": "run-junichiro-01",
+  "researchVersion": 1,
+  "generationVersion": 1,
+  "status": "ready",
+  "visibility": "public",
+  "language": "en-US",
+  "title": "Junichiro Jackson — Audio Scout Brief",
+  "durationMs": 224000,
+  "wordCount": 540,
+  "scriptModelId": "gemini-3.5-flash",
+  "ttsModelId": "gemini-3.1-flash-tts-preview",
+  "speakers": [
+    { "speaker": "Scout", "voice": "Kore" },
+    { "speaker": "Analyst", "voice": "Puck" }
+  ],
+  "transcript": {
+    "segments": [
+      {
+        "order": 1,
+        "section": "hook",
+        "speaker": "Scout",
+        "text": "Welcome to Audience Take. Today we're breaking down Junichiro Jackson, a high-octane anime pilot with over five hundred thousand organic views and an extraordinary 98 out of 100 Audience Heat rating.",
+        "claimIds": ["claim-1"],
+        "sourceIds": ["src-yt-01"]
+      },
+      {
+        "order": 2,
+        "section": "project",
+        "speaker": "Analyst",
+        "text": "Right, Scout. Created as an independent proof of concept, this project blends retro mecha aesthetics with modern hyper-stylized choreography. But let's look at the financial foundation: they raised over two hundred thousand euros on Kickstarter from verified fan backers.",
+        "claimIds": ["claim-1", "claim-2"],
+        "sourceIds": ["src-ks-01"]
+      },
+      {
+        "order": 3,
+        "section": "evidence",
+        "speaker": "Scout",
+        "text": "And the audience resonance is off the charts. YouTube comment analysis shows overwhelming demand for full episodic treatment, physical artbooks, and vinyl soundtracks, with an average backer spend of over sixty euros.",
+        "claimIds": ["claim-2"],
+        "sourceIds": ["src-yt-01", "src-ks-01"]
+      },
+      {
+        "order": 4,
+        "section": "uncertainty",
+        "speaker": "Analyst",
+        "text": "There are operational questions to evaluate. The unit cost for hand-drawn 2D action animation sits around twenty thousand euros per minute. Without an established coproduction studio attached, scaling beyond short form presents cash-flow risk.",
+        "claimIds": ["claim-3"],
+        "sourceIds": ["src-trade-01"]
+      },
+      {
+        "order": 5,
+        "section": "pathways",
+        "speaker": "Scout",
+        "text": "The Gemini Agent mapped three distinct development pathways: first, a prestige limited anime series for streaming buyers like Adult Swim or Prime Video; second, a direct-to-consumer crowdfunded OVA; and third, a graphic novel and webcomic franchise.",
+        "claimIds": ["claim-1", "claim-3"],
+        "sourceIds": ["src-trade-01"]
+      },
+      {
+        "order": 6,
+        "section": "next_move",
+        "speaker": "Analyst",
+        "text": "The immediate recommended experiment is to package an eight-page production bible with the existing animation teaser and secure a European animation coproduction partner before opening a series writer's room.",
+        "claimIds": ["claim-3"],
+        "sourceIds": ["src-trade-01"]
+      }
+    ],
+    "limitations": [
+      "Production timeline subject to studio co-financing agreements.",
+      "International rights distribution depends on animation tax credit approvals."
+    ],
+    "disclosure": "AI-generated Scout Brief based on the cited Scout Card and verified public evidence."
+  },
+  "sourceIds": ["src-yt-01", "src-ks-01", "src-trade-01"],
+  "claimIds": ["claim-1", "claim-2", "claim-3"],
+  "pathwayIds": ["pathway-1", "pathway-2", "pathway-3"],
+  "storagePath": "public/projects/proj-junichiro/scout-briefs/card-proj-junichiro-v1/g1.wav",
+  "audioUrl": "https://storage.googleapis.com/test-app-mkark4.appspot.com/public/projects/proj-junichiro/scout-briefs/card-proj-junichiro-v1/g1.wav",
+  "mimeType": "audio/wav",
+  "sizeBytes": 10752044,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "generatedAt": "2026-08-29T12:00:00Z"
+}
