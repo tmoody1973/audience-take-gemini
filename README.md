@@ -145,9 +145,25 @@ When a user or scout nominates any public URL (YouTube, Vimeo, Kickstarter, pers
 5. **Multimodal Trailer Critic Execution**: Performs frame-accurate audiovisual criticism, extracting timestamped story beats, pacing rhythm, and emotional arcs.
 6. **Deterministic Verification**: Validates all data through strict Zod schemas before writing to Firestore, ensuring zero unsupported claims.
 
+### 2. How We Use the Google Agent Development Kit (ADK / Antigravity SDK)
+The entire intelligence loop is built on the **Google Agent Development Kit (ADK)** architecture, providing enterprise-grade agent orchestration, tool integration, and deterministic reliability:
+
+- **State Machine & Multi-Stage Pipeline Orchestration**:
+  - The ADK manages the autonomous lifecycle (`intake` ➔ `fetching` ➔ `trade_search` ➔ `classifying` ➔ `extracting_evidence` ➔ `validating` ➔ `complete`).
+  - Manages asynchronous background tasks, progress streaming, error recovery, and audit receipts in Firestore.
+- **Deterministic Hallucination Guardrails**:
+  - Enforces the **Clean-Room Verification Barrier**: The ADK prevents the LLM from writing directly to the database. Every generated claim must pass through strict Zod schema validation and have at least one verified source ID in the citation ledger.
+- **Tool Protocol & Skill Execution**:
+  - Connects Google Gemini reasoning models with external tools via standardized tool calling protocols:
+    - `Parallel Search / Fetch / Monitor` APIs for real-time web discovery.
+    - `YouTube Data API v3` for live engagement and comment extraction.
+    - `Multimodal Video Critic` for frame-accurate temporal analysis.
+- **Living Dossier & Autonomous Cron Lifecycle**:
+  - The ADK lifecycle engine handles event-driven wakeups, scheduled milestone checks, and versioned diff tracking across project updates.
+
 ---
 
-### 2. How We Use the Google GenAI SDK (`@google/genai`) & Gemini Models
+### 3. How We Use the Google GenAI SDK (`@google/genai`) & Gemini Models
 Audience Take leverages Google's latest next-generation reasoning and multimodal models via the official `@google/genai` SDK:
 
 - **Google Gemini 3.5 Flash (`gemini-3.5-flash`)**:
@@ -162,7 +178,7 @@ Audience Take leverages Google's latest next-generation reasoning and multimodal
 
 ---
 
-### 3. How We Use Parallel Systems (Hackathon Partner) in Detail
+### 4. How We Use Parallel Systems (Hackathon Partner) in Detail
 Parallel Systems serves as the **Real-Time Web Intelligence, Extraction & Autonomous Monitoring Engine** that powers the agent's external fact-checking and Living Dossier freshness:
 
 - **1. Parallel Search API (`https://api.parallel.ai/v1/search`) — Targeted Trade Discovery**:
@@ -188,7 +204,7 @@ Parallel Systems serves as the **Real-Time Web Intelligence, Extraction & Autono
 
 ---
 
-### 4. How We Use Google Cloud Platform (GCP) & Infrastructure
+### 5. How We Use Google Cloud Platform (GCP) & Infrastructure
 - **Google Cloud YouTube Data API v3 (`youtube.googleapis.com`)**:
   - Live query engine fetching real-time video statistics (views, likes, comments) and relevant comment threads for Gemini's Fandom DNA analyzer.
 - **Google Cloud Run**:
