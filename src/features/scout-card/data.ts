@@ -413,10 +413,10 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           analysisVersion: 1,
           cardVersionId: dynamicCard.id,
           structuralNarrative: {
-            genreSignaling: dynamicCritic.genreAndForm,
-            narrativeDelivery: dynamicCritic.summary,
+            genreSignaling: dynamicCritic.genreAndForm || "Independent Comedy",
+            narrativeDelivery: dynamicCritic.summary || dynamicCritic.whyItMayConnect || dynamicCritic.genreAndForm || "Character-driven comedy teaser",
             trailerType: "Concept Pitch",
-            beats: (dynamicCritic.timestampedBeats || []).slice(0, 4).map((b: any) => ({
+            beats: (dynamicCritic.timestampedBeats || []).slice(0, 6).map((b: any) => ({
               label: b.label || b.description?.slice(0, 30) || "Narrative Beat",
               start: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:00",
               end: b.timestampFormatted?.includes(":") ? b.timestampFormatted : "00:30",
@@ -442,8 +442,8 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
             persuasiveArgument: dynamicCritic.persuasionAndEmotion?.callToAction || "Call to follow project.",
           },
           matrix: [
-            { category: "genre" as const, analysis: dynamicCritic.genreAndForm },
-            { category: "narrative_stance" as const, analysis: dynamicCritic.summary },
+            { category: "genre" as const, analysis: dynamicCritic.genreAndForm || "Independent Comedy" },
+            { category: "narrative_stance" as const, analysis: dynamicCritic.summary || dynamicCritic.whyItMayConnect || "Vibrant, character-driven comedy" },
             { category: "usp" as const, analysis: dynamicCritic.whyItMayConnect || "Unique voice." },
             { category: "target_audience" as const, analysis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Independent audiences." },
             { category: "sound_music" as const, analysis: dynamicCritic.craftAnalysis?.soundAndScore || "Sound design." },

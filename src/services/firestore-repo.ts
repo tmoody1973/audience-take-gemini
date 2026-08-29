@@ -950,11 +950,20 @@ export const dataRepo = {
   async getTrailerCriticById(criticId: string): Promise<TrailerCritic | null> {
     const memory = store.trailerCritics.get(criticId);
     if (memory) return memory;
+    for (const critic of store.trailerCritics.values()) {
+      if (critic.projectId === criticId || critic.id.includes(criticId)) return critic;
+    }
     try {
       const db = getAdminFirestore();
       const doc = await db.collection("videoAnalyses").doc(criticId).get();
       if (doc.exists) {
         const tc = doc.data() as TrailerCritic;
+        store.trailerCritics.set(tc.id, tc);
+        return tc;
+      }
+      const projectQuery = await db.collection("videoAnalyses").where("projectId", "==", criticId).limit(1).get();
+      if (!projectQuery.empty) {
+        const tc = projectQuery.docs[0].data() as TrailerCritic;
         store.trailerCritics.set(tc.id, tc);
         return tc;
       }
