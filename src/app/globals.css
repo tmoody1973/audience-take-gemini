@@ -1622,14 +1622,11 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 }
 
 .wall-hook-text {
-  margin: 0 0 8px;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: #2b2927;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  margin: 6px 0 12px;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #1a1816;
+  display: block;
 }
 
 /* Enlarged Audience Pulse Ledger Section */
