@@ -57,7 +57,7 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: /^sign in$/i })).toHaveAttribute("href", "/sign-in?returnTo=%2Fnominate");
   });
 
-  it("replaces sign in with sign out for an authenticated user", async () => {
+  it("replaces sign in with sign out and shows My Nominations link for an authenticated user", async () => {
     authMocks.onAuthStateChanged.mockImplementation((_auth, next) => {
       next({ uid: "fan-1" });
       return vi.fn();
@@ -65,6 +65,7 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
 
     expect(screen.queryByRole("link", { name: /^sign in$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^04 my nominations$/i })).toHaveAttribute("href", "/my-nominations");
     fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
     await waitFor(() => expect(authMocks.signOutCurrentUser).toHaveBeenCalledOnce());
   });

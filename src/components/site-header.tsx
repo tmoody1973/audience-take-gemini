@@ -19,6 +19,7 @@ export function SiteHeader() {
   const [signingOut, setSigningOut] = useState(false);
   const homeIsCurrent = pathname === "/";
   const wallIsCurrent = pathname === "/projects" || pathname?.startsWith("/projects/") === true;
+  const nominationsIsCurrent = pathname === "/my-nominations";
   const returnTo = encodeURIComponent(pathname || "/");
 
   useEffect(() => {
@@ -60,6 +61,11 @@ export function SiteHeader() {
         <Link href="/#selects">
           <span>03</span> The Selects
         </Link>
+        {authState === "signed-in" ? (
+          <Link href="/my-nominations" aria-current={nominationsIsCurrent ? "page" : undefined}>
+            <span>04</span> My Nominations
+          </Link>
+        ) : null}
       </nav>
       <div className="header-actions">
         {authAction}
