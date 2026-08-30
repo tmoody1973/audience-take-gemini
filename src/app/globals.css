@@ -1627,10 +1627,71 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   overflow: hidden;
 }
 
-/* Seamless Integrated Card Podcast Player (No Island / No Floating Box) */
+/* Enlarged Audience Pulse Ledger Section */
+.wall-audience-pulse-expanded {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 10px 0 14px;
+  background: #ffffff;
+  border: 1px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.pulse-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px 6px;
+  border-right: 1px solid var(--ink);
+}
+
+.pulse-stat-box:last-child {
+  border-right: 0;
+}
+
+.pulse-val {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  line-height: 0.85;
+  font-weight: 400;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pulse-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--meta);
+  font-size: 0.56rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #555;
+  margin-top: 3px;
+}
+
+.pulse-lbl svg {
+  color: var(--coral);
+}
+
+/* Full-Width Bottom Docked Podcast Player & Action Bar */
+.wall-card-bottom-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1.5px solid var(--ink);
+}
+
+/* Seamless Integrated Card Podcast Player (Full Width in Bottom Dock) */
 .wall-podcast-player {
-  margin: 6px 0 4px;
-  padding: 4px 0;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -1655,8 +1716,8 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   background: var(--ink);
   color: var(--yellow);
@@ -1695,7 +1756,7 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   align-items: center;
   gap: 4px;
   font-family: var(--meta);
-  font-size: 0.54rem;
+  font-size: 0.52rem;
   font-weight: 900;
   text-transform: uppercase;
   color: var(--blue);
@@ -1703,7 +1764,7 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 
 .wall-podcast-time {
   font-family: var(--meta);
-  font-size: 0.58rem;
+  font-size: 0.56rem;
   font-weight: 850;
   color: #555;
   font-variant-numeric: tabular-nums;
@@ -1745,60 +1806,22 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   margin-top: 2px;
 }
 
-/* Card Bottom Bar: Audience Pulse + Open Action */
-.wall-card-bottom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px dashed #dcd5c5;
-}
-
-.wall-pulse-quick-signals {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pulse-signal-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--meta);
-  font-size: 0.58rem;
-  color: #444;
-  text-transform: uppercase;
-}
-
-.pulse-signal-item b {
-  font-family: var(--display);
-  font-size: 1.1rem;
-  line-height: 0.85;
-  color: var(--ink);
-}
-
-.pulse-signal-item small {
-  font-weight: 850;
-  color: #666;
-}
-
 .wall-open-link {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   color: var(--blue);
   font-family: var(--meta);
-  font-size: 0.62rem;
+  font-size: 0.64rem;
   font-weight: 900;
   text-transform: uppercase;
   text-decoration: none;
-  padding: 4px 8px;
+  padding: 5px 9px;
   background: #eef2ff;
-  border: 1px solid var(--blue);
+  border: 1.5px solid var(--blue);
   transition: all 0.1s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .wall-open-link:hover {
@@ -1824,6 +1847,14 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   }
   .wall-compact-card {
     grid-template-columns: 46px minmax(0, 1fr);
+  }
+  .wall-card-bottom-dock {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .wall-open-link {
+    justify-content: center;
   }
 }
 

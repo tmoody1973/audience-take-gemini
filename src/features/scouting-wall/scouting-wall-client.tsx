@@ -523,7 +523,7 @@ export function ScoutingWallClient({ initialEntries }: Props) {
 
                 {/* Main Card Content */}
                 <div className="wall-cell-copy">
-                  {/* Top Bar: Type Tag + Evidence Status */}
+                  {/* Top Bar: Type Tag + Evidence Status + Scores */}
                   <div className="wall-card-top-bar">
                     <div className="wall-card-badges">
                       <span className="wall-type-badge">{projectTypeLabels[entry.projectType]}</span>
@@ -553,26 +553,29 @@ export function ScoutingWallClient({ initialEntries }: Props) {
                   {/* 2. Film Description (Hook / Logline) */}
                   <p className="wall-hook-text">{entry.hook}</p>
 
-                  {/* 3. Inline 2-Speaker Podcast Audio Player */}
-                  <CardPodcastPlayer
-                    entry={entry}
-                    activePlayingId={activePlayingId}
-                    setActivePlayingId={setActivePlayingId}
-                  />
-
-                  {/* 4. Audience Pulse Strip + Open Action */}
-                  <div className="wall-card-bottom-bar">
-                    <div className="wall-pulse-quick-signals" title="Organic Audience Pulse Signals">
-                      <span className="pulse-signal-item">
-                        <Users size={12} /> <b>{entry.audiencePulse.follows}</b> <small>Follows</small>
-                      </span>
-                      <span className="pulse-signal-item">
-                        <Flame size={12} /> <b>{entry.audiencePulse.wouldWatch}</b> <small>Watch</small>
-                      </span>
-                      <span className="pulse-signal-item">
-                        <b>{entry.audiencePulse.wouldPay}</b> <small>Pay</small>
-                      </span>
+                  {/* 3. Enlarged Audience Pulse Ledger Section */}
+                  <div className="wall-audience-pulse-expanded" aria-label="Audience Pulse Signals">
+                    <div className="pulse-stat-box">
+                      <span className="pulse-val">{entry.audiencePulse.follows}</span>
+                      <span className="pulse-lbl"><Users size={11} /> Follows</span>
                     </div>
+                    <div className="pulse-stat-box">
+                      <span className="pulse-val">{entry.audiencePulse.wouldWatch}</span>
+                      <span className="pulse-lbl"><Flame size={11} /> Would Watch</span>
+                    </div>
+                    <div className="pulse-stat-box">
+                      <span className="pulse-val">{entry.audiencePulse.wouldPay}</span>
+                      <span className="pulse-lbl">Would Pay</span>
+                    </div>
+                  </div>
+
+                  {/* 4. Full-Width Bottom Docked Podcast Player & Action */}
+                  <div className="wall-card-bottom-dock">
+                    <CardPodcastPlayer
+                      entry={entry}
+                      activePlayingId={activePlayingId}
+                      setActivePlayingId={setActivePlayingId}
+                    />
 
                     <Link 
                       href={`/projects/${entry.slug}`} 
