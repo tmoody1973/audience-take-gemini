@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { TrailerCriticView } from "@/components/critic/TrailerCriticView";
 import { YouTubeEmbed } from "@/components/ui/YouTubeEmbed";
+import { SiteHeader } from "@/components/site-header";
 import type { TrailerCritic } from "@/domain";
 
 const PRESETS = [
@@ -84,8 +85,10 @@ export default function TrailerCriticPage() {
   };
 
   return (
-    <main className="min-h-screen bg-field-paper py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="site-wrapper">
+      <SiteHeader />
+      <main className="min-h-screen bg-field-paper py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Header Ticket Banner */}
         <div className="border-3 border-ink bg-paper p-8 shadow-ticket relative overflow-hidden">
@@ -208,5 +211,6 @@ export default function TrailerCriticPage() {
 
       </div>
     </main>
+    </div>
   );
 }

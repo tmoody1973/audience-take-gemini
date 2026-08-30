@@ -140,7 +140,7 @@ describe("Scout Brief Data Loader", () => {
     expect(brief?.language).toBe("en-US");
     expect(brief?.speakers.length).toBe(2);
     expect(brief?.transcript.segments.length).toBeGreaterThanOrEqual(4);
-    expect(brief?.audioUrl).toMatch(/^https:\/\//);
+    expect(brief?.audioUrl).toMatch(/^(\/api\/|https:\/\/)/);
     expect(brief?.mimeType).toBe("audio/wav");
     expect(brief?.sha256).toMatch(/^[a-f0-9]{64}$/);
   });

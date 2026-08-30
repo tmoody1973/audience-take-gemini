@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SiteHeader } from "@/components/site-header";
 
 function SignInForm() {
   const router = useRouter();
@@ -89,8 +90,11 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<main className="sign-in-page"><p>Loading secure sign-in…</p></main>}>
-      <SignInForm />
-    </Suspense>
+    <div className="site-wrapper">
+      <SiteHeader />
+      <Suspense fallback={<main className="sign-in-page"><p>Loading secure sign-in…</p></main>}>
+        <SignInForm />
+      </Suspense>
+    </div>
   );
 }

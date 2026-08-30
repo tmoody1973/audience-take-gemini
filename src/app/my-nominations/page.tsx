@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { SiteHeader } from "@/components/site-header";
 import { MyNominationsClient } from "./my-nominations-client";
 
 export const metadata: Metadata = {
@@ -10,14 +11,17 @@ export const metadata: Metadata = {
 
 export default function MyNominationsPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="my-nominations-page paper-texture">
-          <div className="nominations-loading">Loading your scout dossier…</div>
-        </main>
-      }
-    >
-      <MyNominationsClient />
-    </Suspense>
+    <div className="site-wrapper">
+      <SiteHeader />
+      <Suspense
+        fallback={
+          <main className="my-nominations-page paper-texture">
+            <div className="nominations-loading">Loading your scout dossier…</div>
+          </main>
+        }
+      >
+        <MyNominationsClient />
+      </Suspense>
+    </div>
   );
 }

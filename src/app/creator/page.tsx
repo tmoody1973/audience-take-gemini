@@ -5,6 +5,7 @@ import { dataRepo } from "@/services/firestore-repo";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { CityDemandHeatmap } from "@/components/pulse/CityDemandHeatmap";
+import { SiteHeader } from "@/components/site-header";
 
 export default async function CreatorDeskPage() {
   const projects = await dataRepo.getProjects();
@@ -17,7 +18,9 @@ export default async function CreatorDeskPage() {
   const totalPayCommitments = projects.reduce((acc, p) => acc + (p.metrics?.payCount || 0), 0);
 
   return (
-    <div className="space-y-10 max-w-5xl mx-auto py-6 px-4 sm:px-6">
+    <div className="site-wrapper">
+      <SiteHeader />
+      <div className="space-y-10 max-w-5xl mx-auto py-6 px-4 sm:px-6">
       
       {/* Header Banner */}
       <div className="border-3 border-ink bg-paper p-8 shadow-ticket relative overflow-hidden">
@@ -197,6 +200,7 @@ export default async function CreatorDeskPage() {
         </div>
       </div>
 
+    </div>
     </div>
   );
 }
