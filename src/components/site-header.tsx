@@ -19,6 +19,7 @@ export function SiteHeader() {
   const [signingOut, setSigningOut] = useState(false);
   const homeIsCurrent = pathname === "/";
   const wallIsCurrent = pathname === "/projects" || pathname?.startsWith("/projects/") === true;
+  const aboutIsCurrent = pathname === "/about";
   const nominationsIsCurrent = pathname === "/my-nominations";
   const returnTo = encodeURIComponent(pathname || "/");
 
@@ -58,12 +59,15 @@ export function SiteHeader() {
         <Link href="/projects" aria-current={wallIsCurrent ? "page" : undefined}>
           <span>02</span> Scouting Wall
         </Link>
+        <Link href="/about" aria-current={aboutIsCurrent ? "page" : undefined}>
+          <span>03</span> About
+        </Link>
         <Link href="/#selects">
-          <span>03</span> The Selects
+          <span>04</span> The Selects
         </Link>
         {authState === "signed-in" ? (
           <Link href="/my-nominations" aria-current={nominationsIsCurrent ? "page" : undefined}>
-            <span>04</span> My Nominations
+            <span>05</span> My Nominations
           </Link>
         ) : null}
       </nav>

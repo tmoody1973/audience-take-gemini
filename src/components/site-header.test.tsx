@@ -42,6 +42,19 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     expect(screen.getByRole("link", { name: /^02 scouting wall$/i })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: /^01 home$/i })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: /^03 about$/i })).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks About current only on the /about route", () => {
+    vi.mocked(usePathname).mockReturnValue("/about");
+    const { rerender } = render(<SiteHeader />);
+    expect(screen.getByRole("link", { name: /^03 about$/i })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /^01 home$/i })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: /^02 scouting wall$/i })).not.toHaveAttribute("aria-current");
+
+    vi.mocked(usePathname).mockReturnValue("/");
+    rerender(<SiteHeader />);
+    expect(screen.getByRole("link", { name: /^03 about$/i })).not.toHaveAttribute("aria-current");
   });
 
   it("omits current-page state when the pathname is unavailable", () => {
@@ -49,6 +62,7 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     expect(screen.getByRole("link", { name: /^01 home$/i })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: /^02 scouting wall$/i })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: /^03 about$/i })).not.toHaveAttribute("aria-current");
   });
 
   it("shows the return-aware sign-in link after Firebase reports a signed-out session", () => {
@@ -65,7 +79,7 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
 
     expect(screen.queryByRole("link", { name: /^sign in$/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /^04 my nominations$/i })).toHaveAttribute("href", "/my-nominations");
+    expect(screen.getByRole("link", { name: /^05 my nominations$/i })).toHaveAttribute("href", "/my-nominations");
     fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
     await waitFor(() => expect(authMocks.signOutCurrentUser).toHaveBeenCalledOnce());
   });

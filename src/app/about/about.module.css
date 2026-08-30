@@ -1,0 +1,1013 @@
+/* ==========================================================================
+   ABOUT PAGE — PUBLIC SCOUTING PROGRAM WORLD
+   ========================================================================== */
+
+.page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 20px 100px;
+  min-height: calc(100vh - 80px);
+  color: var(--ink);
+}
+
+.skipLink {
+  position: absolute;
+  top: -100px;
+  left: 20px;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 10px 16px;
+  font-family: var(--meta);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  z-index: 1000;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: top 0.15s ease;
+}
+
+.skipLink:focus {
+  top: 16px;
+}
+
+/* 1. HERO SECTION */
+.heroSection {
+  margin: 32px 0 40px;
+  background: #ffffff;
+  border: 2.5px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+}
+
+.heroLeft {
+  padding: clamp(28px, 4vw, 48px);
+  border-right: 2px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+
+.heroH1 {
+  font-family: var(--display);
+  font-size: clamp(2.8rem, 6vw, 4.8rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  margin: 0 0 18px;
+}
+
+.heroSub {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #38342e;
+  margin: 0 0 28px;
+  max-width: 58ch;
+}
+
+.heroCtas {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 22px;
+  background: var(--coral, #f05037);
+  color: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--meta);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  min-height: 48px;
+}
+
+.primaryCta:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+  color: #ffffff;
+}
+
+.secondaryCta {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 20px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--meta);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  transition: all 0.1s ease;
+  min-height: 48px;
+}
+
+.secondaryCta:hover {
+  background: var(--yellow);
+}
+
+.heroTrustLine {
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5c574e;
+}
+
+/* Persona In-Page Navigation Directory */
+.heroRight {
+  padding: clamp(24px, 3.5vw, 40px);
+  background: #faf8f5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.directoryLabel {
+  font-family: var(--meta);
+  font-size: 0.64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #666;
+  margin-bottom: 14px;
+}
+
+.personaDirectory {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.directoryLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--meta);
+  font-size: 0.8rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.12s ease;
+  min-height: 48px;
+}
+
+.directoryLink:hover {
+  background: var(--yellow);
+  transform: translateX(3px);
+}
+
+.directoryLink span:last-child {
+  color: var(--blue);
+  font-weight: 900;
+}
+
+/* 2. THREE-CELL RESEARCH PROOF STRIP */
+.shiftSection {
+  margin-bottom: 48px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 32px 32px 28px;
+}
+
+.sectionHeader {
+  margin-bottom: 24px;
+}
+
+.sectionLabel {
+  display: block;
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+
+.sectionH2 {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0 0 14px;
+}
+
+.sectionIntro {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #3b3731;
+  max-width: 78ch;
+  margin: 0;
+}
+
+.proofGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 28px 0 16px;
+}
+
+.proofCard {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.proofMetric {
+  font-family: var(--display);
+  font-size: 2.2rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.proofCard p {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #4a453e;
+  margin: 0 0 12px;
+}
+
+.proofSource {
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.proofNote {
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  color: #777;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* 3. MISSION SECTION */
+.missionSection {
+  margin-bottom: 48px;
+  background: var(--yellow);
+  border: 2.5px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: clamp(28px, 4vw, 44px);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+}
+
+.missionQuote {
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  padding: 20px 24px;
+  max-width: 360px;
+  font-family: var(--meta);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-transform: uppercase;
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* 4. FIVE-STEP PROCESS */
+.processSection {
+  margin-bottom: 48px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+}
+
+.processList {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 20px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.processItem {
+  padding: 20px 16px;
+  border-right: 1px solid #d8d4cb;
+  display: flex;
+  flex-direction: column;
+}
+
+.processItem:last-child {
+  border-right: 0;
+}
+
+.processStepNum {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--blue);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.processItem h3 {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1;
+  margin: 0 0 10px;
+}
+
+.processItem p {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #4a453e;
+  margin: 0;
+}
+
+.processTrustNote {
+  margin-top: 18px;
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+/* 5. FOUR PERSONA BANDS */
+.personasContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 48px;
+}
+
+.personaBand {
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 32px;
+  scroll-margin-top: 90px;
+}
+
+.personaBand.isCreator {
+  background: #fdfbf7;
+  border-left: 6px solid var(--blue);
+}
+
+.personaBand.isIndustry {
+  background: #f7f9fd;
+  border-left: 6px solid var(--ink);
+}
+
+.personaBand.isFan {
+  border-left: 6px solid var(--yellow);
+}
+
+.personaBand.isVisitor {
+  border-left: 6px solid var(--evidence-mint, #cbe9d9);
+}
+
+.personaContent {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.personaFeatures {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 20px 24px;
+}
+
+.personaFeatures h4 {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #666;
+  margin: 0 0 12px;
+}
+
+.personaFeatures ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.personaFeatures li {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #3b3731;
+  position: relative;
+  padding-left: 14px;
+}
+
+.personaFeatures li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.personaFooter {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.personaSupportLine {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #666;
+}
+
+/* 6. WHAT A SCOUT CARD IS / IS NOT */
+.ledgerSection {
+  margin-bottom: 48px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+}
+
+.ledgerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 28px 0;
+}
+
+.ledgerCol {
+  padding: 24px;
+  border: 1.5px solid var(--ink);
+}
+
+.ledgerCol.isShows {
+  background: #edf8e9;
+  border-color: #2b7a0b;
+}
+
+.ledgerCol.isDoesNot {
+  background: #fff4f2;
+  border-color: #d13017;
+}
+
+.ledgerCol h3 {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledgerCol.isShows h3 {
+  color: #236509;
+}
+
+.ledgerCol.isDoesNot h3 {
+  color: #b82610;
+}
+
+.ledgerCol ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ledgerCol li {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #2b2823;
+  padding-left: 14px;
+  position: relative;
+}
+
+.ledgerCol.isShows li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #2b7a0b;
+  font-weight: 900;
+}
+
+.ledgerCol.isDoesNot li::before {
+  content: "✕";
+  position: absolute;
+  left: 0;
+  color: #d13017;
+  font-weight: 900;
+}
+
+.pullQuoteBar {
+  background: #faf8f5;
+  border-left: 4px solid var(--ink);
+  padding: 14px 20px;
+  font-family: var(--meta);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #3b3731;
+}
+
+/* 7. AI AGENTS CONTACT STRIP & BOUNDARIES */
+.aiSection {
+  margin-bottom: 48px;
+  background: var(--ink);
+  color: #ffffff;
+  border: 2.5px solid var(--ink);
+  box-shadow: 4px 4px 0 #333;
+  padding: 36px 32px;
+}
+
+.aiSection .sectionLabel {
+  color: var(--yellow);
+}
+
+.aiSection .sectionH2 {
+  color: #ffffff;
+}
+
+.aiSection .sectionIntro {
+  color: #d2cfc8;
+}
+
+.aiContactStrip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin: 32px 0 28px;
+  padding: 16px 0;
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
+}
+
+.aiStageFrame {
+  background: #1e1d1a;
+  border: 1px solid #444;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.aiStageNum {
+  font-family: var(--meta);
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--yellow);
+  margin-bottom: 6px;
+}
+
+.aiStageTitle {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #ffffff;
+  margin: 0 0 8px;
+}
+
+.aiStageDesc {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #bbb7ae;
+  margin: 0;
+}
+
+/* CSS registration mark animation */
+.registrationMark {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--yellow);
+  margin-right: 4px;
+  animation: markPulse 2s infinite ease-in-out;
+}
+
+@keyframes markPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .registrationMark {
+    animation: none;
+  }
+}
+
+.aiBoundariesBlock {
+  background: #1a1916;
+  border: 1.5px solid #444;
+  padding: 22px 26px;
+  margin-top: 24px;
+}
+
+.aiBoundariesBlock h3 {
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--coral, #f05037);
+  margin: 0 0 14px;
+}
+
+.aiBoundariesBlock ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+}
+
+.aiBoundariesBlock li {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #d6d3cb;
+  padding-left: 14px;
+  position: relative;
+}
+
+.aiBoundariesBlock li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--yellow);
+  font-weight: 900;
+}
+
+/* 8. SOCIAL LAYER TWO-LEDGER EXPLANATION */
+.socialSection {
+  margin-bottom: 48px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+}
+
+.twoLedgerDiagram {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin: 28px 0;
+}
+
+.ledgerRail {
+  padding: 20px;
+  border: 2px solid var(--ink);
+}
+
+.ledgerRail.isMint {
+  background: #edf8e9;
+  border-color: #2b7a0b;
+}
+
+.ledgerRail.isYellow {
+  background: #fff9e6;
+  border-color: #b87b00;
+}
+
+.railTitle {
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.ledgerRail.isMint .railTitle {
+  color: #236509;
+}
+
+.ledgerRail.isYellow .railTitle {
+  color: #996500;
+}
+
+.ledgerRail p {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #333;
+  margin: 0;
+}
+
+.diagramIntersection {
+  font-family: var(--display);
+  font-size: 1.8rem;
+  text-align: center;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: 12px 18px;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.socialLoop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px;
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+
+.loopStep {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loopArrow {
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.signalsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+}
+
+.signalsTable th {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 10px 14px;
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+}
+
+.signalsTable td {
+  border: 1px solid #dcd8d0;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #38342e;
+}
+
+.signalName {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  color: var(--blue);
+  white-space: nowrap;
+}
+
+/* 9. PRINCIPLES BAND */
+.principlesSection {
+  margin-bottom: 48px;
+  background: #faf8f5;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+}
+
+.commitmentsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+  margin-top: 24px;
+}
+
+.commitmentItem {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #2b2823;
+}
+
+.commitmentBullet {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--blue);
+}
+
+/* 10. FINAL NOMINATION TICKET */
+.finalTicketSection {
+  background: #ffffff;
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: clamp(32px, 5vw, 56px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.finalTicketSection::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--coral, #f05037);
+}
+
+.finalTitle {
+  font-family: var(--display);
+  font-size: clamp(2.8rem, 6vw, 4.4rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0 0 16px;
+}
+
+.finalBody {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #4a453e;
+  max-width: 54ch;
+  margin: 0 auto 28px;
+}
+
+.finalCtas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.closingLine {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #777;
+  margin-top: 12px;
+}
+
+/* ==========================================================================
+   RESPONSIVE STYLES
+   ========================================================================== */
+
+@media (max-width: 1080px) {
+  .heroSection {
+    grid-template-columns: 1fr;
+  }
+  .heroLeft {
+    border-right: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  .processList {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .processItem:nth-child(3) {
+    border-right: 0;
+  }
+  .processItem:nth-child(n+4) {
+    border-top: 1px solid #d8d4cb;
+  }
+  .aiContactStrip {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .personaContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .proofGrid {
+    grid-template-columns: 1fr;
+  }
+  .missionSection {
+    grid-template-columns: 1fr;
+  }
+  .processList {
+    grid-template-columns: 1fr;
+  }
+  .processItem {
+    border-right: 0;
+    border-bottom: 1px solid #d8d4cb;
+  }
+  .processItem:last-child {
+    border-bottom: 0;
+  }
+  .ledgerGrid {
+    grid-template-columns: 1fr;
+  }
+  .aiContactStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .aiBoundariesBlock ul {
+    grid-template-columns: 1fr;
+  }
+  .twoLedgerDiagram {
+    grid-template-columns: 1fr;
+  }
+  .commitmentsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 0 14px 60px;
+  }
+  .heroSection, .shiftSection, .processSection, .personaBand, .ledgerSection, .aiSection, .socialSection, .principlesSection, .finalTicketSection {
+    padding: 24px 18px;
+  }
+  .aiContactStrip {
+    grid-template-columns: 1fr;
+  }
+  .signalsTable th, .signalsTable td {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+  .signalsTable {
+    display: block;
+    overflow-x: auto;
+  }
+  .primaryCta, .secondaryCta {
+    width: 100%;
+    justify-content: center;
+  }
+  .heroCtas, .finalCtas {
+    flex-direction: column;
+    width: 100%;
+  }
+}
