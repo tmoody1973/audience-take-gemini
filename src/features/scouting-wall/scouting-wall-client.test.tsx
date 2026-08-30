@@ -59,14 +59,14 @@ describe("ScoutingWallClient Component", () => {
     vi.clearAllMocks();
   });
 
-  it("renders all cards, scores, buyer tags, and inline podcast players", () => {
+  it("renders all cards, scores, audience pulse, and inline podcast players", () => {
     render(<ScoutingWallClient initialEntries={sampleEntries} />);
 
     expect(screen.getByText("American Pachuco")).toBeInTheDocument();
     expect(screen.getByText("Fruity")).toBeInTheDocument();
     expect(screen.getByText("98")).toBeInTheDocument();
     expect(screen.getByText("91")).toBeInTheDocument();
-    expect(screen.getByText("PBS / POV / American Masters")).toBeInTheDocument();
+    expect(screen.getByText("24")).toBeInTheDocument();
     expect(screen.getAllByText(/2-Speaker Scout Brief/i)).toHaveLength(2);
   });
 

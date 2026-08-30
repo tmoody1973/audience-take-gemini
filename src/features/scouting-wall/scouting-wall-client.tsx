@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   Sparkles,
   ArrowRight,
-  Filter
+  Filter,
+  Users
 } from "lucide-react";
 import type { ScoutingWallEntry } from "./data";
 import { AudiencePulseStrip } from "./audience-pulse-strip";
@@ -522,75 +523,66 @@ export function ScoutingWallClient({ initialEntries }: Props) {
 
                 {/* Main Card Content */}
                 <div className="wall-cell-copy">
-                  {/* Top Kicker Bar with Format, Evidence, and Dual-Axis Scores */}
+                  {/* Top Bar: Type Tag + Evidence Status */}
                   <div className="wall-card-top-bar">
                     <div className="wall-card-badges">
                       <span className="wall-type-badge">{projectTypeLabels[entry.projectType]}</span>
                       <span className="wall-evidence-badge" data-evidence={entry.evidenceStatus}>
                         <CheckCircle2 size={10} /> {evidenceLabels[entry.evidenceStatus]}
                       </span>
-                      {entry.channelTitle && (
-                        <span className="wall-creator-tag">
-                          {entry.channelTitle}
-                        </span>
-                      )}
                     </div>
 
-                    {/* Compact Dual-Axis Score Pills */}
+                    {/* Dual-Axis Scores */}
                     <div className="wall-compact-scores">
                       <span className="compact-score-pill heat" title={`Audience Heat Score: ${entry.audienceHeatScore ?? 88}/100`}>
-                        <Flame size={11} /> <b>{entry.audienceHeatScore ?? 88}</b>
+                        <Flame size={11} /> <b>{entry.audienceHeatScore ?? 88}</b> <small>Heat</small>
                       </span>
                       <span className="compact-score-pill readiness" title={`Market Readiness Score: ${entry.marketReadinessScore ?? 82}/100`}>
-                        <TrendingUp size={11} /> <b>{entry.marketReadinessScore ?? 82}</b>
+                        <TrendingUp size={11} /> <b>{entry.marketReadinessScore ?? 82}</b> <small>Viability</small>
                       </span>
                     </div>
                   </div>
 
-                  {/* Project Title & Clickable Headline */}
+                  {/* 1. Film Title (Clean, readable, non-colliding typography) */}
                   <h2 className="wall-card-title">
                     <Link href={`/projects/${entry.slug}`}>
                       {entry.title}
                     </Link>
                   </h2>
 
-                  {/* Hook / Core Logline (Clean 2-line clamp) */}
+                  {/* 2. Film Description (Hook / Logline) */}
                   <p className="wall-hook-text">{entry.hook}</p>
 
-                  {/* INLINE COMPACT PODCAST AUDIO PLAYER */}
+                  {/* 3. Inline 2-Speaker Podcast Audio Player */}
                   <CardPodcastPlayer
                     entry={entry}
                     activePlayingId={activePlayingId}
                     setActivePlayingId={setActivePlayingId}
                   />
 
-                  {/* Target Buyer Tags & Specs Bar */}
-                  <div className="wall-card-meta-bar">
-                    {entry.buyerTargets && entry.buyerTargets.length > 0 && (
-                      <div className="wall-buyers-inline">
-                        <span className="buyers-label">Buyers:</span>
-                        <div className="buyers-pills">
-                          {entry.buyerTargets.slice(0, 2).map((b) => (
-                            <span key={b} className="buyer-pill">{b}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <span className="wall-source-count">{entry.sourceCount} sources</span>
-                  </div>
+                  {/* 4. Audience Pulse Strip + Open Action */}
+                  <div className="wall-card-bottom-bar">
+                    <div className="wall-pulse-quick-signals" title="Organic Audience Pulse Signals">
+                      <span className="pulse-signal-item">
+                        <Users size={12} /> <b>{entry.audiencePulse.follows}</b> <small>Follows</small>
+                      </span>
+                      <span className="pulse-signal-item">
+                        <Flame size={12} /> <b>{entry.audiencePulse.wouldWatch}</b> <small>Watch</small>
+                      </span>
+                      <span className="pulse-signal-item">
+                        <b>{entry.audiencePulse.wouldPay}</b> <small>Pay</small>
+                      </span>
+                    </div>
 
-                  {/* Card Footer with Direct Open Link */}
-                  <footer>
-                    <span className="accession-code">Published {safeFormatDate(entry.publishedAt)}</span>
                     <Link 
                       href={`/projects/${entry.slug}`} 
                       className="wall-open-link"
                       aria-label={`Open ${entry.title} Scout Card`}
                     >
-                      <span>Open Scout Card</span>
+                      <span>Open Card</span>
                       <ArrowIcon />
                     </Link>
-                  </footer>
+                  </div>
                 </div>
 
                 {/* Vertical Accession Side Label */}
