@@ -18,6 +18,9 @@ export async function GET(
 
   // 1. Check memory / cached audio buffer
   let audioBuffer = scoutBriefStore.getAudioBuffer(artifactId);
+  if (!audioBuffer) {
+    audioBuffer = scoutBriefStore.getAudioBuffer(`scout-brief-${artifactId}-g1`);
+  }
 
   if (!audioBuffer) {
     const cachedDiskPath = path.resolve(process.cwd(), `public/audio-cache/${artifactId}.wav`);
@@ -30,8 +33,11 @@ export async function GET(
   }
 
   if (!audioBuffer) {
-    // 2. Fetch brief from store or canonical fixture
+    // 2. Fetch brief from store (by direct ID or by cardVersionId) or canonical fixture
     let brief: ScoutBrief | null = await scoutBriefStore.getScoutBrief(artifactId);
+    if (!brief) {
+      brief = await scoutBriefStore.getScoutBriefByCardVersion(artifactId);
+    }
 
     const countWords = (t: any) =>
       (t?.segments || []).reduce(

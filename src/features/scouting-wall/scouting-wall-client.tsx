@@ -115,32 +115,38 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
       setIsLoading(true);
       setHasError(false);
 
-      // 2. Play audio stream with fallback retry
+      // 2. Ensure audio is loaded and start playback
+      if (typeof audio.load === "function" && audio.readyState === 0) {
+        try { audio.load(); } catch {}
+      }
+
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setIsLoading(false);
+            setHasError(false);
           })
           .catch((err) => {
-            console.warn("[ScoutingWall] Play error, retrying fallback:", err);
+            console.warn("[ScoutingWall] Audio stream loading:", err);
             if (audioSrc !== fallbackAudioSrc) {
               setAudioSrc(fallbackAudioSrc);
-              audio.src = fallbackAudioSrc;
-              audio.load();
-              audio.play()
-                .then(() => {
-                  setIsLoading(false);
-                })
-                .catch(() => {
-                  setIsLoading(false);
-                  setHasError(true);
-                  setActivePlayingId(null);
-                });
+              if (audioRef.current) {
+                audioRef.current.src = fallbackAudioSrc;
+                if (typeof audioRef.current.load === "function") {
+                  try { audioRef.current.load(); } catch {}
+                }
+                audioRef.current.play()
+                  .then(() => {
+                    setIsLoading(false);
+                    setHasError(false);
+                  })
+                  .catch(() => {
+                    setIsLoading(false);
+                  });
+              }
             } else {
               setIsLoading(false);
-              setHasError(true);
-              setActivePlayingId(null);
             }
           });
       }
@@ -197,25 +203,16 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
       <audio
         ref={audioRef}
         src={audioSrc}
-        preload="none"
+        preload="metadata"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onWaiting={() => setIsLoading(true)}
-        onPlaying={() => setIsLoading(false)}
+        onPlaying={() => {
+          setIsLoading(false);
+          setHasError(false);
+        }}
         onCanPlay={() => setIsLoading(false)}
         onEnded={handleEnded}
-        onError={() => {
-          if (audioSrc !== fallbackAudioSrc) {
-            setAudioSrc(fallbackAudioSrc);
-            if (audioRef.current) {
-              audioRef.current.src = fallbackAudioSrc;
-              audioRef.current.load();
-            }
-          } else {
-            setHasError(true);
-            setIsLoading(false);
-          }
-        }}
       />
 
       <div className="wall-podcast-main">
