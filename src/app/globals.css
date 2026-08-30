@@ -1627,23 +1627,22 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   overflow: hidden;
 }
 
-/* Slim Compact Inline Podcast Player */
+/* Seamless Integrated Card Podcast Player (No Island / No Floating Box) */
 .wall-podcast-player {
-  margin: 4px 0 8px;
-  padding: 6px 10px;
-  background: #f4eedf;
-  border: 1px solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
+  margin: 6px 0 4px;
+  padding: 4px 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  transition: all 0.12s ease-out;
 }
 
 .wall-podcast-player.is-active-playback {
-  background: #fff4cc;
-  border-color: var(--coral);
-  box-shadow: 3px 3px 0 var(--coral);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .wall-podcast-main {
@@ -1656,8 +1655,8 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   background: var(--ink);
   color: var(--yellow);
@@ -1712,9 +1711,8 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 
 .wall-podcast-progress-bar {
   width: 100%;
-  height: 5px;
-  background: #ddd7c9;
-  border: 1px solid var(--ink);
+  height: 4px;
+  background: #e2dbcc;
   cursor: pointer;
   position: relative;
 }
