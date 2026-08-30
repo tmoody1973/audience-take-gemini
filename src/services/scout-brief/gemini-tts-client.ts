@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 import type { ScoutBriefTranscript, ScoutBriefSpeaker } from "@/features/scout-brief/types";
 import { generateSyntheticPcm } from "./audio-processor";
 
@@ -31,7 +32,7 @@ export function formatDialoguePrompt(transcript: ScoutBriefTranscript): string {
 }
 
 /**
- * Generates multi-speaker audio from a structured Scout Brief transcript.
+ * Generates multi-speaker real voice audio from a structured Scout Brief transcript using Gemini 3.1 Flash TTS.
  */
 export async function generateMultiSpeakerAudio(
   transcript: ScoutBriefTranscript,
@@ -46,62 +47,71 @@ export async function generateMultiSpeakerAudio(
     { speaker: "Analyst", voice: process.env.AUDIENCE_TAKE_ANALYST_VOICE || "Puck" },
   ];
 
-  const dialogueText = formatDialoguePrompt(transcript);
+  const speakerVoiceMap: Record<string, string> = {
+    Scout: speakers.find((s) => s.speaker === "Scout")?.voice || "Kore",
+    Analyst: speakers.find((s) => s.speaker === "Analyst")?.voice || "Puck",
+  };
 
-  if (apiKey && !isTest) {
+  if (apiKey && !isTest && transcript.segments && transcript.segments.length > 0) {
     try {
-      // Direct REST call to Gemini Speech Generation / Interactions endpoint
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
-      const payload = {
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: dialogueText }],
-          },
-        ],
-        generationConfig: {
-          responseModalities: ["AUDIO"],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: speakers[0].voice,
+      const ai = new GoogleGenAI({ apiKey });
+      const audioBuffers: Buffer[] = [];
+      const pauseBetweenTurns = Buffer.alloc(24000 * 2 * 0.25); // 250ms natural pause (12,000 bytes of zeros)
+
+      for (let i = 0; i < transcript.segments.length; i++) {
+        const seg = transcript.segments[i];
+        const voiceName = speakerVoiceMap[seg.speaker] || "Kore";
+
+        try {
+          const resp = await ai.models.generateContent({
+            model: modelId,
+            contents: seg.text,
+            config: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName,
+                  },
+                },
               },
             },
-          },
-        },
-      };
+          });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+          const audioPart = resp.candidates?.[0]?.content?.parts?.find((p: any) =>
+            p.inlineData?.mimeType?.startsWith("audio/")
+          );
 
-      if (response.ok) {
-        const data = await response.json();
-        const candidate = data.candidates?.[0];
-        const audioPart = candidate?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith("audio/"));
-        if (audioPart?.inlineData?.data) {
-          const pcmBase64 = audioPart.inlineData.data;
-          const pcmBytes = Buffer.from(pcmBase64, "base64").length;
-          const duration = pcmBytes / (24000 * 1 * 2);
-          return {
-            base64Pcm: pcmBase64,
-            durationSeconds: duration,
-            sampleRate: 24000,
-          };
+          if (audioPart?.inlineData?.data) {
+            const segBuffer = Buffer.from(audioPart.inlineData.data, "base64");
+            audioBuffers.push(segBuffer);
+            if (i < transcript.segments.length - 1) {
+              audioBuffers.push(pauseBetweenTurns);
+            }
+          }
+        } catch (turnErr) {
+          console.warn(`[ScoutBrief TTS] Segment ${i + 1} (${seg.speaker}) TTS error:`, turnErr);
         }
-      } else {
-        const errText = await response.text().catch(() => "");
-        console.warn(`[ScoutBrief] Gemini TTS API returned ${response.status}:`, errText.slice(0, 200));
+      }
+
+      if (audioBuffers.length > 0) {
+        const combinedBuffer = Buffer.concat(audioBuffers);
+        const pcmBase64 = combinedBuffer.toString("base64");
+        const duration = combinedBuffer.length / (24000 * 1 * 2);
+        console.log(`[ScoutBrief TTS] Generated ${audioBuffers.length} speaker turns (${duration.toFixed(1)}s total audio).`);
+        return {
+          base64Pcm: pcmBase64,
+          durationSeconds: duration,
+          sampleRate: 24000,
+        };
       }
     } catch (err) {
-      console.warn("[ScoutBrief] Live TTS request failed, utilizing high-fidelity synthetic audio:", err);
+      console.warn("[ScoutBrief] Live TTS request failed, utilizing high-fidelity synthetic audio fallback:", err);
     }
   }
 
-  // Generate synthetic PCM audio representing ~3.5 minutes of briefing (210s)
-  const syntheticSeconds = 180;
+  // Fallback if no API key or in unit testing
+  const syntheticSeconds = 30;
   const base64Pcm = generateSyntheticPcm(syntheticSeconds, 24000, 440);
 
   return {

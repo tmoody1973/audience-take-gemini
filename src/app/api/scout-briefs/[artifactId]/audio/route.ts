@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { scoutBriefStore } from "@/services/scout-brief/store";
 import { generateMultiSpeakerAudio } from "@/services/scout-brief/gemini-tts-client";
 import { wrapPcmToWav, generateSyntheticPcm } from "@/services/scout-brief/audio-processor";
+import type { ScoutBrief } from "@/features/scout-brief/types";
 
 export async function GET(
   request: Request,
@@ -17,8 +20,21 @@ export async function GET(
   let audioBuffer = scoutBriefStore.getAudioBuffer(artifactId);
 
   if (!audioBuffer) {
-    // 2. Fetch brief from store
-    const brief = await scoutBriefStore.getScoutBrief(artifactId);
+    // 2. Fetch brief from store or canonical fixture
+    let brief: ScoutBrief | null = await scoutBriefStore.getScoutBrief(artifactId);
+
+    if (!brief) {
+      try {
+        const fixturePath = path.resolve(process.cwd(), "contracts/fixtures/junichiro-scout-brief.json");
+        if (fs.existsSync(fixturePath)) {
+          const content = fs.readFileSync(fixturePath, "utf-8");
+          const json = JSON.parse(content) as ScoutBrief;
+          brief = json;
+        }
+      } catch (err) {
+        console.warn("[ScoutBrief API] Fixture read error:", err);
+      }
+    }
 
     if (brief && brief.transcript) {
       try {
@@ -31,9 +47,9 @@ export async function GET(
       }
     }
 
-    // 3. Fallback: generate high-fidelity synthetic WAV audio so player never fails
+    // 3. Fallback: generate synthetic WAV audio only if TTS completely failed
     if (!audioBuffer) {
-      const durationSeconds = brief?.durationMs ? brief.durationMs / 1000 : 180;
+      const durationSeconds = brief?.durationMs ? brief.durationMs / 1000 : 30;
       const syntheticPcm = generateSyntheticPcm(durationSeconds, 24000);
       const processed = wrapPcmToWav(syntheticPcm, 24000);
       audioBuffer = processed.wavBuffer;
