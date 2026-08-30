@@ -1433,20 +1433,25 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 .wall-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
-  gap: 0;
-  margin: 0;
+  gap: 24px;
+  margin: 24px 0 0;
   padding: 0;
   list-style: none;
-  border-left: var(--rule);
-  border-top: var(--rule);
+  border: 0;
 }
 
 .wall-cell {
   min-width: 0;
-  border-right: var(--rule);
-  border-bottom: var(--rule);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
   position: relative;
   background: #fffdf9;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.wall-cell:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
 }
 
 .wall-compact-card {
