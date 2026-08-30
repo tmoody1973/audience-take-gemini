@@ -113,6 +113,13 @@ export function computeMarketViability(
   let estTam: string;
   let recommendedAction: "Acquire & Slate for Coproduction" | "Track Pilot Delivery" | "Pass / Too Early";
 
+  const isAnime =
+    typeLower.includes("anime") ||
+    titleLower.includes("junichiro") ||
+    slugLower.includes("junichiro");
+
+  const isAnimation = typeLower.includes("animat") || isGothic || isAnime;
+
   if (isDocumentary) {
     topBuyers = [
       "PBS / POV / American Masters",
@@ -172,7 +179,7 @@ export function computeMarketViability(
     studioAttachment = "Haly Sisters Productions / Independent Digital Collective";
     estTam = "$2.5M–$6M (Broadcast Format Optioning + SVOD Streaming + Digital Advertising)";
     recommendedAction = "Track Pilot Delivery";
-  } else {
+  } else if (isAnime) {
     topBuyers = [
       "Adult Swim / Toonami",
       "Crunchyroll / Sony",
@@ -191,6 +198,26 @@ export function computeMarketViability(
     studioAttachment = "Independent Animation Studio";
     estTam = "$5M–$15M (Global SVOD Licensing + Manga Publishing + Merch)";
     recommendedAction = "Acquire & Slate for Coproduction";
+  } else {
+    topBuyers = [
+      "A24",
+      "Neon",
+      "MUBI",
+      "Hulu / Searchlight",
+      "Netflix Independent"
+    ];
+    genreFitRationale =
+      "Growing specialty and SVOD buyer appetite for auteur-driven independent screen IP with proven grassroots digital and community backing.";
+    buyerRiskFactors = [
+      "Financing packaging timeline and distribution windowing negotiations",
+      "Festival competition and marketing discoverability"
+    ];
+    commercialCeilingVerdict =
+      "Independent screen breakout with strong festival potential, boutique theatrical distribution, and global SVOD acquisition pathways.";
+    estCostPerMinute = "$5,000–$12,000 / min (Independent Live-Action Screen Production)";
+    studioAttachment = "Independent Production Collective";
+    estTam = "$3M–$10M (Global SVOD Licensing + Specialty Theatrical / VOD)";
+    recommendedAction = "Track Pilot Delivery";
   }
 
   // 4. Commercial Ceiling & ARPU

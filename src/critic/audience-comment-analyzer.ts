@@ -17,39 +17,73 @@ export interface FandomDnaAnalysis {
 
 export async function analyzeAudienceComments(
   comments: YouTubeCommentItem[],
-  projectTitle: string = "Vampair: The Animated Pilot",
-  genre: string = "Indie Animation / Dark Fantasy Musical"
+  projectTitle: string = "Independent Screen Project",
+  genre: string = "Independent Screen Narrative"
 ): Promise<FandomDnaAnalysis> {
+  const titleLower = projectTitle.toLowerCase();
+  const genreLower = genre.toLowerCase();
+  const isDoc = genreLower.includes("doc") || titleLower.includes("valdez") || titleLower.includes("pachuco");
+  const isComedy = genreLower.includes("comedy") || genreLower.includes("live-action") || titleLower.includes("fruity");
+  const isGoth = genreLower.includes("gothic") || titleLower.includes("vampair");
+
   const fallbackAnalysis: FandomDnaAnalysis = {
-    characterAndLoreObsessions: [
-      "Extreme focus on Duke and Missi's adversarial chemistry and backstory dynamics",
-      "Widespread excitement over the original theatrical musical score at timestamp 0:38",
-      "Praise for high-contrast gothic ballroom shadow lighting and expressive 2D choreography",
-    ],
-    merchandiseDemandSignals: [
-      "Direct requests for vinyl OST pressings and art books",
-      "Crowdfunding backers confirming high physical reward tier pledges",
-      "Apparel and character plushie purchase intent voiced in comment threads",
-    ],
+    characterAndLoreObsessions: isDoc
+      ? [
+          `Audience reverence for the historical subject and central themes of "${projectTitle}"`,
+          "Engagement with restored archival footage and historical community commentary",
+          "Praise for authentic cultural and educational significance",
+        ]
+      : isComedy
+      ? [
+          `Strong reaction to dynamic character chemistry and comedic timing in "${projectTitle}"`,
+          "High viral engagement with relatable situational humor and modern themes",
+          "Enthusiasm for the creative ensemble and lead performances",
+        ]
+      : isGoth
+      ? [
+          "Extreme focus on adversarial character chemistry and stylized dark fantasy lore",
+          "Widespread excitement over the original theatrical musical score",
+          "Praise for expressive animation and shadow lighting",
+        ]
+      : [
+          `Enthusiastic reception for the visual direction and worldbuilding of "${projectTitle}"`,
+          "Praise for pacing, soundtrack choices, and lead character dynamics",
+          "Anticipation for expanded episodic narrative or full-length release",
+        ],
+    merchandiseDemandSignals: isDoc
+      ? [
+          "High demand for educational and institutional screening licenses",
+          "Community screening requests from cultural and historical organizations",
+        ]
+      : isComedy
+      ? [
+          "Audience demand for live screening events and branded creator merchandise",
+          "Direct engagement with digital social updates and behind-the-scenes content",
+        ]
+      : [
+          "Audience demand for physical collector editions, OST pressings, and apparel",
+          "Crowdfunding community engagement with physical reward tiers",
+        ],
     toneAndWritingReception: {
-      praise: [
-        "Perfect fusion of dark comedy with Broadway-style villain song energy",
-        "Fluid hand-drawn 2D animation timing synced to musical downbeats",
-      ],
+      praise: isDoc
+        ? ["Compelling historical depth and emotional resonance", "Authentic civil rights and cultural preservation"]
+        : isComedy
+        ? ["Brisk comedic pacing and modern dialogue", "Authentic humor without heavy-handed tropes"]
+        : ["Kinetic pacing and distinct visual identity", "High production craft relative to independent scope"],
       critiques: [
-        "Desire for deeper serialized lore explanation in the extended pilot episode",
+        "Audience eagerness for broader distribution and full release",
       ],
     },
-    demographicAndFandomComps: [
-      "Hazbin Hotel / SpindleHorse Productions",
-      "Lackadaisy (Iron Circus Animation)",
-      "Castlevania / Castlevania: Nocturne",
-      "The Nightmare Before Christmas / Tim Burton Gothic Musicals",
-    ],
+    demographicAndFandomComps: isDoc
+      ? ["DOCUMENTARY FILMGOERS", "HISTORICAL & CULTURAL AUDIENCES", "ACADEMIC & PUBLIC SCREENING COMMUNITIES"]
+      : isComedy
+      ? ["DIGITAL COMEDY AUDIENCE", "GEN-Z & MILLENNIAL STREAMERS", "INDIE COMEDY ENTHUSIASTS"]
+      : isGoth
+      ? ["Hazbin Hotel / SpindleHorse Productions", "Lackadaisy", "Castlevania"]
+      : ["INDEPENDENT SCREEN AUDIENCES", "CULT GENRE COMMUNITIES", "YA STREAMING VIEWERS"],
     organicVsBrigadedFlag: "concentrated_cult",
-    audienceResonanceSummary:
-      "High-intensity cult engagement with exceptional commercial monetization propensity (€64/backer average). The audience demonstrates genuine artistic loyalty and strong transmedia merchandise demand.",
-    sentimentScore: 94,
+    audienceResonanceSummary: `High grassroots resonance for "${projectTitle}" driven by authentic audience connection to the creative vision and distinct tone.`,
+    sentimentScore: 92,
     analyzedAt: new Date().toISOString(),
   };
 
