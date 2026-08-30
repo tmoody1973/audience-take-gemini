@@ -41,14 +41,6 @@ const selects = [
     href: "/projects/proj-1788033835868-tfn0k",
     status: "Published Scout Card · 2-speaker audio brief",
   },
-  {
-    title: "American Pachuco: The Legend of Luis Valdez",
-    type: "Feature Documentary",
-    reason: "Selected for institutional festival recognition, extensive archival source citations, and educational licensing potential.",
-    color: "yellow",
-    href: "/projects/project-vsu2dlapid",
-    status: "Published Scout Card · source-limited evidence",
-  },
 ];
 
 export default function HomePage() {
