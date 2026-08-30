@@ -1,0 +1,702 @@
+/* ==========================================================================
+   CREATOR DESK — CREATOR STEWARDSHIP PROGRAM
+   ========================================================================== */
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px 100px;
+  min-height: calc(100vh - 80px);
+  color: var(--ink);
+}
+
+.skipLink {
+  position: absolute;
+  top: -100px;
+  left: 20px;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 10px 16px;
+  font-family: var(--meta);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  z-index: 1000;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: top 0.15s ease;
+}
+
+.skipLink:focus {
+  top: 16px;
+}
+
+/* 1. HERO BANNER */
+.heroBanner {
+  margin: 32px 0 40px;
+  background: #ffffff;
+  border: 2.5px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: clamp(28px, 4vw, 48px);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroEyebrow {
+  display: inline-block;
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  background: #f0f4ff;
+  border: 1.5px solid var(--blue);
+  padding: 4px 10px;
+  margin-bottom: 16px;
+}
+
+.heroH1 {
+  font-family: var(--display);
+  font-size: clamp(3rem, 7vw, 5.2rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.heroBody {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: #3b3731;
+  max-width: 64ch;
+  margin: 0 0 28px;
+}
+
+.heroCtas {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  background: var(--coral, #f05037);
+  color: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--meta);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  min-height: 48px;
+}
+
+.primaryCta:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+  color: #ffffff;
+}
+
+.secondaryCta {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 20px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--meta);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  transition: all 0.1s ease;
+  min-height: 48px;
+}
+
+.secondaryCta:hover {
+  background: var(--yellow);
+}
+
+/* 2. HOW CLAIMING WORKS */
+.claimingSection {
+  margin-bottom: 44px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+  scroll-margin-top: 90px;
+}
+
+.sectionHeader {
+  margin-bottom: 24px;
+}
+
+.sectionLabel {
+  display: block;
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+
+.sectionH2 {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.claimingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.claimingCard {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepBadge {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+
+.claimingCard h3 {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1;
+  margin: 0 0 10px;
+}
+
+.claimingCard p {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #4a453e;
+  margin: 0;
+}
+
+/* 3. COMMUNITY SIGNAL SNAPSHOT */
+.signalsSnapshotSection {
+  margin-bottom: 44px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 24px 0 20px;
+}
+
+.metricCard {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.metricLabel {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.metricValue {
+  font-family: var(--display);
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 0.9;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.metricSublabel {
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.signalQualificationBar {
+  background: #fff9e6;
+  border: 1.5px solid #d4a700;
+  padding: 14px 18px;
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #665000;
+  line-height: 1.45;
+}
+
+/* 4. PERMISSIONS & INDEPENDENCE SPLIT LEDGER */
+.ledgerSection {
+  margin-bottom: 44px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ledgerPanel {
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 28px 24px;
+}
+
+.ledgerPanel.isPermissions {
+  border-top: 6px solid var(--blue);
+}
+
+.ledgerPanel.isIndependence {
+  border-top: 6px solid var(--coral, #f05037);
+}
+
+.ledgerPanel h3 {
+  font-family: var(--meta);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledgerPanel.isPermissions h3 {
+  color: var(--blue);
+}
+
+.ledgerPanel.isIndependence h3 {
+  color: var(--coral, #f05037);
+}
+
+.ledgerPanel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ledgerPanel li {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #3b3731;
+  padding-left: 16px;
+  position: relative;
+}
+
+.ledgerPanel.isPermissions li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.ledgerPanel.isIndependence li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--coral, #f05037);
+  font-weight: 900;
+}
+
+/* 5. SCOUTED PROJECT DIRECTORY */
+.directorySection {
+  margin-bottom: 48px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 36px 32px;
+  scroll-margin-top: 90px;
+}
+
+.projectList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.projectRow {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  transition: background 0.12s ease;
+}
+
+.projectRow:hover {
+  background: #fffdf7;
+}
+
+.projectMain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.badgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border: 1px solid var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statusUnclaimed {
+  background: #f0ede6;
+  color: #555;
+}
+
+.statusPending {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.statusVerified {
+  background: var(--evidence-mint, #cbe9d9);
+  color: #11100d;
+}
+
+.metaBadge {
+  font-family: var(--meta);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  color: #444;
+}
+
+.projectTitle {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  color: var(--ink);
+  margin: 4px 0 2px;
+}
+
+.creatorsLine {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #5c574e;
+}
+
+.logline {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #444;
+  margin: 4px 0 8px;
+  max-width: 70ch;
+}
+
+.projectSignals {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: var(--meta);
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  color: #333;
+  padding-top: 6px;
+  border-top: 1px dashed #dcd8d0;
+}
+
+.signalItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.signalDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--blue);
+}
+
+.projectActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.actionPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 16px;
+  background: var(--coral, #f05037);
+  color: #ffffff;
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--meta);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.1s ease;
+  min-height: 44px;
+  text-align: center;
+}
+
+.actionPrimary:hover {
+  background: #d83d25;
+  color: #ffffff;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.actionPrimaryVerified {
+  background: var(--blue);
+}
+
+.actionPrimaryVerified:hover {
+  background: #0e29a8;
+  color: #ffffff;
+}
+
+.actionSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.1s ease;
+  min-height: 44px;
+  text-align: center;
+}
+
+.actionSecondary:hover {
+  background: var(--yellow);
+}
+
+.emptyState {
+  background: #faf8f5;
+  border: 1.5px dashed var(--ink);
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.emptyStateTitle {
+  font-family: var(--display);
+  font-size: 2rem;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.emptyStateText {
+  font-size: 0.9rem;
+  color: #666;
+  max-width: 50ch;
+  margin: 0 auto 20px;
+}
+
+/* Tool Callout Banner */
+.toolCallout {
+  background: #faf8f5;
+  border: 1.5px solid var(--ink);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.toolCalloutText {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  color: #444;
+}
+
+.toolCalloutLink {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 6. CLOSING NOMINATION CTA TICKET */
+.closingTicket {
+  background: #ffffff;
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: clamp(32px, 5vw, 52px);
+  text-align: center;
+  position: relative;
+}
+
+.closingTicket::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--yellow);
+}
+
+.closingEyebrow {
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.closingH2 {
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin: 0 0 16px;
+}
+
+.closingBody {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: #4a453e;
+  max-width: 58ch;
+  margin: 0 auto 28px;
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .metricGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .claimingGrid {
+    grid-template-columns: 1fr;
+  }
+  .projectRow {
+    grid-template-columns: 1fr;
+  }
+  .projectActions {
+    flex-direction: row;
+    width: 100%;
+  }
+  .projectActions a {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .ledgerSection {
+    grid-template-columns: 1fr;
+  }
+  .heroBanner, .claimingSection, .signalsSnapshotSection, .directorySection, .closingTicket {
+    padding: 24px 20px;
+  }
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+  .projectActions {
+    flex-direction: column;
+  }
+  .toolCallout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .page {
+    padding: 0 12px 60px;
+  }
+  .heroCtas {
+    flex-direction: column;
+    width: 100%;
+  }
+  .primaryCta, .secondaryCta {
+    width: 100%;
+    justify-content: center;
+  }
+}
