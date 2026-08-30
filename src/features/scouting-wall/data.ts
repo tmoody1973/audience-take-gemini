@@ -77,11 +77,11 @@ export async function loadScoutingWallEntries(
     const entries: (ScoutingWallEntry | null)[] = await Promise.all(
       projectSnapshot.docs.map(async (projectSnapshot): Promise<ScoutingWallEntry | null> => {
         const project = projectSnapshot.data();
-        if (!project || typeof project !== "object") return null;
         const projectData = project as Record<string, unknown>;
         if (
           (projectData.moderationState !== undefined && projectData.moderationState !== "clear") ||
           typeof projectData.slug !== "string" || !projectData.slug ||
+          projectData.slug.startsWith("e2e-") || projectData.slug.startsWith("test-") ||
           typeof projectData.latestCardVersionId !== "string" || !projectData.latestCardVersionId
         ) return null;
 
