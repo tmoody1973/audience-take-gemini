@@ -30,13 +30,20 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => {
-      if (audio.duration && !isNaN(audio.duration)) {
+    const syncDuration = () => {
+      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
         setDuration(audio.duration);
       }
     };
-    const handleEnded = () => setIsPlaying(false);
+
+    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const handleLoadedMetadata = () => syncDuration();
+    const handleDurationChange = () => syncDuration();
+    const handleCanPlay = () => syncDuration();
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(audio.duration || currentTime);
+    };
     const handleError = () => {
       if (currentAudioSrc !== fallbackAudioSrc) {
         // Fallback to local audio API endpoint
@@ -53,16 +60,20 @@ export function ScoutBriefPlayer({ brief, unclaimed }: Props) {
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("durationchange", handleDurationChange);
+    audio.addEventListener("canplay", handleCanPlay);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("durationchange", handleDurationChange);
+      audio.removeEventListener("canplay", handleCanPlay);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
-  }, [currentAudioSrc, fallbackAudioSrc]);
+  }, [currentAudioSrc, fallbackAudioSrc, currentTime]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;

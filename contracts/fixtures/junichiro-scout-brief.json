@@ -1,7 +1,7 @@
 {
-  "artifactId": "scout-brief-card-proj-junichiro-v1-g1",
-  "projectId": "proj-junichiro",
-  "cardVersionId": "card-proj-junichiro-v1",
+  "artifactId": "scout-brief-card-proj-1788033835868-tfn0k-v1-g1",
+  "projectId": "proj-1788033835868-tfn0k",
+  "cardVersionId": "card-proj-1788033835868-tfn0k-v1",
   "runId": "run-junichiro-01",
   "researchVersion": 1,
   "generationVersion": 1,
@@ -9,8 +9,8 @@
   "visibility": "public",
   "language": "en-US",
   "title": "Junichiro Jackson — Audio Scout Brief",
-  "durationMs": 224000,
-  "wordCount": 540,
+  "durationMs": 222000,
+  "wordCount": 518,
   "scriptModelId": "gemini-3.5-flash",
   "ttsModelId": "gemini-3.1-flash-tts-preview",
   "speakers": [
@@ -23,7 +23,7 @@
         "order": 1,
         "section": "hook",
         "speaker": "Scout",
-        "text": "Welcome to Audience Take. Today we're breaking down Junichiro Jackson, a high-octane anime pilot with over five hundred thousand organic views and an extraordinary 98 out of 100 Audience Heat rating.",
+        "text": "Welcome to Audience Take. Today we're breaking down Junichiro Jackson, a high-octane indie animation project that has exploded across the internet. With over five hundred thousand organic views on its proof-of-concept teaser and an exceptional 98 out of 100 Audience Heat rating, this title is exhibiting the kind of grassroots fanaticism that buyers rarely encounter in early-stage development.",
         "claimIds": ["claim-1"],
         "sourceIds": ["src-yt-01"]
       },
@@ -31,7 +31,7 @@
         "order": 2,
         "section": "project",
         "speaker": "Analyst",
-        "text": "Right, Scout. Created as an independent proof of concept, this project blends retro mecha aesthetics with modern hyper-stylized choreography. But let's look at the financial foundation: they raised over two hundred thousand euros on Kickstarter from verified fan backers.",
+        "text": "Right, Scout. What makes Junichiro Jackson compelling from an institutional perspective is its distinct creative identity. It bridges vintage nineties mecha anime aesthetics with hyper-kinetic modern choreography. But more importantly, the creators didn't wait for permission: they proved market appetite by raising over two hundred and twenty thousand euros directly from thousands of verified fan backers on Kickstarter.",
         "claimIds": ["claim-1", "claim-2"],
         "sourceIds": ["src-ks-01"]
       },
@@ -39,7 +39,7 @@
         "order": 3,
         "section": "evidence",
         "speaker": "Scout",
-        "text": "And the audience resonance is off the charts. YouTube comment analysis shows overwhelming demand for full episodic treatment, physical artbooks, and vinyl soundtracks, with an average backer spend of over sixty euros.",
+        "text": "And the engagement depth is remarkable. When you look at our real-time YouTube comment discourse analysis, audiences aren't just leaving casual compliments. They are dissecting lore, demanding vinyl original soundtrack pressings, asking for physical artbooks, and campaigning for an episodic streaming pickup. The backer cohort demonstrates a high-intent commercial commitment with an average spend exceeding sixty euros per fan.",
         "claimIds": ["claim-2"],
         "sourceIds": ["src-yt-01", "src-ks-01"]
       },
@@ -47,7 +47,7 @@
         "order": 4,
         "section": "uncertainty",
         "speaker": "Analyst",
-        "text": "There are operational questions to evaluate. The unit cost for hand-drawn 2D action animation sits around twenty thousand euros per minute. Without an established coproduction studio attached, scaling beyond short form presents cash-flow risk.",
+        "text": "However, as institutional scouts, we have to evaluate the execution constraints. High-end, frame-by-frame 2D animation carries an estimated unit cost of eighteen to twenty-five thousand euros per screen minute. Scaling an eight-episode series requires roughly four to five million euros in budget. Without an established coproduction studio partner and structured European animation tax credits attached, a single creator studio faces significant operational bottlenecks.",
         "claimIds": ["claim-3"],
         "sourceIds": ["src-trade-01"]
       },
@@ -55,7 +55,7 @@
         "order": 5,
         "section": "pathways",
         "speaker": "Scout",
-        "text": "The Gemini Agent mapped three distinct development pathways: first, a prestige limited anime series for streaming buyers like Adult Swim or Prime Video; second, a direct-to-consumer crowdfunded OVA; and third, a graphic novel and webcomic franchise.",
+        "text": "That's exactly why the Gemini Agent synthesized three distinct, bounded development pathways. Pathway 01 proposes a prestige limited anime series targeted at Adult Swim, Prime Video, or Crunchyroll. Pathway 02 envisions a direct-to-consumer crowdfunded OVA or theatrical special. And Pathway 03 outlines a transmedia expansion with an official graphic novel series and webcomic to maintain audience heat while financing wraps.",
         "claimIds": ["claim-1", "claim-3"],
         "sourceIds": ["src-trade-01"]
       },
@@ -63,7 +63,7 @@
         "order": 6,
         "section": "next_move",
         "speaker": "Analyst",
-        "text": "The immediate recommended experiment is to package an eight-page production bible with the existing animation teaser and secure a European animation coproduction partner before opening a series writer's room.",
+        "text": "The clear next move for studio executives and financiers is bounded: package an eight-page series production bible using the existing animation teaser as visual proof, and secure a qualifying European coproduction partner before commissioning a full writer's room. That limits upfront risk while preserving the creator's signature cultural gravity.",
         "claimIds": ["claim-3"],
         "sourceIds": ["src-trade-01"]
       }
