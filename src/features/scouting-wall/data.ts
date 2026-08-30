@@ -43,6 +43,7 @@ export type ScoutingWallEntry = {
   channelTitle?: string;
   channelHandle?: string;
   audioArtifactId?: string;
+  durationSeconds?: number;
   imageUrl?: string;
 };
 
@@ -98,6 +99,17 @@ export async function loadScoutingWallEntries(
         if (!card) return null;
         const commitmentCounts = trustedCommitmentCounts(projectData.commitmentCounts);
 
+        let durationSeconds = 150;
+        try {
+          const briefDoc = await database.collection("scoutBriefs").doc(`scout-brief-${card.cardVersionId}-g1`).get();
+          if (briefDoc.exists) {
+            const briefData = briefDoc.data() as { durationMs?: number };
+            if (briefData?.durationMs) {
+              durationSeconds = Math.round(briefData.durationMs / 1000);
+            }
+          }
+        } catch {}
+
         return {
           accessionId: card.cardVersionId,
           projectId: card.projectId,
@@ -127,6 +139,7 @@ export async function loadScoutingWallEntries(
           channelTitle: card.channelEcosystem?.channelTitle,
           channelHandle: card.channelEcosystem?.channelHandle,
           audioArtifactId: card.cardVersionId,
+          durationSeconds,
           imageUrl: card.media?.imageUrl,
         };
       })

@@ -88,7 +88,7 @@ function CardPodcastPlayer({
   onToggleMute,
 }: CardPodcastPlayerProps) {
   const displayTime = isThisPlaying ? currentTime : 0;
-  const displayDuration = isThisPlaying && duration > 0 ? duration : 150;
+  const displayDuration = isThisPlaying && duration > 0 ? duration : (entry.durationSeconds || 150);
   const progressPercent = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
 
   const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {

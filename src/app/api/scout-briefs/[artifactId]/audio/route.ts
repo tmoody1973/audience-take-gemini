@@ -23,10 +23,13 @@ export async function GET(
   }
 
   if (!audioBuffer) {
-    const cachedDiskPath = path.resolve(process.cwd(), `public/audio-cache/${artifactId}.wav`);
-    if (fs.existsSync(cachedDiskPath)) {
+    const directPath = path.resolve(process.cwd(), `public/audio-cache/${artifactId}.wav`);
+    const prefixedPath = path.resolve(process.cwd(), `public/audio-cache/scout-brief-${artifactId}-g1.wav`);
+    const targetPath = fs.existsSync(directPath) ? directPath : (fs.existsSync(prefixedPath) ? prefixedPath : null);
+
+    if (targetPath) {
       try {
-        audioBuffer = fs.readFileSync(cachedDiskPath);
+        audioBuffer = fs.readFileSync(targetPath);
         scoutBriefStore.saveAudioBuffer(artifactId, audioBuffer);
       } catch {}
     }
