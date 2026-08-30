@@ -195,6 +195,7 @@ export type ScoutCard = {
     recommendedNextExperiment: NextExperiment;
   };
   trailerCritiques?: TrailerCriticAnalysis[];
+  decisionBrief?: any;
   fandomDna?: import("@/critic/audience-comment-analyzer").FandomDnaAnalysis;
   marketViability?: import("@/critic/market-viability-engine").MarketViabilityReport;
   livingDossier?: import("@/services/re-scout-engine").LivingDossierRecord;

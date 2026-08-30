@@ -240,12 +240,20 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
     if (!source || youtubeVideoId(source.url) !== parsed.data.youtubeVideoId || youtubeVideoId(parsed.data.youtubeUrl) !== parsed.data.youtubeVideoId) return [];
     return [parsed.data];
   });
+
+  const cardData = cardSnapshot.data() as any;
+  const decisionBrief = cardData?.decisionBrief || card.decisionBrief;
+  const directTrailerCritiques = Array.isArray(cardData?.trailerCritiques) && cardData.trailerCritiques.length > 0
+    ? cardData.trailerCritiques
+    : trailerCritiques;
+
   return {
     ...card,
     claimStatus: trustedClaimStatus,
     creatorContext: { ...card.creatorContext, claimStatus: trustedClaimStatus },
     industryLens: { ...card.industryLens, creatorClaimStatus: trustedClaimStatus },
-    trailerCritiques,
+    trailerCritiques: directTrailerCritiques,
+    decisionBrief,
   };
 }
 
