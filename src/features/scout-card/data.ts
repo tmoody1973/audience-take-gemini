@@ -397,12 +397,13 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
       const medium = dynamicProject?.identity?.medium || (dynamicCard as any).medium || "series";
       const creators = dynamicProject?.identity?.creators || (dynamicCard as any).creators || ["Independent Filmmaker"];
       const claimStatusVal = (dynamicProject?.creatorClaim?.status || "unclaimed") as ClaimStatus;
+      const resolvedCardVersionId = dynamicCard.cardVersionId || dynamicCard.id || dyn?.latestCardVersionId || (dyn as any)?.publishedCardId || `card-${slug}-v1`;
 
       return {
-        cardVersionId: dynamicCard.id,
+        cardVersionId: resolvedCardVersionId,
         runId: "run-dynamic",
         researchVersion: 1,
-        projectId: dynamicProject?.id || slug,
+        projectId: dynamicProject?.id || dyn?.id || slug,
         slug: dynamicProject?.id || slug,
         title,
         hook,
