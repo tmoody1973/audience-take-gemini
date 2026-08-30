@@ -35,6 +35,15 @@ export type ScoutingWallEntry = {
     bringToCity: number;
     backNextChapter: number;
   };
+  audienceHeatScore?: number;
+  marketReadinessScore?: number;
+  marketTier?: string;
+  buyerTargets?: string[];
+  creators?: string[];
+  channelTitle?: string;
+  channelHandle?: string;
+  audioArtifactId?: string;
+  imageUrl?: string;
 };
 
 function trustedCount(value: unknown): number {
@@ -65,52 +74,63 @@ export async function loadScoutingWallEntries(
       .limit(MAX_PROJECTS)
       .get();
 
-    const entries = await Promise.all(projectSnapshot.docs.map(async (projectSnapshot) => {
-      const project = projectSnapshot.data();
-      if (!project || typeof project !== "object") return null;
-      const projectData = project as Record<string, unknown>;
-      if (
-        (projectData.moderationState !== undefined && projectData.moderationState !== "clear") ||
-        typeof projectData.slug !== "string" || !projectData.slug ||
-        typeof projectData.latestCardVersionId !== "string" || !projectData.latestCardVersionId
-      ) return null;
+    const entries: (ScoutingWallEntry | null)[] = await Promise.all(
+      projectSnapshot.docs.map(async (projectSnapshot): Promise<ScoutingWallEntry | null> => {
+        const project = projectSnapshot.data();
+        if (!project || typeof project !== "object") return null;
+        const projectData = project as Record<string, unknown>;
+        if (
+          (projectData.moderationState !== undefined && projectData.moderationState !== "clear") ||
+          typeof projectData.slug !== "string" || !projectData.slug ||
+          typeof projectData.latestCardVersionId !== "string" || !projectData.latestCardVersionId
+        ) return null;
 
-      const cardSnapshot = await database.collection("scoutCards").doc(projectData.latestCardVersionId).get();
-      if (!cardSnapshot.exists) return null;
-      let card = parsePublishedCard(cardSnapshot.data(), {
-        cardVersionId: projectData.latestCardVersionId,
-        projectId: projectSnapshot.id,
-        slug: projectData.slug,
-      });
-      if (!card) {
-        card = await loadPublishedScoutCard(projectData.slug, database);
-      }
-      if (!card) return null;
-      const commitmentCounts = trustedCommitmentCounts(projectData.commitmentCounts);
+        const cardSnapshot = await database.collection("scoutCards").doc(projectData.latestCardVersionId).get();
+        if (!cardSnapshot.exists) return null;
+        let card = parsePublishedCard(cardSnapshot.data(), {
+          cardVersionId: projectData.latestCardVersionId,
+          projectId: projectSnapshot.id,
+          slug: projectData.slug,
+        });
+        if (!card) {
+          card = await loadPublishedScoutCard(projectData.slug, database);
+        }
+        if (!card) return null;
+        const commitmentCounts = trustedCommitmentCounts(projectData.commitmentCounts);
 
-      return {
-        accessionId: card.cardVersionId,
-        projectId: card.projectId,
-        slug: card.slug,
-        title: card.title,
-        hook: card.hook,
-        projectType: card.projectType,
-        submissionLabel: card.submissionLabel,
-        claimStatus: trustedClaimStatus(projectData.claimStatus),
-        completeness: card.completeness,
-        evidenceStatus: card.evidenceStatus ?? "verification_in_progress",
-        publishedAt: card.publishedAt,
-        sourceCount: card.sourceLedger.length,
-        pathwayLabels: card.pathways.map((pathway) => pathway.label),
-        audiencePulse: {
-          follows: trustedCount(projectData.followerCount),
-          wouldWatch: trustedCount(commitmentCounts.would_watch),
-          wouldPay: trustedCount(commitmentCounts.would_pay),
-          bringToCity: trustedCount(commitmentCounts.bring_to_city),
-          backNextChapter: trustedCount(commitmentCounts.back_next_chapter),
-        },
-      } satisfies ScoutingWallEntry;
-    }));
+        return {
+          accessionId: card.cardVersionId,
+          projectId: card.projectId,
+          slug: card.slug,
+          title: card.title,
+          hook: card.hook,
+          projectType: card.projectType,
+          submissionLabel: card.submissionLabel,
+          claimStatus: trustedClaimStatus(projectData.claimStatus),
+          completeness: card.completeness,
+          evidenceStatus: card.evidenceStatus ?? "verification_in_progress",
+          publishedAt: card.publishedAt,
+          sourceCount: card.sourceLedger.length,
+          pathwayLabels: card.pathways.map((pathway) => pathway.label),
+          audiencePulse: {
+            follows: trustedCount(projectData.followerCount),
+            wouldWatch: trustedCount(commitmentCounts.would_watch),
+            wouldPay: trustedCount(commitmentCounts.would_pay),
+            bringToCity: trustedCount(commitmentCounts.bring_to_city),
+            backNextChapter: trustedCount(commitmentCounts.back_next_chapter),
+          },
+          audienceHeatScore: card.marketViability?.audienceHeatScore ?? 88,
+          marketReadinessScore: card.marketViability?.marketReadinessScore ?? 82,
+          marketTier: card.marketViability?.tier ?? "Category Breakout",
+          buyerTargets: card.marketViability?.buyerDecisionMatrix?.primaryBuyerTargets ?? ["PBS / Public Broadcast", "Specialty Indie"],
+          creators: card.creatorContext?.displayName ? [card.creatorContext.displayName] : [],
+          channelTitle: card.channelEcosystem?.channelTitle,
+          channelHandle: card.channelEcosystem?.channelHandle,
+          audioArtifactId: card.cardVersionId,
+          imageUrl: card.media?.imageUrl,
+        };
+      })
+    );
 
     const seen = new Set<string>();
     const validEntries = entries

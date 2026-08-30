@@ -192,6 +192,32 @@ Output MUST strictly adhere to the following JSON structure:
 
         if (response.text) {
           proposalData = JSON.parse(response.text);
+
+          // Normalize stage and medium to ensure deterministic schema conformance
+          if (proposalData) {
+            const allowedStages = new Set(["concept", "script", "crowdfunding", "production", "post_production", "festival_circuit", "unreleased_complete"]);
+            if (!allowedStages.has(proposalData.stage)) {
+              const sLower = String(proposalData.stage || "").toLowerCase();
+              if (sLower.includes("post")) proposalData.stage = "post_production";
+              else if (sLower.includes("crowd") || sLower.includes("kickstarter")) proposalData.stage = "crowdfunding";
+              else if (sLower.includes("fest") || sLower.includes("sundance")) proposalData.stage = "festival_circuit";
+              else if (sLower.includes("complete") || sLower.includes("release")) proposalData.stage = "unreleased_complete";
+              else if (sLower.includes("script")) proposalData.stage = "script";
+              else if (sLower.includes("concept")) proposalData.stage = "concept";
+              else proposalData.stage = "production";
+            }
+
+            const allowedMediums = new Set(["feature", "short", "documentary", "series", "pilot", "proof_of_concept", "creator_page"]);
+            if (!allowedMediums.has(proposalData.medium)) {
+              const mLower = String(proposalData.medium || "").toLowerCase();
+              if (mLower.includes("doc")) proposalData.medium = "documentary";
+              else if (mLower.includes("series") || mLower.includes("show")) proposalData.medium = "series";
+              else if (mLower.includes("short")) proposalData.medium = "short";
+              else if (mLower.includes("pilot")) proposalData.medium = "pilot";
+              else if (mLower.includes("proof")) proposalData.medium = "proof_of_concept";
+              else proposalData.medium = "feature";
+            }
+          }
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
