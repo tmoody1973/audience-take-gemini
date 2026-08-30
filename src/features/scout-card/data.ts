@@ -710,7 +710,12 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
                 ? { pledged: 45000, goal: 35000, backers: 980 }
                 : dynIsGoth
                 ? { pledged: 225460, goal: 135000, backers: 3512 }
-                : { pledged: 220000, goal: 100000, backers: 1200 }
+                : { pledged: 220000, goal: 100000, backers: 1200 },
+              {
+                title: cardTitle,
+                projectType: dynamicCard?.projectType,
+                slug,
+              }
             );
         })(),
         fandomDna: (() => {
