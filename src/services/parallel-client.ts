@@ -20,14 +20,12 @@ export interface ParallelSearchOptions {
   maxResults?: number;
 }
 
-const DEFAULT_PARALLEL_KEY = "REDACTED_PARALLEL_KEY";
-
 export class ParallelSearchClient {
   private apiKey: string | null;
   private baseUrl: string;
 
   constructor(apiKey?: string, baseUrl = "https://api.parallel.ai/v1") {
-    this.apiKey = apiKey || process.env.PARALLEL_API_KEY || DEFAULT_PARALLEL_KEY;
+    this.apiKey = apiKey || process.env.PARALLEL_API_KEY || null;
     this.baseUrl = baseUrl;
   }
 
@@ -35,9 +33,9 @@ export class ParallelSearchClient {
    * Performs an LLM-optimized web search using Parallel Search API v1
    */
   async search(options: ParallelSearchOptions): Promise<ParallelSearchResponse> {
-    const key = this.apiKey || process.env.PARALLEL_API_KEY || DEFAULT_PARALLEL_KEY;
+    const key = this.apiKey || process.env.PARALLEL_API_KEY || null;
     if (!key) {
-      console.warn("ParallelSearchClient: No PARALLEL_API_KEY available.");
+      console.warn("ParallelSearchClient: No PARALLEL_API_KEY configured.");
       return { search_id: `no_key_${Date.now()}`, results: [], warnings: ["PARALLEL_API_KEY not configured"] };
     }
 

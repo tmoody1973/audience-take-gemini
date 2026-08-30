@@ -1,12 +1,13 @@
 # Audience Take — The Autonomous Public Scouting Program for Screen IP
 
 > **Institutional-Grade Screen Discovery, Fandom DNA & Anti-Brigade Market Intelligence**  
-> Powered by **Google Gemini 3.5 Flash**, **Gemini 3.7 Flash Video Understanding**, **YouTube Data API v3**, and **Parallel Web Systems**.
+> Powered by **Google Gemini 3.5 Flash**, **Gemini 3.7 Flash Video Understanding**, **YouTube Data API v3**, and **Parallel Search API**.
 
 [![Live on Cloud Run](https://img.shields.io/badge/Google_Cloud_Run-Serving_100%25-4285F4?logo=google-cloud&logoColor=white)](https://audience-take-web-866111144888.us-central1.run.app)
-[![Tests Passing](https://img.shields.io/badge/Vitest-230%2B_Tests_Passing-brightgreen?logo=vitest&logoColor=white)](./tests)
+[![Tests Passing](https://img.shields.io/badge/Vitest-265%2B_Tests_Passing-brightgreen?logo=vitest&logoColor=white)](./tests)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.5_(App_Router)-black?logo=next.js&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_Mode-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 
 ---
 
@@ -28,8 +29,8 @@ Audience Take solves both problems through **Autonomous Agent Intelligence**, **
 | :--- | :--- |
 | **🍿 Fans, Superfans & Audience Communities** | **Real power to champion projects they love**. Fans move beyond passive consumption—signaling high-intent willingness to watch, pay, or back creators, rallying local demand to bring screenings to their cities, and voting on creative pathways to shape how stories grow. |
 | **🔍 Cultural Scouts & Film Curators** | **Be the first to spot breakout hits**. Nominate public web links (YouTube, Vimeo, Kickstarter), verify citation ledgers, author analytical Takes, and establish a public reputation as trusted tastemakers. |
-| **🎨 Independent Filmmakers, Animators & Creators** | **Institutional visibility with proof of demand**. Receive an autonomous, grounded Scout Card that quantifies true commercial viability beyond raw vanity metrics. Showcase full media arsenals (pilots, pitch videos, devlogs) that auto-update as projects hit milestones. |
-| **🎬 Studio Acquisitions & Development Executives** *(Amazon Prime Video, Adult Swim / Max, A24, Netflix, Neon, Hulu)* | **De-risked, data-backed IP discovery**. Bounded buyer sanity checks that analyze production unit costs (€/min), trade press diffusion, demographic fandom overlap, and platform programming slate alignment. |
+| **🎨 Independent Filmmakers, Animators & Creators** | **Institutional visibility with proof of demand**. Receive an autonomous, grounded Scout Card that quantifies true commercial viability beyond raw vanity metrics. Showcase full media arsenals (pilots, pitch videos, devlogs) with verified creator claims. |
+| **🎬 Studio Acquisitions & Development Executives** *(Amazon Prime Video, Adult Swim / Max, A24, Netflix, Neon, Hulu)* | **De-risked, data-backed IP discovery**. Bounded buyer sanity checks that analyze production unit costs, trade press diffusion, demographic fandom overlap, and platform programming slate alignment. |
 
 ---
 
@@ -47,12 +48,6 @@ Audience Take solves both problems through **Autonomous Agent Intelligence**, **
 │  ├─ Market Viability: 90/100 (Category Breakout · Bounded by Studio Attachment)          │
 │  └─ Executive Decision: Acquire & Slate for Coproduction                                 │
 │     [ PRIME VIDEO ANIMATION ] [ ADULT SWIM / MAX ] [ A24 / SPINDLEHORSE ] [ NETFLIX YA ] │
-└──────────────────────────────────────────────────────────────────────────────────────────┘
-                                             │
-┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│  LIVING DOSSIER (ANTI-DATA DECAY)                                                        │
-│  • Status: Live Verified · Latest Milestone: YouTube views reached 0.3M (6,825 likes)     │
-│  • Expandable Changelog: Milestone history across YouTube, Kickstarter, & Trade Press    │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
                                              │
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
@@ -76,25 +71,22 @@ Decouples **Grassroots Momentum** from **Institutional Buyer Viability**:
   - `25%` Studio Buying Slate Alignment (Active YA mandates at Prime Video, Adult Swim, A24)
   - `20%` Commercial TAM & Merchandising Propensity (€4.5M–€12M addressable market)
 
-### 2. Living Dossier Engine (Anti-Data Decay)
-Autonomous milestone sensors track progress across YouTube, crowdfunding platforms, and trade news, automatically updating the card and logging an immutable, auditable changelog.
-
-### 3. Multimodal Trailer Critic (Gemini 3.7 / 3.5 Flash)
+### 2. Multimodal Trailer Critic (Gemini 3.7 / 3.5 Flash)
 Full-width audiovisual breakdown including:
 - **Timestamped Narrative Beats** (`0:00–0:18`, `0:18–0:38`, `0:38–0:56`, etc.)
 - **Technical Craft Analysis** (Pacing, 2D lighting, cinematography, sound & music mix)
 - **Marketing Positioning & Emotional Hooks** (USP, target persona, concept-vs-star balance)
 
-### 4. YouTube Data API v3 & Gemini NLP Fandom DNA
+### 3. YouTube Data API v3 & Gemini NLP Fandom DNA
 - Real-time quantitative metrics (live views, likes, comments).
 - Qualitative comment discourse synthesis across **Lore Obsessions**, **Physical Merchandise Demand**, **Critical Reception (Praise vs Constructive Notes)**, and **Demographic Comparables** (*Hazbin Hotel*, *Lackadaisy*, *Castlevania*).
 
-### 5. Creator Channel Gravity & Multi-Asset Media Switcher
+### 4. Creator Channel Gravity & Multi-Asset Media Switcher
 - **Channel Gravity Banner**: Displays creator channel subscribers (905K), universe catalog views (42.5M), active fan retention (29.4%), and fandom longevity (7+ years).
 - **Multi-Video In-Player Picker**: Toggle seamlessly between the **Pilot Teaser**, **Lore Origin Shorts**, and **Production Devlogs**.
 - **`+ Add Video / Devlog` Workflow**: Interactive modal + API endpoint (`/api/projects/[id]/media`) allowing creators and scouts to submit media updates post-publication.
 
-### 6. The Social Layer: Audience Pulse, Intent Commitments & Structured Takes
+### 5. The Social Layer: Audience Pulse, Intent Commitments & Structured Takes
 Unlike traditional platforms that rely on hollow, easily manipulated upvotes, Audience Take introduces a high-signal, anti-bot social architecture:
 - **High-Intent Commitments ("Skin in the Game")**:
   - `I would watch`: Direct viewership demand velocity.
@@ -106,7 +98,7 @@ Unlike traditional platforms that rely on hollow, easily manipulated upvotes, Au
 - **Creator Desk (`/creator`)**: Verified creators can claim their projects, publish official production dispatches, and engage directly with their verified scout base.
 - **Data Integrity & Demo Separation**: Real-time Firebase Firestore synchronization that strictly separates organic verified commitments from demo test counters (`counterKind: "organic"` vs `"demo"`).
 
-### 7. The 2-Speaker Gemini Audio Scout Brief (Executive Podcast Briefing)
+### 6. The 2-Speaker Gemini Audio Scout Brief (Executive Podcast Briefing)
 A failure-isolated, 3-to-5 minute two-speaker audio briefing attached as an immutable sidecar artifact to each published Scout Card:
 - **Two Distinct Personas**:
   - **`Scout`** (Voiced by `Kore` / energetic, culture-first): Walks through the narrative hook, character lore, grassroots fan velocity, and YouTube comment resonance.
@@ -114,12 +106,12 @@ A failure-isolated, 3-to-5 minute two-speaker audio briefing attached as an immu
 - **Closed-World Verifiability**: Powered by **Gemini 3.5 Flash** for structured script synthesis (strictly bounded by card facts with zero hallucinations) and **Gemini 3.1 Flash TTS Preview** for multi-speaker speech synthesis.
 - **Accessible HTML5 Player**: Features playback rate options (`0.75×`, `1×`, `1.25×`, `1.5×`, `2×`), time scrubber, volume toggle, strictly NO autoplay, and an expandable speaker-labeled transcript drawer with interactive citation pills.
 
-### 8. Evidence & Citation Ledger
+### 7. Evidence & Citation Ledger
 Zero black-box assertions. Every claim in the dossier is backed by named source badges (`S1 · The Hive Studio`, `S2 · C21Media`, `S3 · Kickstarter`) linked directly to the public evidence ledger.
 
 ---
 
-## 🤖 Deep Dive: Autonomous Agent Pipeline & Partner Integrations
+## 🤖 Autonomous Agent Pipeline & Partner Integrations
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -129,10 +121,10 @@ Zero black-box assertions. Every claim in the dossier is backed by named source 
                 │
   [ Stage 2: Multimodal Ingestion ] ─▶ Safe Web Fetch & Video Stream Extraction
                 │
-  [ Stage 3: Trade Press Search ] ───▶ PARALLEL SEARCH API / CLI (Real-Time Deep Web Crawling)
+  [ Stage 3: Trade Press Search ] ───▶ PARALLEL SEARCH API (Server-Side REST)
                 │                      • Kickstarter Backer Stats • Animation Magazine • Co-Pro Deals
                 │
-  [ Stage 4: Narrative Synthesis ] ──▶ GOOGLE GEMINI 3.5 FLASH (Structured JSON Schema)
+  [ Stage 4: Narrative Synthesis ] ──▶ GOOGLE GEMINI 3.5 FLASH via @google/genai (Structured JSON Schema)
                 │                      • What We Know • What We're Checking • 3 Development Pathways
                 │
   [ Stage 5: Multimodal Video Critic]▶ GOOGLE GEMINI 3.7 FLASH (Audiovisual Understanding)
@@ -141,7 +133,7 @@ Zero black-box assertions. Every claim in the dossier is backed by named source 
   [ Stage 6: Deterministic Check ] ──▶ Strict TypeScript Runtime Schema Verification (Zero Hallucination)
                 │
                 ▼
-  [ PUBLISHED LIVING DOSSIER ] ──────▶ Cloud Firestore Sync & Dual-Axis Market Index Calculation
+  [ PUBLISHED SCOUT CARD ] ──────────▶ Cloud Firestore Sync & Dual-Axis Market Index Calculation
 ```
 
 ### 1. How the Autonomous Scout Agent Operates
@@ -153,70 +145,60 @@ When a user or scout nominates any public URL (YouTube, Vimeo, Kickstarter, pers
 5. **Multimodal Trailer Critic Execution**: Performs frame-accurate audiovisual criticism, extracting timestamped story beats, pacing rhythm, and emotional arcs.
 6. **Deterministic Verification**: Validates all data through strict Zod schemas before writing to Firestore, ensuring zero unsupported claims.
 
-### 2. How We Use the Google Agent Development Kit (ADK / Antigravity SDK)
-The entire intelligence loop is built on the **Google Agent Development Kit (ADK)** architecture, providing enterprise-grade agent orchestration, tool integration, and deterministic reliability:
+---
 
-- **State Machine & Multi-Stage Pipeline Orchestration**:
-  - The ADK manages the autonomous lifecycle (`intake` ➔ `fetching` ➔ `trade_search` ➔ `classifying` ➔ `extracting_evidence` ➔ `validating` ➔ `complete`).
-  - Manages asynchronous background tasks, progress streaming, error recovery, and audit receipts in Firestore.
-- **Deterministic Hallucination Guardrails**:
-  - Enforces the **Clean-Room Verification Barrier**: The ADK prevents the LLM from writing directly to the database. Every generated claim must pass through strict Zod schema validation and have at least one verified source ID in the citation ledger.
-- **Tool Protocol & Skill Execution**:
-  - Connects Google Gemini reasoning models with external tools via standardized tool calling protocols:
-    - `Parallel Search / Fetch / Monitor` APIs for real-time web discovery.
-    - `YouTube Data API v3` for live engagement and comment extraction.
-    - `Multimodal Video Critic` for frame-accurate temporal analysis.
-- **Living Dossier & Autonomous Cron Lifecycle**:
-  - The ADK lifecycle engine handles event-driven wakeups, scheduled milestone checks, and versioned diff tracking across project updates.
+### 2. Parallel Systems Integration Matrix
+
+Audience Take integrates with **Parallel Systems** for real-time web intelligence and discovery:
+
+| Parallel Capability | Status | Runtime Proof & Integration Notes |
+| :--- | :--- | :--- |
+| **Search API** | **Implemented** | Direct server-side REST request `POST https://api.parallel.ai/v1/search` in [`src/services/parallel-client.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/services/parallel-client.ts), called during research runs by [`src/agent/agent-runner.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/agent/agent-runner.ts). Returns ranked public URLs, titles, and excerpts used to ground Scout Card citations. |
+| **Extract API** | **Roadmap** | Potential future support for deep structured content extraction from supplied URLs via `/v1/extract`. |
+| **Monitor API** | **Roadmap** | Planned for living-dossier recurring change monitoring and automated milestone notifications. |
+| **Responses API** | **Not Implemented** | Out of scope for current scouting workflows. |
+
+#### Provenance & Evidence Separation
+- User-submitted sources and Parallel-discovered web citations maintain strictly separate provenance in the Firestore evidence ledger (`origin: "user"` vs `origin: "parallel"` vs `origin: "inferred"`).
+- Parallel Search results pass through an SSRF validation guard before ingestion, ensuring returned links resolve only to public internet hosts.
+
+#### Development Workflow vs Runtime
+- **Parallel CLI & Agent Skills**: Skills located in `.agents/skills/` (`parallel-web-search`, `parallel-web-extract`, `parallel-deep-research`, `parallel-data-enrichment`) are utilized for developer research and CLI operations. The deployed runtime service executes raw server-side REST calls against `https://api.parallel.ai/v1/search`.
 
 ---
 
-### 3. How We Use the Google GenAI SDK (`@google/genai`) & Gemini Models
-Audience Take leverages Google's latest next-generation reasoning and multimodal models via the official `@google/genai` SDK:
+### 3. Google AI & SDK Architecture
 
-- **Google Gemini 3.5 Flash (`gemini-3.5-flash`)**:
-  - **High-Velocity Agent Synthesis**: Powers the primary research pipeline, converting messy web data into structured evidence ledgers.
-  - **Fandom DNA & Comment NLP**: Classifies thousands of YouTube fan comments into character obsessions, physical merchandise demand, and acoustic/writing critiques.
-  - **Market Viability Matrix**: Performs 4-dimension buyer sanity checks, matching indie projects against active acquisition mandates at Prime Video, Adult Swim, and A24.
-  - **Structured Outputs via `responseSchema`**: Utilizes Gemini's native JSON schema constraints to guarantee 100% type-safe payloads that map directly to TypeScript interfaces without runtime parsing errors.
-
-- **Google Gemini 3.7 Flash (`gemini-3.7-flash`) Video Understanding**:
-  - **Native Audiovisual Ingestion**: Ingests video streams directly to analyze cinematography, color contrast, shadow lighting, and sound mixes.
-  - **Temporal Story Beat Extraction**: Pinpoints narrative transition timestamps (`0:00–0:18`, `0:18–0:38`, `0:38–0:56`, etc.) and grades rhythmic editing pacing.
+- **Google GenAI SDK (`@google/genai`)**:
+  - The runtime application uses `@google/genai` directly in [`src/lib/google/genai-client.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/lib/google/genai-client.ts) and [`src/agent/agent-runner.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/agent/agent-runner.ts).
+  - Automatically switches between Vertex AI (when running on Cloud Run with Google Cloud Application Default Credentials) and Gemini Developer API (via `GEMINI_API_KEY`).
+  - **Gemini 3.5 Flash (`gemini-3.5-flash`)**: Synthesizes narrative structure, extracts Fandom DNA, and enforces `responseSchema` JSON constraints.
+  - **Gemini 3.7 Flash (`gemini-3.7-flash`)**: Executes multimodal video understanding, scene segmentation, and pacing critique.
+- **Google Agent Development Kit (`@google/adk`)**:
+  - `@google/adk` is included as a project dependency in `package.json` for architectural compatibility with Google ADK agent patterns. Active runtime inference is executed directly via `@google/genai`, which is explicitly supported across the Google Cloud and Gemini ecosystem.
 
 ---
 
-### 4. How We Use Parallel Systems (Hackathon Partner) in Detail
-Parallel Systems serves as the **Real-Time Web Intelligence, Extraction & Autonomous Monitoring Engine** that powers the agent's external fact-checking and Living Dossier freshness:
+### 4. Live Today vs Roadmap
 
-- **1. Parallel Search API (`https://api.parallel.ai/v1/search`) — Targeted Trade Discovery**:
-  - Executes targeted multi-query fanouts (`"Daria Cohen" "The Vampair Series" Kickstarter "The Hive Studio"`) to crawl and index live web pages beyond static search engine caches.
-  - **Discovered Closed Campaign Metrics**: Crawled Kickstarter to extract exact closed totals: **€225,460 pledged of €135,000 goal (167% funded) across 3,512 verified fan backers (€64.19 ARPU)**.
-  - **Trade Press Validation**: Located critical international co-production reporting in *Animation Magazine* and *C21Media*, proving the project had broken out of insular online bubbles.
-
-- **2. Parallel Fetch API (`https://api.parallel.ai/v1/fetch`) — Headless DOM Extraction**:
-  - Headless JavaScript rendering and clean markdown extraction (`parallel-web-extract`).
-  - Converts complex, dynamic creator link-trees, Kickstarter reward tiers, festival catalogs, and PDF pitch decks into clean, token-efficient Markdown for Gemini 3.5 Flash without HTML clutter or scraper blocks.
-
-- **3. Parallel Monitor API (`https://api.parallel.ai/v1/monitor`) — Living Dossier Sensors**:
-  - Configures automated webhooks and scheduled monitors on creator URLs, crowdfunding campaigns, and trade RSS feeds.
-  - **Drives Anti-Data Decay**: Whenever Parallel Monitor detects milestone changes (e.g. stretch goals reached, new trade announcement in *Variety* / *Deadline*, new festival laurels), it sends a webhook that triggers the **Living Dossier Auto-Re-Scout Engine** to append to the immutable changelog in real time.
-
-- **Parallel CLI (`parallel-cli` v0.9.3)**:
-  - Used for rapid developer inspection, data enrichment, and test-suite verification.
-- **Autonomous Agent Skills Utilized**:
-  - `parallel-web-search`: High-speed LLM-optimized fact retrieval.
-  - `parallel-web-extract`: Clean markdown extraction from complex DOMs and PDF pitch decks.
-  - `parallel-deep-research`: Multi-source synthesis on creator catalog depth and production history.
-  - `parallel-data-enrichment`: Bulk entity verification across international animation registries.
+| Feature Area | Live Today in Production | Roadmap / Future Milestone |
+| :--- | :--- | :--- |
+| **Project Intake & Scouting** | Live public nomination at `/nominate` with SSRF guard and YouTube metadata parsing | Automated multi-platform RSS feed ingesters |
+| **Web Research** | Server-side Parallel Search API v1 (`POST /v1/search`) with bounded queries | Automated Parallel Extract API (`/v1/extract`) on arbitrary long-form PDFs/pitch decks |
+| **Dossier Freshness** | Verified creator update publishing (`/creator` & `/projects/[id]/manage`) | Automated webhooks via Parallel Monitor API for automated milestone alerts |
+| **Audio Scout Briefs** | 2-speaker Gemini 3.5 / Gemini 3.1 Flash TTS audio briefings with interactive transcripts | Custom creator voice cloning for approved filmmaker dispatches |
+| **Audience Signals** | Organic vs demo separated commitments (Watch, Pay, City demand, Back) | Integrated ticket reservation and escrow crowdfunding checkout |
 
 ---
 
-### 5. How We Use Google Cloud Platform (GCP) & Infrastructure
+### 5. Google Cloud Platform (GCP) Infrastructure
+
 - **Google Cloud YouTube Data API v3 (`youtube.googleapis.com`)**:
   - Live query engine fetching real-time video statistics (views, likes, comments) and relevant comment threads for Gemini's Fandom DNA analyzer.
 - **Google Cloud Run**:
   - Containerized production server (Node.js 22 Alpine) deployed in `us-central1` serving 100% of live traffic with instant scale-to-zero efficiency.
+- **Google Secret Manager**:
+  - Secure credential storage (`audience-take-parallel-api-key`) injected directly into the Cloud Run container environment as `PARALLEL_API_KEY`.
 - **Firebase Firestore & Admin SDK**:
   - Low-latency real-time document store powering Scout Cards, Living Dossier audit logs, and social commitment synchronization.
 
@@ -225,15 +207,16 @@ Parallel Systems serves as the **Real-Time Web Intelligence, Extraction & Autono
 ## 🛠️ Technical Stack & Infrastructure
 
 - **Frontend & App Architecture**: [Next.js 15](https://nextjs.org) (App Router), React 19, TypeScript (Strict Mode)
-- **Design System & Typography**: Custom "Public Scouting Program" festival theme, League Gothic AT, Tailwind CSS, Lucide Icons
+- **Design System & Typography**: Custom "Public Scouting Program" neo-brutalist theme, League Gothic AT, Scoped CSS Modules, Lucide Icons
 - **AI & Reasoning Models**:
   - **Scout Research Agent & Fandom DNA**: Google Gemini 3.5 Flash (`gemini-3.5-flash`) via `@google/genai`
   - **Multimodal Trailer Critic**: Google Gemini 3.7 Flash (`gemini-3.7-flash`) via `@google/genai`
-- **Web Intelligence & Search**: Parallel Search API (`https://api.parallel.ai/v1/search`) & Parallel CLI (`parallel-cli` v0.9.3)
+  - **Audio Scout Brief Synthesis**: Google Gemini 3.1 Flash TTS Preview
+- **Web Intelligence & Search**: Parallel Search API (`https://api.parallel.ai/v1/search`)
 - **Video Intelligence**: Google Cloud YouTube Data API v3 (`youtube.googleapis.com`)
 - **Database & Realtime Sync**: Firebase Firestore / Firebase Admin SDK
 - **Cloud Hosting & Containers**: Google Cloud Run (`us-central1`, `test-app-mkark4`)
-- **Testing & Quality Assurance**: Vitest, React Testing Library, Playwright (230+ automated tests passing)
+- **Testing & Quality Assurance**: Vitest, React Testing Library, Playwright (265+ automated tests passing)
 
 ---
 
@@ -247,8 +230,12 @@ npm install
 ```
 
 ### 2. Configure Environment Variables
-Create a `.env.local` file in the project root:
+Copy `.env.example` to `.env.local` and populate your API credentials:
 ```bash
+cp .env.example .env.local
+```
+
+```env
 # Google Gemini AI
 GEMINI_API_KEY="your-gemini-api-key"
 AUDIENCE_TAKE_GEMINI_MODEL="gemini-3.5-flash"
@@ -260,7 +247,7 @@ YOUTUBE_API_KEY="your-youtube-data-api-key"
 # Parallel Search API
 PARALLEL_API_KEY="your-parallel-api-key"
 
-# Firebase / GCP Config (Optional for full Firestore integration)
+# Firebase / GCP Config
 FIREBASE_PROJECT_ID="test-app-mkark4"
 ```
 
@@ -275,14 +262,20 @@ Open [http://localhost:3000](http://localhost:3000) to view the Public Scouting 
 npm test
 ```
 
+To run the optional live integration test against the live Parallel Search API:
+```bash
+RUN_PARALLEL_INTEGRATION_TESTS=1 PARALLEL_API_KEY="your-key" npm test
+```
+
 ---
 
 ## 📂 Key Application Routes
 
 - **`/`**: The Public Scouting Wall (featured projects, signal counters, and pathway strips)
 - **`/nominate`**: Project intake ticket with URL validation and SSRF security boundary
+- **`/about`**: The editorial manifesto, scouting thesis, and methodology
 - **`/research/[id]`**: Live 6-stage autonomous research trace and receipts
-- **`/projects/[slug]`**: Complete Scout Card dossier, Dual-Axis Index, Fandom DNA, Living Dossier, and Trailer Critic
+- **`/projects/[slug]`**: Complete Scout Card dossier, Dual-Axis Index, Fandom DNA, and Trailer Critic
 - **`/creator`**: Creator Desk for project claims and creator updates
 - **`/api/projects/[id]/media`**: Media ingestion endpoint for devlogs, pilots, and pitch videos
 
@@ -290,12 +283,15 @@ npm test
 
 ## 📚 Technical Documentation & References
 
-- **[Hackathon Intelligence & Formula Specification](docs/HACKATHON_INTELLIGENCE_ARCHITECTURE.md)**: Detailed mathematical breakdowns for Audience Heat, Market Viability, and Living Dossier triggers.
+- **[Hackathon Intelligence & Formula Specification](docs/HACKATHON_INTELLIGENCE_ARCHITECTURE.md)**: Mathematical breakdowns for Audience Heat and Market Viability.
+- **[Nomination & Agent Lifecycle](docs/NOMINATION_AND_AGENT_LIFECYCLE.md)**: In-depth guide to the 6-stage research pipeline and Firestore synchronization.
 - **Live Cloud Run Deployment**: [https://audience-take-web-866111144888.us-central1.run.app](https://audience-take-web-866111144888.us-central1.run.app)
 - **Sample Verified Dossier**: [The Vampair Series Scout Card](https://audience-take-web-866111144888.us-central1.run.app/projects/proj-1788033835868-tfn0k)
 
 ---
 
-## 📜 License & Provenance
+## 📜 License
 
-Built with autonomous pairing and generated with **Google Antigravity**.
+This project is licensed under the **Apache License 2.0**. See the [LICENSE](./LICENSE) file for the full license text.
+
+Copyright 2026 Audience Take Contributors.
