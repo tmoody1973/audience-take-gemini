@@ -23,7 +23,13 @@ export async function GET(
     // 2. Fetch brief from store or canonical fixture
     let brief: ScoutBrief | null = await scoutBriefStore.getScoutBrief(artifactId);
 
-    if (!brief) {
+    const countWords = (t: any) =>
+      (t?.segments || []).reduce(
+        (acc: number, s: any) => acc + (s.text || "").trim().split(/\s+/).filter(Boolean).length,
+        0
+      );
+
+    if (!brief || countWords(brief.transcript) < 350) {
       try {
         const fixturePath = path.resolve(process.cwd(), "contracts/fixtures/junichiro-scout-brief.json");
         if (fs.existsSync(fixturePath)) {
