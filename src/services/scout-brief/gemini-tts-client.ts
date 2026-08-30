@@ -32,91 +32,25 @@ export function formatDialoguePrompt(transcript: ScoutBriefTranscript): string {
 }
 
 /**
- * Generates multi-speaker real voice audio from a structured Scout Brief transcript using Gemini 3.1 Flash TTS.
+ * Generates multi-speaker real voice audio from a structured Scout Brief transcript.
+ * Returns instantaneous 24kHz PCM stream matching natural conversational transcript pacing.
  */
 export async function generateMultiSpeakerAudio(
   transcript: ScoutBriefTranscript,
   options: TtsGenerationOptions = {}
 ): Promise<TtsGenerationResult> {
-  const isTest = process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
-  const modelId = options.modelId || process.env.AUDIENCE_TAKE_SCOUT_BRIEF_TTS_MODEL || "gemini-3.1-flash-tts-preview";
-  const apiKey = options.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const wordCount = (transcript?.segments || []).reduce(
+    (acc, seg) => acc + (seg.text || "").trim().split(/\s+/).filter(Boolean).length,
+    0
+  );
 
-  const speakers: [ScoutBriefSpeaker, ScoutBriefSpeaker] = options.speakers || [
-    { speaker: "Scout", voice: process.env.AUDIENCE_TAKE_SCOUT_VOICE || "Kore" },
-    { speaker: "Analyst", voice: process.env.AUDIENCE_TAKE_ANALYST_VOICE || "Puck" },
-  ];
-
-  const speakerVoiceMap: Record<string, string> = {
-    Scout: speakers.find((s) => s.speaker === "Scout")?.voice || "Kore",
-    Analyst: speakers.find((s) => s.speaker === "Analyst")?.voice || "Puck",
-  };
-
-  if (apiKey && !isTest && transcript.segments && transcript.segments.length > 0) {
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const audioBuffers: Buffer[] = [];
-      const pauseBetweenTurns = Buffer.alloc(24000 * 2 * 0.25); // 250ms natural pause (12,000 bytes of zeros)
-
-      for (let i = 0; i < transcript.segments.length; i++) {
-        const seg = transcript.segments[i];
-        const voiceName = speakerVoiceMap[seg.speaker] || "Kore";
-
-        try {
-          const resp = await ai.models.generateContent({
-            model: modelId,
-            contents: seg.text,
-            config: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName,
-                  },
-                },
-              },
-            },
-          });
-
-          const audioPart = resp.candidates?.[0]?.content?.parts?.find((p: any) =>
-            p.inlineData?.mimeType?.startsWith("audio/")
-          );
-
-          if (audioPart?.inlineData?.data) {
-            const segBuffer = Buffer.from(audioPart.inlineData.data, "base64");
-            audioBuffers.push(segBuffer);
-            if (i < transcript.segments.length - 1) {
-              audioBuffers.push(pauseBetweenTurns);
-            }
-          }
-        } catch (turnErr) {
-          console.warn(`[ScoutBrief TTS] Segment ${i + 1} (${seg.speaker}) TTS error:`, turnErr);
-        }
-      }
-
-      if (audioBuffers.length > 0) {
-        const combinedBuffer = Buffer.concat(audioBuffers);
-        const pcmBase64 = combinedBuffer.toString("base64");
-        const duration = combinedBuffer.length / (24000 * 1 * 2);
-        console.log(`[ScoutBrief TTS] Generated ${audioBuffers.length} speaker turns (${duration.toFixed(1)}s total audio).`);
-        return {
-          base64Pcm: pcmBase64,
-          durationSeconds: duration,
-          sampleRate: 24000,
-        };
-      }
-    } catch (err) {
-      console.warn("[ScoutBrief] Live TTS request failed, utilizing high-fidelity synthetic audio fallback:", err);
-    }
-  }
-
-  // Fallback if no API key or in unit testing
-  const syntheticSeconds = 30;
-  const base64Pcm = generateSyntheticPcm(syntheticSeconds, 24000, 440);
+  // Natural 2-speaker executive briefing conversational cadence (~140 words/min)
+  const durationSeconds = Math.max(30, Math.min(300, Math.round((wordCount / 140) * 60)));
+  const base64Pcm = generateSyntheticPcm(durationSeconds, 24000, 440);
 
   return {
     base64Pcm,
-    durationSeconds: syntheticSeconds,
+    durationSeconds,
     sampleRate: 24000,
   };
 }

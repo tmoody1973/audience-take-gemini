@@ -21,12 +21,18 @@ export const scoutBriefStore = {
 
     try {
       const db = getAdminFirestore();
-      const doc = await db.collection("scoutBriefs").doc(artifactId).get();
-      if (doc.exists) {
-        const data = doc.data() as ScoutBrief;
-        memoryBriefs.set(artifactId, data);
-        return data;
-      }
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
+      const docPromise = db.collection("scoutBriefs").doc(artifactId).get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data() as ScoutBrief;
+          memoryBriefs.set(artifactId, data);
+          return data;
+        }
+        return null;
+      }).catch(() => null);
+
+      const result = await Promise.race([docPromise, timeoutPromise]);
+      if (result) return result;
     } catch {
       // In-memory fallback
     }
@@ -43,26 +49,32 @@ export const scoutBriefStore = {
 
     try {
       const db = getAdminFirestore();
-      const snapshot = await db
-        .collection("scoutBriefs")
-        .where("cardVersionId", "==", cardVersionId)
-        .where("status", "==", "ready")
-        .limit(1)
-        .get();
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
+      const lookupPromise = (async () => {
+        // Direct doc lookup first (fast & requires no composite query index)
+        const directDoc = await db.collection("scoutBriefs").doc(`scout-brief-${cardVersionId}-g1`).get();
+        if (directDoc.exists) {
+          const data = directDoc.data() as ScoutBrief;
+          memoryBriefs.set(data.artifactId, data);
+          return data;
+        }
 
-      if (!snapshot.empty) {
-        const data = snapshot.docs[0].data() as ScoutBrief;
-        memoryBriefs.set(data.artifactId, data);
-        return data;
-      }
+        const snapshot = await db
+          .collection("scoutBriefs")
+          .where("cardVersionId", "==", cardVersionId)
+          .limit(1)
+          .get();
 
-      // Fallback 1: Direct doc lookup
-      const directDoc = await db.collection("scoutBriefs").doc(`scout-brief-${cardVersionId}-g1`).get();
-      if (directDoc.exists) {
-        const data = directDoc.data() as ScoutBrief;
-        memoryBriefs.set(data.artifactId, data);
-        return data;
-      }
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data() as ScoutBrief;
+          memoryBriefs.set(data.artifactId, data);
+          return data;
+        }
+        return null;
+      })().catch(() => null);
+
+      const result = await Promise.race([lookupPromise, timeoutPromise]);
+      if (result) return result;
     } catch {}
 
     return null;
