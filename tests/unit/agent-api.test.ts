@@ -6,51 +6,74 @@ describe("Scout Agent API End-to-End Handlers", () => {
   it("processes nomination intake and executes research run via API handlers", async () => {
     const uniqueUrl = `https://www.youtube.com/watch?v=s8G7425lfKs&t=${Date.now()}`;
 
-    // 1. Submit Nomination
-    const nomReq = new Request("http://localhost:3000/api/nominate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectUrl: uniqueUrl,
-        nominatorRole: "fan",
-        reason: "Exceptional indie animated project exploring rich urban mythology.",
-        supportingLinks: [],
-      }),
-    });
+    let createdProjectId: string | undefined;
+    let createdCardId: string | undefined;
 
-    const nomRes = await nominateHandler(nomReq);
-    const nomData = await nomRes.json();
+    try {
+      const nomReq = new Request("http://localhost:3000/api/nominate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectUrl: uniqueUrl,
+          nominatorRole: "fan",
+          reason: "Exceptional indie animated project exploring rich urban mythology.",
+          supportingLinks: [],
+        }),
+      });
 
-    expect(nomRes.status).toBe(200);
-    expect(nomData.success).toBe(true);
-    expect(nomData.runId).toBeDefined();
-    expect(nomData.projectId).toBeDefined();
+      const nomRes = await nominateHandler(nomReq);
+      const nomData = await nomRes.json();
 
-    // 2. Query Initial Run State
-    const getReq = new Request(`http://localhost:3000/api/agent/run?runId=${nomData.runId}`);
-    const getRes = await agentGetHandler(getReq);
-    const getData = await getRes.json();
+      expect(nomRes.status).toBe(200);
+      expect(nomData.success).toBe(true);
+      expect(nomData.runId).toBeDefined();
+      expect(nomData.projectId).toBeDefined();
+      createdProjectId = nomData.projectId;
 
-    expect(getRes.status).toBe(200);
-    expect(getData.run.currentStep).toBe("fetching");
+      // 2. Query Initial Run State
+      const getReq = new Request(`http://localhost:3000/api/agent/run?runId=${nomData.runId}`);
+      const getRes = await agentGetHandler(getReq);
+      const getData = await getRes.json();
 
-    // 3. Trigger Agent Run Execution
-    const runReq = new Request("http://localhost:3000/api/agent/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ runId: nomData.runId }),
-    });
+      expect(getRes.status).toBe(200);
+      expect(getData.run.currentStep).toBe("fetching");
 
-    const runRes = await agentRunHandler(runReq);
-    const runData = await runRes.json();
+      // 3. Trigger Agent Run Execution
+      const runReq = new Request("http://localhost:3000/api/agent/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId: nomData.runId }),
+      });
 
-    if (runData.run?.currentStep === "failed") {
-      console.error("AGENT API RUN ERROR:", runData.run?.errorMessage, JSON.stringify(runData.run?.stepLogs, null, 2));
+      const runRes = await agentRunHandler(runReq);
+      const runData = await runRes.json();
+
+      if (runData.run?.currentStep === "failed") {
+        console.error("AGENT API RUN ERROR:", runData.run?.errorMessage, JSON.stringify(runData.run?.stepLogs, null, 2));
+      }
+      expect(runRes.status).toBe(200);
+      expect(runData.success).toBe(true);
+      expect(runData.run.currentStep).toBe("complete");
+      expect(runData.run.progressPercent).toBe(100);
+      expect(runData.run.cardId).toBeDefined();
+      createdCardId = runData.run.cardId;
+    } finally {
+      // Clean up test records from Firestore
+      const { dataRepo } = await import("@/services/firestore-repo");
+      if (createdProjectId) {
+        try {
+          const { getAdminFirestore } = await import("@/lib/firebase/admin");
+          const db = getAdminFirestore() as any;
+          if (db) await db.collection("projects").doc(createdProjectId).delete();
+        } catch {}
+      }
+      if (createdCardId) {
+        try {
+          const { getAdminFirestore } = await import("@/lib/firebase/admin");
+          const db = getAdminFirestore() as any;
+          if (db) await db.collection("scoutCards").doc(createdCardId).delete();
+        } catch {}
+      }
     }
-    expect(runRes.status).toBe(200);
-    expect(runData.success).toBe(true);
-    expect(runData.run.currentStep).toBe("complete");
-    expect(runData.run.progressPercent).toBe(100);
-    expect(runData.run.cardId).toBeDefined();
   }, 60000);
 });
