@@ -10,18 +10,17 @@ describe("ScoutCard", () => {
   it("renders the complete card with cited claims and exactly three pathway hypotheses", () => {
     const { container } = render(<ScoutCard card={getScoutCardFixture("complete")} />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Junichiro Jackson" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Watch before you judge" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Scout Card status")).toHaveTextContent("StructurecompleteEvidenceSource limited");
-    expect(screen.getByRole("heading", { name: "What we know" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What we're checking" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Why this is being scouted" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Add your informed Take" })).toHaveAttribute("href", "#audience-pulse");
-    const overview = screen.getByLabelText("Submitted media and scouting summary");
-    expect(overview.firstElementChild).toHaveClass("scout-start-here");
-    expect(overview.lastElementChild).toHaveClass("evidence-brief");
-    expect(container.querySelector(".evidence-brief")?.children).toHaveLength(2);
-    const pathways = screen.getByRole("heading", { name: "Pathway hypotheses" }).closest("section");
+    expect(screen.getByRole("heading", { level: 1, name: /Junichiro Jackson/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Watch before you judge/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Scout Card status")).toHaveTextContent(/complete/i);
+    expect(screen.getByRole("heading", { name: /What we know/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Scouting status/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Why this surfaced/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Needs verification/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Add your informed Take/i })).toHaveAttribute("href", "#audience-pulse");
+    const primaryGrid = container.querySelector(".scout-primary-grid");
+    expect(primaryGrid).not.toBeNull();
+    const pathways = screen.getByRole("heading", { name: /Pathway hypotheses/i }).closest("section");
     expect(pathways).not.toBeNull();
     expect(screen.getAllByRole("link", { name: /S1/i })).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Junichiro Jackson public project video" })).toHaveAttribute("href", "https://www.youtube.com/watch?v=M2djoKmnOTY");

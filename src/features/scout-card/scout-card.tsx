@@ -93,42 +93,246 @@ function claimSourceIds(card: ScoutCardModel, claimIds: string[]): string[] {
   ))];
 }
 
-function EvidenceBrief({ card, sourceLabels }: { card: ScoutCardModel; sourceLabels: Map<string, string> }) {
-  const knownClaims = card.evidenceClaims.filter((claim) => (
-    claimEvidenceState(claim, card.sourceLedger) !== "unknown"
-  )).slice(0, 4);
-  const checking = card.industryLens.unresolvedQuestions.slice(0, 2);
+function ProjectHeader({
+  card,
+  cardStructureStatus,
+  cardEvidenceLabel,
+}: {
+  card: ScoutCardModel;
+  cardStructureStatus: string;
+  cardEvidenceLabel: string;
+}) {
+  return (
+    <header className="scout-header-module">
+      <div className="scout-header-top">
+        <h1 id="scout-card-title" className="scout-header-title">{card.title}</h1>
+        <dl className="scout-header-metadata">
+          <div><dt>FORMAT</dt><dd>{card.projectType.replace("_", " ")}</dd></div>
+          <div><dt>CLAIM</dt><dd>{card.claimStatus}</dd></div>
+          <div><dt>PUBLISHED</dt><dd>{formatDate(card.publishedAt)}</dd></div>
+        </dl>
+      </div>
+
+      <p className="scout-header-hook">{card.hook}</p>
+      {card.identity?.relationshipStatus === "unresolved" ? (
+        <p className="identity-caution">Identity relationship remains unresolved; similar names are not silently merged.</p>
+      ) : null}
+
+      <div className="scout-header-scores-strip" aria-label="Scout Card status">
+        <div className="score-cell">
+          <span className="score-icon score-icon-structure" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+          </span>
+          <div className="score-cell-text">
+            <small>STRUCTURE</small>
+            <strong>{cardStructureStatus}</strong>
+          </div>
+        </div>
+
+        <div className="score-cell">
+          <span className="score-icon score-icon-evidence" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+          </span>
+          <div className="score-cell-text">
+            <small>EVIDENCE</small>
+            <strong>{cardEvidenceLabel}</strong>
+          </div>
+        </div>
+
+        <div className="score-cell">
+          <span className="score-icon score-icon-heat" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg>
+          </span>
+          <div className="score-cell-text">
+            <small>AUDIENCE HEAT</small>
+            <strong>{card.marketViability ? `${card.marketViability.audienceHeatScore}/100` : "—"}</strong>
+          </div>
+        </div>
+
+        <div className="score-cell">
+          <span className="score-icon score-icon-viability" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+          </span>
+          <div className="score-cell-text">
+            <small>MARKET VIABILITY</small>
+            <strong>{card.marketViability ? `${card.marketViability.marketReadinessScore}/100` : "—"}</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function ScoutingStatusPanel({
+  card,
+  sourceLabels,
+}: {
+  card: ScoutCardModel;
+  sourceLabels: Map<string, string>;
+}) {
   const observationSourceIds = claimSourceIds(card, card.storyContext.claimIds).slice(0, 2);
   const hooks = card.storyContext.audienceHooks.slice(0, 3);
-  const activeQuestion = checking[0] ?? card.limitations[0];
+  const checking = card.industryLens.unresolvedQuestions.slice(0, 2);
+  const activeQuestion = checking[0] ?? card.limitations[0] ?? "What is the primary viability question?";
 
   return (
-    <div className="scout-summary evidence-brief">
-      <div className="evidence-main-col">
-        <div className="evidence-brief-block">
-          <h2>What we know</h2>
-          {knownClaims.length ? <ul>{knownClaims.map((claim) => {
-            const state = claimEvidenceState(claim, card.sourceLedger);
-            return <li key={claim.id}><span className={`evidence-state evidence-state-${state}`}>{evidenceStateLabel(state)}</span><p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} /></p></li>;
-          })}</ul> : <p>No public claim has enough usable source support yet.</p>}
-        </div>
+    <section className="scouting-status-panel" aria-labelledby="scouting-status-title">
+      <div className="scouting-status-header">
+        <h2 id="scouting-status-title">SCOUTING STATUS</h2>
       </div>
-      <div className="evidence-side-col">
-        <div className="why-scouted">
-          <h3>Why this is being scouted</h3>
-          <ol>{hooks.map((hook) => <li key={hook}><span className="evidence-state evidence-state-inferred">Inferred</span><p>{hook} <SourceMarks sourceIds={observationSourceIds} labels={sourceLabels} /></p></li>)}</ol>
+
+      {/* SECTION A: WHY THIS SURFACED */}
+      <div className="scouting-status-section why-surfaced-section">
+        <div className="section-subheading-row">
+          <h3>WHY THIS SURFACED</h3>
+          <span className="evidence-state evidence-state-inferred">INFERRED</span>
         </div>
-        <div className="evidence-brief-block evidence-checking">
-          <h3>What we&apos;re checking</h3>
-          <ul>{checking.map((question) => <li key={question}>{question}</li>)}</ul>
-        </div>
-        <aside className="active-question" aria-label="Active community question">
-          <span>Open question</span>
-          <strong>{activeQuestion}</strong>
-          <a href="#audience-pulse">Add your informed Take</a>
-        </aside>
+        <ul className="signals-bullet-list">
+          {hooks.map((hook) => (
+            <li key={hook}>
+              <span className="signal-bullet" aria-hidden="true" />
+              <div className="signal-content">
+                <span className="signal-text">{hook}</span>
+                <SourceMarks sourceIds={observationSourceIds} labels={sourceLabels} />
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+
+      {/* SECTION B: NEEDS VERIFICATION */}
+      <div className="scouting-status-section needs-verification-section">
+        <div className="section-subheading-row">
+          <h3>NEEDS VERIFICATION</h3>
+        </div>
+        <ul className="verification-bullet-list">
+          {checking.map((question) => (
+            <li key={question}>
+              <span className="signal-bullet verification-bullet" aria-hidden="true" />
+              <span className="verification-text">{question}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* SECTION C: PRIMARY OPEN QUESTION */}
+      <div className="scouting-status-section primary-open-q-section">
+        <span className="open-q-label">PRIMARY OPEN QUESTION</span>
+        <p className="open-q-text">{activeQuestion}</p>
+        <a href="#audience-pulse" className="open-q-cta">
+          ADD YOUR INFORMED TAKE →
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function EvidenceLedgerPanel({
+  card,
+  sourceLabels,
+}: {
+  card: ScoutCardModel;
+  sourceLabels: Map<string, string>;
+}) {
+  const knownClaims = card.evidenceClaims.filter(
+    (claim) => claimEvidenceState(claim, card.sourceLedger) !== "unknown",
+  ).slice(0, 4);
+
+  return (
+    <section className="evidence-ledger-panel" aria-labelledby="evidence-ledger-title">
+      <div className="evidence-ledger-header">
+        <h2 id="evidence-ledger-title">WHAT WE KNOW</h2>
+        <span className="evidence-ledger-sub">EVIDENCE LEDGER</span>
+      </div>
+
+      <div className="evidence-ledger-body">
+        {knownClaims.length ? (
+          <ul className="ledger-entries-list">
+            {knownClaims.map((claim) => (
+              <li key={claim.id} className="ledger-entry-item">
+                <div className="ledger-tag-col">
+                  <span className="evidence-state evidence-state-reported">REPORTED</span>
+                </div>
+                <div className="ledger-content-col">
+                  <p className="ledger-statement-text">{claim.statement}</p>
+                  <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="ledger-empty-text">No public claim has enough usable source support yet.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PathwayHypothesesPanel({
+  card,
+  sourceLabels,
+}: {
+  card: ScoutCardModel;
+  sourceLabels: Map<string, string>;
+}) {
+  return (
+    <section className="pathway-hypotheses-panel" aria-labelledby="pathway-hypotheses-title">
+      <div className="pathway-hypotheses-header">
+        <h2 id="pathway-hypotheses-title">PATHWAY HYPOTHESES</h2>
+        <span className="pathway-hypotheses-sub">EXACTLY THREE / BOUNDED</span>
+      </div>
+
+      <div className="pathway-cards-stack">
+        {card.pathways.map((pathway) => (
+          <article key={pathway.id} className="pathway-decision-card">
+            <div className="pathway-card-main-grid">
+              <div className="pathway-card-info-col">
+                <div className="pathway-card-title-row">
+                  <span className="pathway-number-badge">{String(pathway.order).padStart(2, "0")}</span>
+                  <h3 className="pathway-card-title">{pathway.label}</h3>
+                </div>
+                <p className="pathway-card-rationale">{pathway.rationale}</p>
+                <dl className="pathway-card-meta-list">
+                  <div>
+                    <dt>FORMAT</dt>
+                    <dd>{pathway.format || pathway.label}</dd>
+                  </div>
+                  <div>
+                    <dt>AUDIENCE</dt>
+                    <dd>{pathway.audience || "Independent screen audience"}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="pathway-card-evidence-col">
+                <div className="pathway-evidence-meta-block">
+                  <span className="meta-label">EVIDENCE</span>
+                  <div className="pathway-evidence-pills-row">
+                    <SourceMarks
+                      sourceIds={(pathway.supportingClaimIds || []).flatMap(
+                        (claimId) => (card.evidenceClaims || []).find((claim) => claim.id === claimId)?.sourceIds ?? [],
+                      )}
+                      labels={sourceLabels}
+                    />
+                  </div>
+                </div>
+                <div className="pathway-readiness-meta-block">
+                  <span className="meta-label">READINESS</span>
+                  <strong className="pathway-readiness-value">{readinessLabel(pathway.confidence || "high")}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="pathway-next-experiment-row">
+              <strong className="experiment-label">NEXT EXPERIMENT:</strong>
+              <span className="experiment-value">
+                {pathway.nextExperiment?.title || "Audience Demand Validation"} / {pathway.nextExperiment?.timebox || "14 days"}
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -173,59 +377,33 @@ export function ScoutCard({
       </div>
       <CardStatus card={card} />
 
-      <article className="scout-dossier" aria-labelledby="scout-card-title">
-        <header className="scout-identity">
-          <h1 id="scout-card-title">{card.title}</h1>
-          <p>{card.submissionLabel}</p>
-          <div className="scout-status-stack" aria-label="Scout Card status">
-            <span><small>Structure</small><strong>{cardStructureStatus}</strong></span>
-            <span><small>Evidence</small><strong>{cardEvidenceLabel}</strong></span>
-            {card.marketViability ? (
-              <>
-                <span className="status-heat"><small>Audience Heat</small><strong>{card.marketViability.audienceHeatScore}/100</strong></span>
-                <span className="status-viability"><small>Market Viability</small><strong>{card.marketViability.marketReadinessScore}/100</strong></span>
-              </>
-            ) : null}
+      <article className="scout-dossier-redesign" aria-labelledby="scout-card-title">
+        {/* 1. Full-Width Project Header */}
+        <ProjectHeader
+          card={card}
+          cardStructureStatus={cardStructureStatus}
+          cardEvidenceLabel={cardEvidenceLabel}
+        />
+
+        {/* 2. Primary Grid (Video + Scouting Status) */}
+        <div className="scout-primary-grid">
+          <div className="scout-video-column">
+            <ScoutMedia card={card} />
           </div>
-          {card.identity?.relationshipStatus === "unresolved" ? <p className="identity-caution">Identity relationship remains unresolved; similar names are not silently merged.</p> : null}
-          <p className="scout-hook">{card.hook}</p>
-          <dl className="scout-accession">
-            <div><dt>Format</dt><dd>{card.projectType.replace("_", " ")}</dd></div>
-            <div><dt>Claim</dt><dd>{card.claimStatus}</dd></div>
-            <div><dt>Published</dt><dd>{formatDate(card.publishedAt)}</dd></div>
-          </dl>
-        </header>
+          <div className="scout-status-column">
+            <ScoutingStatusPanel card={card} sourceLabels={sourceLabels} />
+          </div>
+        </div>
 
-        <section className="scout-overview" aria-label="Submitted media and scouting summary">
-          <ScoutMedia card={card} />
-          <EvidenceBrief card={card} sourceLabels={sourceLabels} />
-        </section>
-
-        <section className="pathway-hypotheses" aria-labelledby="pathway-title">
-          <div className="section-heading-line"><h2 id="pathway-title">Pathway hypotheses</h2><span>Exactly three / bounded</span></div>
-          <ol>
-            {card.pathways.map((pathway) => (
-              <li key={pathway.id}>
-                <span className="pathway-number">{String(pathway.order).padStart(2, "0")}</span>
-                <div>
-                  <h3>{pathway.label}</h3>
-                  <p>{pathway.rationale}</p>
-                  <dl>
-                    <div><dt>Format</dt><dd>{pathway.format || pathway.label}</dd></div>
-                    <div><dt>Audience</dt><dd>{pathway.audience || "Independent screen audience"}</dd></div>
-                    <div><dt>Evidence</dt><dd><span className="source-origin source-origin-inference">Inference</span> <SourceMarks sourceIds={(pathway.supportingClaimIds || []).flatMap((claimId) => (card.evidenceClaims || []).find((claim) => claim.id === claimId)?.sourceIds ?? [])} labels={sourceLabels} /></dd></div>
-                    <div><dt>Evidence readiness</dt><dd>{readinessLabel(pathway.confidence || "high")}</dd></div>
-                  </dl>
-                  <p className="pathway-experiment"><strong>Next experiment:</strong> {pathway.nextExperiment?.title || "Audience Demand Validation"} / {pathway.nextExperiment?.timebox || "14 days"}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <aside className="scout-stub" aria-label="Scout Card accession stub">
-          <span>{card.cardVersionId}</span><strong>{card.title}</strong><small>Scout Card</small>
-        </aside>
+        {/* 3. Research Grid (Evidence Ledger + Pathway Hypotheses) */}
+        <div className="scout-research-grid">
+          <div className="scout-evidence-ledger-column">
+            <EvidenceLedgerPanel card={card} sourceLabels={sourceLabels} />
+          </div>
+          <div className="scout-hypotheses-column">
+            <PathwayHypothesesPanel card={card} sourceLabels={sourceLabels} />
+          </div>
+        </div>
       </article>
 
       {scoutBrief && <ScoutBriefPlayer brief={scoutBrief} unclaimed={card.claimStatus === "unclaimed"} />}
