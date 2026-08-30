@@ -251,22 +251,74 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
 
 export async function loadPublishedScoutCard(slug: string, database?: ScoutCardFirestore): Promise<ScoutCard | null> {
   try {
-    const fromFirestore = await readPublishedScoutCard(slug, database ?? getAdminFirestore() as unknown as ScoutCardFirestore);
+    const db = (database ?? getAdminFirestore()) as any;
+    const fromFirestore = await readPublishedScoutCard(slug, db);
     if (fromFirestore) return fromFirestore;
 
-    if (database) return null;
+    // Check dataRepo and Firestore for dynamically scouted projects in live environment
+    let dynamicProject = await dataRepo.getProjectById(slug);
+    if (!dynamicProject && db) {
+      try {
+        const doc = await db.collection("projects").doc(slug).get();
+        if (doc.exists) {
+          dynamicProject = { id: doc.id, ...doc.data() } as any;
+        } else {
+          const snap = await db.collection("projects").where("slug", "==", slug).limit(1).get();
+          if (!snap.empty) {
+            dynamicProject = { id: snap.docs[0].id, ...snap.docs[0].data() } as any;
+          }
+        }
+      } catch (err) {
+        console.warn("[ScoutCard] Firestore dynamicProject lookup failed:", err);
+      }
+    }
 
-    // Check dataRepo for in-memory or dynamically scouted projects in live environment
-    const dynamicProject = await dataRepo.getProjectById(slug);
+    const dyn = dynamicProject as any;
+    if (dyn) {
+      if (
+        dyn.publicationStatus !== "published" ||
+        (dyn.moderationState !== undefined && dyn.moderationState !== "clear")
+      ) {
+        return null;
+      }
+    }
+
     let dynamicCard: any = null;
-    if (dynamicProject?.publishedCardId) {
-      dynamicCard = await dataRepo.getScoutCardById(dynamicProject.publishedCardId);
+    if (dyn?.publishedCardId) {
+      dynamicCard = await dataRepo.getScoutCardById(dyn.publishedCardId);
+      if (!dynamicCard && db) {
+        try {
+          const cardDoc = await db.collection("scoutCards").doc(dyn.publishedCardId).get();
+          if (cardDoc.exists) dynamicCard = { id: cardDoc.id, ...cardDoc.data() };
+        } catch {}
+      }
+    }
+    if (!dynamicCard && dyn?.latestCardVersionId) {
+      dynamicCard = await dataRepo.getScoutCardById(dyn.latestCardVersionId);
+      if (!dynamicCard && db) {
+        try {
+          const cardDoc = await db.collection("scoutCards").doc(dyn.latestCardVersionId).get();
+          if (cardDoc.exists) dynamicCard = { id: cardDoc.id, ...cardDoc.data() };
+        } catch {}
+      }
     }
     if (!dynamicCard) {
       dynamicCard = await dataRepo.getScoutCardById(`card-${slug}-v1`);
+      if (!dynamicCard && db) {
+        try {
+          const cardDoc = await db.collection("scoutCards").doc(`card-${slug}-v1`).get();
+          if (cardDoc.exists) dynamicCard = { id: cardDoc.id, ...cardDoc.data() };
+        } catch {}
+      }
     }
     if (!dynamicCard) {
       dynamicCard = await dataRepo.getScoutCardById(slug);
+      if (!dynamicCard && db) {
+        try {
+          const cardDoc = await db.collection("scoutCards").doc(slug).get();
+          if (cardDoc.exists) dynamicCard = { id: cardDoc.id, ...cardDoc.data() };
+        } catch {}
+      }
     }
 
     if (dynamicCard) {

@@ -112,10 +112,21 @@ export async function loadScoutingWallEntries(
       } satisfies ScoutingWallEntry;
     }));
 
-    return entries
+    const seen = new Set<string>();
+    const validEntries = entries
       .filter((entry): entry is ScoutingWallEntry => entry !== null)
-      .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt))
-      .slice(0, MAX_WALL_ENTRIES);
+      .sort((left, right) => (right.publishedAt || "").localeCompare(left.publishedAt || ""));
+
+    const uniqueEntries: ScoutingWallEntry[] = [];
+    for (const entry of validEntries) {
+      const key = entry.title.toLowerCase().trim();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueEntries.push(entry);
+      }
+    }
+
+    return uniqueEntries.slice(0, MAX_WALL_ENTRIES);
   } catch (error) {
     console.error(JSON.stringify({
       level: "error",
