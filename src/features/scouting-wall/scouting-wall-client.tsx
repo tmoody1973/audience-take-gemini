@@ -64,162 +64,55 @@ function formatTime(seconds: number): string {
 }
 
 // -----------------------------------------------------------------------------
-// INLINE CARD PODCAST PLAYER COMPONENT (RACE-FREE & RESILIENT)
+// INLINE CARD PODCAST PLAYER UI (DRIVEN BY SINGLETON CONTROLLER)
 // -----------------------------------------------------------------------------
 interface CardPodcastPlayerProps {
   entry: ScoutingWallEntry;
-  activePlayingId: string | null;
-  setActivePlayingId: (id: string | null) => void;
+  isThisPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  isMuted: boolean;
+  onTogglePlay: () => void;
+  onSeek: (percent: number) => void;
+  onToggleMute: () => void;
 }
 
-function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardPodcastPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const isThisPlaying = activePlayingId === entry.accessionId;
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(150); // Default ~2:30 brief
-  const [isMuted, setIsMuted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
+function CardPodcastPlayer({
+  entry,
+  isThisPlaying,
+  currentTime,
+  duration,
+  isMuted,
+  onTogglePlay,
+  onSeek,
+  onToggleMute,
+}: CardPodcastPlayerProps) {
+  const displayTime = isThisPlaying ? currentTime : 0;
+  const displayDuration = isThisPlaying && duration > 0 ? duration : 150;
+  const progressPercent = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
 
-  const primaryAudioSrc = `/api/scout-briefs/${entry.accessionId}/audio`;
-  const fallbackAudioSrc = `/api/scout-briefs/${entry.slug}/audio`;
-  const [audioSrc, setAudioSrc] = useState(primaryAudioSrc);
-
-  // Single-player coordinator: pause this audio if another card starts playing
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (!isThisPlaying) {
-      if (!audio.paused) {
-        audio.pause();
-      }
-      setIsLoading(false);
-    }
-  }, [isThisPlaying]);
-
-  const handleTogglePlay = (e: React.MouseEvent) => {
+  const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isThisPlaying) {
-      audio.pause();
-      setActivePlayingId(null);
-      setIsLoading(false);
-    } else {
-      // 1. Set active ID immediately to prevent useEffect race condition
-      setActivePlayingId(entry.accessionId);
-      setIsLoading(true);
-      setHasError(false);
-
-      // 2. Ensure audio is loaded and start playback
-      if (typeof audio.load === "function" && audio.readyState === 0) {
-        try { audio.load(); } catch {}
-      }
-
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsLoading(false);
-            setHasError(false);
-          })
-          .catch((err) => {
-            console.warn("[ScoutingWall] Audio stream loading:", err);
-            if (audioSrc !== fallbackAudioSrc) {
-              setAudioSrc(fallbackAudioSrc);
-              if (audioRef.current) {
-                audioRef.current.src = fallbackAudioSrc;
-                if (typeof audioRef.current.load === "function") {
-                  try { audioRef.current.load(); } catch {}
-                }
-                audioRef.current.play()
-                  .then(() => {
-                    setIsLoading(false);
-                    setHasError(false);
-                  })
-                  .catch(() => {
-                    setIsLoading(false);
-                  });
-              }
-            } else {
-              setIsLoading(false);
-            }
-          });
-      }
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current && !isNaN(audioRef.current.duration) && isFinite(audioRef.current.duration)) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const handleEnded = () => {
-    setActivePlayingId(null);
-    setCurrentTime(0);
-    setIsLoading(false);
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
-
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const newTime = pos * duration;
-    audio.currentTime = newTime;
-    setCurrentTime(newTime);
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    onSeek(percent);
   };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div 
       className={`wall-podcast-player ${isThisPlaying ? "is-active-playback" : ""}`}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
     >
-      <audio
-        ref={audioRef}
-        src={audioSrc}
-        preload="metadata"
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onWaiting={() => setIsLoading(true)}
-        onPlaying={() => {
-          setIsLoading(false);
-          setHasError(false);
-        }}
-        onCanPlay={() => setIsLoading(false)}
-        onEnded={handleEnded}
-      />
-
       <div className="wall-podcast-main">
         <button 
           type="button"
           className="wall-podcast-play-btn"
-          onClick={handleTogglePlay}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onTogglePlay();
+          }}
           aria-label={isThisPlaying ? `Pause scout brief podcast for ${entry.title}` : `Play scout brief podcast for ${entry.title}`}
           title={isThisPlaying ? "Pause Audio Brief" : "Play 2-Speaker Scout Brief"}
         >
@@ -232,17 +125,17 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
               <Headphones size={11} /> 2-Speaker Scout Brief
             </span>
             <span className="wall-podcast-time">
-              {formatTime(currentTime)} / {formatTime(duration)}
+              {formatTime(displayTime)} / {formatTime(displayDuration)}
             </span>
           </div>
 
           <div 
             className="wall-podcast-progress-bar"
-            onClick={handleSeek}
+            onClick={handleSeekClick}
             role="progressbar"
-            aria-valuenow={currentTime}
+            aria-valuenow={displayTime}
             aria-valuemin={0}
-            aria-valuemax={duration}
+            aria-valuemax={displayDuration}
             title="Click to seek"
           >
             <div 
@@ -255,19 +148,17 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
         <button
           type="button"
           className="wall-podcast-mute-btn"
-          onClick={toggleMute}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleMute();
+          }}
           aria-label={isMuted ? "Unmute podcast" : "Mute podcast"}
           title={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
         </button>
       </div>
-
-      {hasError && (
-        <small className="wall-podcast-error">
-          Audio brief streaming offline. Open card to inspect full transcript.
-        </small>
-      )}
     </div>
   );
 }
@@ -286,7 +177,86 @@ export function ScoutingWallClient({ initialEntries }: Props) {
   const [selectedBuyer, setSelectedBuyer] = useState<string>("all");
   const [minHeat, setMinHeat] = useState<number>(0);
   const [sortBy, setSortBy] = useState<"recent" | "heat" | "readiness" | "sources">("recent");
+
+  // Singleton Audio Player Controller
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [activePlayingId, setActivePlayingId] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(150);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const handleTogglePlay = (entry: ScoutingWallEntry) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (activePlayingId === entry.accessionId && isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      setActivePlayingId(entry.accessionId);
+      const src = `/api/scout-briefs/${entry.accessionId}/audio`;
+      audio.src = src;
+      if (typeof audio.load === "function") {
+        try { audio.load(); } catch {}
+      }
+      audio.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.warn("[ScoutingWall Audio] Accession play failed, trying slug:", err);
+          const fallbackSrc = `/api/scout-briefs/${entry.slug}/audio`;
+          audio.src = fallbackSrc;
+          if (typeof audio.load === "function") {
+            try { audio.load(); } catch {}
+          }
+          audio.play()
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch((fallbackErr) => {
+              console.warn("[ScoutingWall Audio] Fallback error:", fallbackErr);
+              setIsPlaying(false);
+              setActivePlayingId(null);
+            });
+        });
+    }
+  };
+
+  const handleSeek = (percent: number) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const newTime = percent * duration;
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const handleToggleMute = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current && !isNaN(audioRef.current.duration) && isFinite(audioRef.current.duration)) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+    setActivePlayingId(null);
+    setCurrentTime(0);
+  };
 
   // Extract all distinct buyer categories across entries
   const availableBuyers = useMemo(() => {
@@ -623,8 +593,13 @@ export function ScoutingWallClient({ initialEntries }: Props) {
                   <div className="wall-card-bottom-dock">
                     <CardPodcastPlayer
                       entry={entry}
-                      activePlayingId={activePlayingId}
-                      setActivePlayingId={setActivePlayingId}
+                      isThisPlaying={activePlayingId === entry.accessionId && isPlaying}
+                      currentTime={currentTime}
+                      duration={duration}
+                      isMuted={isMuted}
+                      onTogglePlay={() => handleTogglePlay(entry)}
+                      onSeek={handleSeek}
+                      onToggleMute={handleToggleMute}
                     />
 
                     <Link 
@@ -656,6 +631,15 @@ export function ScoutingWallClient({ initialEntries }: Props) {
           </button>
         </div>
       )}
+
+      {/* Singleton Global Audio Stream for the Scouting Wall */}
+      <audio
+        ref={audioRef}
+        preload="none"
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleAudioEnded}
+      />
     </section>
   );
 }
