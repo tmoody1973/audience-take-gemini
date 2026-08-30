@@ -512,7 +512,7 @@ export function ScoutingWallClient({ initialEntries }: Props) {
         <ol className="wall-grid">
           {filteredEntries.map((entry, index) => (
             <li key={entry.accessionId} className="wall-cell">
-              <article>
+              <article className="wall-compact-card">
                 {/* Poster Index Column */}
                 <div className="wall-cell-poster" aria-hidden="true">
                   <span>{String(index + 1).padStart(2, "0")}</span>
@@ -522,96 +522,70 @@ export function ScoutingWallClient({ initialEntries }: Props) {
 
                 {/* Main Card Content */}
                 <div className="wall-cell-copy">
-                  {/* Top Kicker Bar */}
-                  <div className="wall-cell-kicker">
-                    <span className="wall-type-badge">{projectTypeLabels[entry.projectType]}</span>
-                    <span className="wall-evidence-badge" data-evidence={entry.evidenceStatus}>
-                      <CheckCircle2 size={11} /> {evidenceLabels[entry.evidenceStatus]}
-                    </span>
-                    {entry.channelTitle && (
-                      <span className="wall-creator-tag">
-                        {entry.channelTitle} {entry.channelHandle ? `(${entry.channelHandle})` : ""}
+                  {/* Top Kicker Bar with Format, Evidence, and Dual-Axis Scores */}
+                  <div className="wall-card-top-bar">
+                    <div className="wall-card-badges">
+                      <span className="wall-type-badge">{projectTypeLabels[entry.projectType]}</span>
+                      <span className="wall-evidence-badge" data-evidence={entry.evidenceStatus}>
+                        <CheckCircle2 size={10} /> {evidenceLabels[entry.evidenceStatus]}
                       </span>
-                    )}
+                      {entry.channelTitle && (
+                        <span className="wall-creator-tag">
+                          {entry.channelTitle}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Compact Dual-Axis Score Pills */}
+                    <div className="wall-compact-scores">
+                      <span className="compact-score-pill heat" title={`Audience Heat Score: ${entry.audienceHeatScore ?? 88}/100`}>
+                        <Flame size={11} /> <b>{entry.audienceHeatScore ?? 88}</b>
+                      </span>
+                      <span className="compact-score-pill readiness" title={`Market Readiness Score: ${entry.marketReadinessScore ?? 82}/100`}>
+                        <TrendingUp size={11} /> <b>{entry.marketReadinessScore ?? 82}</b>
+                      </span>
+                    </div>
                   </div>
 
                   {/* Project Title & Clickable Headline */}
-                  <h2>
-                    <Link href={`/projects/${entry.slug}`} aria-label={`Open ${entry.title} Scout Card`}>
+                  <h2 className="wall-card-title">
+                    <Link href={`/projects/${entry.slug}`}>
                       {entry.title}
                     </Link>
                   </h2>
 
-                  {/* Hook / Core Logline */}
+                  {/* Hook / Core Logline (Clean 2-line clamp) */}
                   <p className="wall-hook-text">{entry.hook}</p>
 
-                  {/* Dual-Axis Market & Audience Score Chips */}
-                  <div className="wall-score-strip">
-                    <div className="wall-score-chip chip-heat">
-                      <span className="score-label"><Flame size={12} /> Audience Heat</span>
-                      <b className="score-val">{entry.audienceHeatScore ?? 88}</b>
-                      <small>/100</small>
-                    </div>
-
-                    <div className="wall-score-chip chip-readiness">
-                      <span className="score-label"><TrendingUp size={12} /> Market Viability</span>
-                      <b className="score-val">{entry.marketReadinessScore ?? 82}</b>
-                      <small>/100</small>
-                    </div>
-
-                    <div className="wall-tier-badge">
-                      <span>Status</span>
-                      <strong>{entry.marketTier || "Category Breakout"}</strong>
-                    </div>
-                  </div>
-
-                  {/* Target Buyer Tags */}
-                  {entry.buyerTargets && entry.buyerTargets.length > 0 && (
-                    <div className="wall-buyers-row">
-                      <span className="buyers-label">Target Buyers:</span>
-                      <div className="buyers-pills">
-                        {entry.buyerTargets.slice(0, 3).map((b) => (
-                          <span key={b} className="buyer-pill">{b}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* INLINE PODCAST AUDIO PLAYER */}
+                  {/* INLINE COMPACT PODCAST AUDIO PLAYER */}
                   <CardPodcastPlayer
                     entry={entry}
                     activePlayingId={activePlayingId}
                     setActivePlayingId={setActivePlayingId}
                   />
 
-                  {/* Metadata Specs Grid */}
-                  <dl className="wall-specs-grid">
-                    <div><dt>Structure</dt><dd>{entry.completeness}</dd></div>
-                    <div><dt>Verified Sources</dt><dd>{entry.sourceCount} citations</dd></div>
-                    <div><dt>Creator Claim</dt><dd>{entry.claimStatus}</dd></div>
-                    <div><dt>Published</dt><dd>{safeFormatDate(entry.publishedAt)}</dd></div>
-                  </dl>
-
-                  {/* Growth Pathway Hypotheses Preview */}
-                  <ol className="wall-pathways" aria-label="Growth pathways preview">
-                    {entry.pathwayLabels.map((label, pathwayIndex) => (
-                      <li key={label}>
-                        <span>0{pathwayIndex + 1}</span>
-                        {label}
-                      </li>
-                    ))}
-                  </ol>
-
-                  {/* Audience Pulse Strip */}
-                  <AudiencePulseStrip counts={entry.audiencePulse} />
+                  {/* Target Buyer Tags & Specs Bar */}
+                  <div className="wall-card-meta-bar">
+                    {entry.buyerTargets && entry.buyerTargets.length > 0 && (
+                      <div className="wall-buyers-inline">
+                        <span className="buyers-label">Buyers:</span>
+                        <div className="buyers-pills">
+                          {entry.buyerTargets.slice(0, 2).map((b) => (
+                            <span key={b} className="buyer-pill">{b}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <span className="wall-source-count">{entry.sourceCount} sources</span>
+                  </div>
 
                   {/* Card Footer with Direct Open Link */}
                   <footer>
-                    <span className="accession-code">Accession: {entry.accessionId}</span>
+                    <span className="accession-code">Published {safeFormatDate(entry.publishedAt)}</span>
                     <Link 
                       href={`/projects/${entry.slug}`} 
                       className="wall-open-link"
-                      aria-label={`Inspect full intelligence for ${entry.title}`}
+                      aria-label={`Open ${entry.title} Scout Card`}
                     >
                       <span>Open Scout Card</span>
                       <ArrowIcon />

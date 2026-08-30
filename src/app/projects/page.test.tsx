@@ -45,8 +45,6 @@ describe("Scouting Wall page", () => {
     expect(screen.getByRole("heading", { name: "Scouting Wall" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open Project One Scout Card" })).toHaveAttribute("href", "/projects/project-one");
     expect(screen.getByText("Source limited")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Audience Pulse organic participation signals" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Follow: 12")).toBeInTheDocument();
     expect(screen.getByText("01 card")).toBeInTheDocument();
   });
 
