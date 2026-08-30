@@ -25,6 +25,30 @@ const selects = [
     href: "/projects/junichiro-live-project",
     status: "Published Scout Card · source-limited evidence",
   },
+  {
+    title: "Fruity",
+    type: "Viral Comedy Web Series",
+    reason: "Selected for exceptional organic fan momentum across digital video platforms and clear web-to-broadcast packaging pathways.",
+    color: "coral",
+    href: "/projects/proj-1787999939817-25f9r",
+    status: "Published Scout Card · verified core evidence",
+  },
+  {
+    title: "Vampair: The Animated Pilot",
+    type: "Independent Animated Pilot",
+    reason: "Selected to highlight high-intent crowdfunding economics, massive music engagement, and European coproduction feasibility.",
+    color: "blue",
+    href: "/projects/proj-1788033835868-tfn0k",
+    status: "Published Scout Card · 2-speaker audio brief",
+  },
+  {
+    title: "American Pachuco: The Legend of Luis Valdez",
+    type: "Feature Documentary",
+    reason: "Selected for institutional festival recognition, extensive archival source citations, and educational licensing potential.",
+    color: "yellow",
+    href: "/projects/project-vsu2dlapid",
+    status: "Published Scout Card · source-limited evidence",
+  },
 ];
 
 export default function HomePage() {

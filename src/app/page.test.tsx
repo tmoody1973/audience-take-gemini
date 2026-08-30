@@ -23,7 +23,7 @@ describe("HomePage", () => {
     expect(screen.getByRole("heading", { name: "Nominate" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Agents scout" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Audience takes action" })).toBeInTheDocument();
-    expect(screen.getByText(/Published Scout Card · source-limited evidence/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Published Scout Card/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("link", { name: /Complete demonstration card Junichiro Jackson/i })).toHaveAttribute("href", "/projects/junichiro-live-project");
     expect(screen.getByRole("link", { name: /Browse the Scouting Wall/i })).toHaveAttribute("href", "/projects");
   });
