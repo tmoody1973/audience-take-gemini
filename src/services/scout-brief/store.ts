@@ -55,6 +55,14 @@ export const scoutBriefStore = {
         memoryBriefs.set(data.artifactId, data);
         return data;
       }
+
+      // Fallback 1: Direct doc lookup
+      const directDoc = await db.collection("scoutBriefs").doc(`scout-brief-${cardVersionId}-g1`).get();
+      if (directDoc.exists) {
+        const data = directDoc.data() as ScoutBrief;
+        memoryBriefs.set(data.artifactId, data);
+        return data;
+      }
     } catch {}
 
     return null;

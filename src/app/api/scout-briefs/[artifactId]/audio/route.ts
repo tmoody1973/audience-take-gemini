@@ -20,6 +20,16 @@ export async function GET(
   let audioBuffer = scoutBriefStore.getAudioBuffer(artifactId);
 
   if (!audioBuffer) {
+    const cachedDiskPath = path.resolve(process.cwd(), `public/audio-cache/${artifactId}.wav`);
+    if (fs.existsSync(cachedDiskPath)) {
+      try {
+        audioBuffer = fs.readFileSync(cachedDiskPath);
+        scoutBriefStore.saveAudioBuffer(artifactId, audioBuffer);
+      } catch {}
+    }
+  }
+
+  if (!audioBuffer) {
     // 2. Fetch brief from store or canonical fixture
     let brief: ScoutBrief | null = await scoutBriefStore.getScoutBrief(artifactId);
 
