@@ -64,7 +64,7 @@ function formatTime(seconds: number): string {
 }
 
 // -----------------------------------------------------------------------------
-// INLINE CARD PODCAST PLAYER COMPONENT
+// INLINE CARD PODCAST PLAYER COMPONENT (RACE-FREE & RESILIENT)
 // -----------------------------------------------------------------------------
 interface CardPodcastPlayerProps {
   entry: ScoutingWallEntry;
@@ -76,18 +76,25 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isThisPlaying = activePlayingId === entry.accessionId;
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(150); // Standard brief ~2:30 default
+  const [duration, setDuration] = useState(150); // Default ~2:30 brief
   const [isMuted, setIsMuted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  const audioSrc = `/api/scout-briefs/${entry.accessionId}/audio`;
+  const primaryAudioSrc = `/api/scout-briefs/${entry.accessionId}/audio`;
+  const fallbackAudioSrc = `/api/scout-briefs/${entry.slug}/audio`;
+  const [audioSrc, setAudioSrc] = useState(primaryAudioSrc);
 
+  // Single-player coordinator: pause this audio if another card starts playing
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (!isThisPlaying && !audio.paused) {
-      audio.pause();
+    if (!isThisPlaying) {
+      if (!audio.paused) {
+        audio.pause();
+      }
+      setIsLoading(false);
     }
   }, [isThisPlaying]);
 
@@ -101,14 +108,42 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
     if (isThisPlaying) {
       audio.pause();
       setActivePlayingId(null);
+      setIsLoading(false);
     } else {
-      audio.play().then(() => {
-        setActivePlayingId(entry.accessionId);
-        setHasError(false);
-      }).catch((err) => {
-        console.warn("Audio playback failed:", err);
-        setHasError(true);
-      });
+      // 1. Set active ID immediately to prevent useEffect race condition
+      setActivePlayingId(entry.accessionId);
+      setIsLoading(true);
+      setHasError(false);
+
+      // 2. Play audio stream with fallback retry
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsLoading(false);
+          })
+          .catch((err) => {
+            console.warn("[ScoutingWall] Play error, retrying fallback:", err);
+            if (audioSrc !== fallbackAudioSrc) {
+              setAudioSrc(fallbackAudioSrc);
+              audio.src = fallbackAudioSrc;
+              audio.load();
+              audio.play()
+                .then(() => {
+                  setIsLoading(false);
+                })
+                .catch(() => {
+                  setIsLoading(false);
+                  setHasError(true);
+                  setActivePlayingId(null);
+                });
+            } else {
+              setIsLoading(false);
+              setHasError(true);
+              setActivePlayingId(null);
+            }
+          });
+      }
     }
   };
 
@@ -127,6 +162,7 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
   const handleEnded = () => {
     setActivePlayingId(null);
     setCurrentTime(0);
+    setIsLoading(false);
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -136,7 +172,7 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
     if (!audio || !duration) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const newTime = pos * duration;
     audio.currentTime = newTime;
     setCurrentTime(newTime);
@@ -164,8 +200,22 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
         preload="none"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onWaiting={() => setIsLoading(true)}
+        onPlaying={() => setIsLoading(false)}
+        onCanPlay={() => setIsLoading(false)}
         onEnded={handleEnded}
-        onError={() => setHasError(true)}
+        onError={() => {
+          if (audioSrc !== fallbackAudioSrc) {
+            setAudioSrc(fallbackAudioSrc);
+            if (audioRef.current) {
+              audioRef.current.src = fallbackAudioSrc;
+              audioRef.current.load();
+            }
+          } else {
+            setHasError(true);
+            setIsLoading(false);
+          }
+        }}
       />
 
       <div className="wall-podcast-main">
@@ -174,8 +224,9 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
           className="wall-podcast-play-btn"
           onClick={handleTogglePlay}
           aria-label={isThisPlaying ? `Pause scout brief podcast for ${entry.title}` : `Play scout brief podcast for ${entry.title}`}
+          title={isThisPlaying ? "Pause Audio Brief" : "Play 2-Speaker Scout Brief"}
         >
-          {isThisPlaying ? <Pause size={15} /> : <Play size={15} className="play-icon-offset" />}
+          {isThisPlaying ? <Pause size={14} /> : <Play size={14} className="play-icon-offset" />}
         </button>
 
         <div className="wall-podcast-info">
@@ -195,6 +246,7 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
             aria-valuenow={currentTime}
             aria-valuemin={0}
             aria-valuemax={duration}
+            title="Click to seek"
           >
             <div 
               className="wall-podcast-progress-fill"
@@ -208,14 +260,15 @@ function CardPodcastPlayer({ entry, activePlayingId, setActivePlayingId }: CardP
           className="wall-podcast-mute-btn"
           onClick={toggleMute}
           aria-label={isMuted ? "Unmute podcast" : "Mute podcast"}
+          title={isMuted ? "Unmute" : "Mute"}
         >
-          {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
         </button>
       </div>
 
       {hasError && (
         <small className="wall-podcast-error">
-          Audio brief streaming offline. Open card to read transcript.
+          Audio brief streaming offline. Open card to inspect full transcript.
         </small>
       )}
     </div>
