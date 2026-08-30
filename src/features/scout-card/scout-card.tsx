@@ -19,8 +19,15 @@ import { FandomDnaSection } from "./fandom-dna-section";
 import type { ScoutBrief } from "../scout-brief/types";
 import { ScoutBriefPlayer } from "../scout-brief/scout-brief-player";
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(value));
+function formatDate(value: string | undefined | null): string {
+  if (!value) return "Recently published";
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "Recently published";
+    return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }).format(d);
+  } catch {
+    return "Recently published";
+  }
 }
 
 function SourceMarks({ sourceIds, labels }: { sourceIds: string[]; labels: Map<string, string> }) {

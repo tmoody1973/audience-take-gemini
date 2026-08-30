@@ -39,6 +39,17 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
+function safeFormatDate(value: string | undefined | null): string {
+  if (!value) return "Recently published";
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "Recently published";
+    return dateFormatter.format(d);
+  } catch {
+    return "Recently published";
+  }
+}
+
 function WallCard({ entry, index }: { entry: ScoutingWallEntry; index: number }) {
   return (
     <li className="wall-cell">
@@ -63,7 +74,7 @@ function WallCard({ entry, index }: { entry: ScoutingWallEntry; index: number })
               {entry.pathwayLabels.map((label, pathwayIndex) => <li key={label}><span>0{pathwayIndex + 1}</span>{label}</li>)}
             </ol>
             <AudiencePulseStrip counts={entry.audiencePulse} />
-            <footer><span>Published <time dateTime={entry.publishedAt}>{dateFormatter.format(new Date(entry.publishedAt))}</time></span><strong>Open Scout Card <ArrowIcon /></strong></footer>
+            <footer><span>Published <time dateTime={entry.publishedAt || new Date().toISOString()}>{safeFormatDate(entry.publishedAt)}</time></span><strong>Open Scout Card <ArrowIcon /></strong></footer>
           </div>
           <span className="wall-accession" aria-hidden="true">{entry.accessionId}</span>
         </article>

@@ -1,10 +1,17 @@
 import { evidenceStatusLabel, sourcePresentation } from "./evidence-display";
 import type { ScoutCard } from "./types";
 
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric", month: "short", day: "numeric", timeZone: "UTC",
-  }).format(new Date(value));
+function formatDate(value: string | undefined | null): string {
+  if (!value) return "Recently";
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "Recently";
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric", month: "short", day: "numeric", timeZone: "UTC",
+    }).format(d);
+  } catch {
+    return "Recently";
+  }
 }
 
 function relationshipLabel(card: ScoutCard): string {
