@@ -63,14 +63,34 @@ export async function executeScoutResearchRun(runId: string): Promise<ResearchRu
 
     let fetchedText = "";
     try {
-      const fetchResult = await fetchSafeWebContent(run.sourceUrl);
-      fetchedText = fetchResult.text.slice(0, 10000); // 10kb sample for prompt
-      await logStep(
-        "fetching",
-        `Successfully fetched public content${ytMeta?.title ? ` (Title: "${ytMeta.title}")` : ""}.`,
-        30,
-        "done"
-      );
+      if (!youtubeUrl) {
+        // Attempt high-fidelity markdown extraction via Parallel Extract API
+        const extractRes = await parallelClient.extract({
+          urls: [run.sourceUrl],
+          mode: "markdown",
+          maxCharsPerResult: 12000,
+        });
+        if (extractRes.results && extractRes.results.length > 0 && extractRes.results[0].markdown) {
+          fetchedText = extractRes.results[0].markdown.slice(0, 10000);
+          await logStep(
+            "fetching",
+            `Parallel Extract API retrieved structured document markdown (${fetchedText.length} chars).`,
+            30,
+            "done"
+          );
+        }
+      }
+
+      if (!fetchedText) {
+        const fetchResult = await fetchSafeWebContent(run.sourceUrl);
+        fetchedText = fetchResult.text.slice(0, 10000); // 10kb sample for prompt
+        await logStep(
+          "fetching",
+          `Successfully fetched public content${ytMeta?.title ? ` (Title: "${ytMeta.title}")` : ""}.`,
+          30,
+          "done"
+        );
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       await logStep("fetching", `Web fetching notice: ${msg}. Proceeding with metadata context.`, 30, "warning");
@@ -408,6 +428,19 @@ Output MUST strictly adhere to the following JSON structure:
     };
 
     await dataRepo.publishScoutCard(finalCard);
+
+    // Register Living Dossier monitor sensor via Parallel Monitor API
+    try {
+      await parallelClient.createMonitor({
+        name: `Scout Monitor: ${proposalData.projectTitle || project.identity.title}`,
+        targetUrl: run.sourceUrl,
+        frequency: "daily",
+        webhookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_BASE_URL || "https://audience-take-web-866111144888.us-central1.run.app"}/api/webhooks/parallel`,
+        metadata: { projectId: project.id },
+      });
+    } catch (monErr) {
+      console.warn("Parallel Monitor registration notice:", monErr);
+    }
 
     // Update project identity with discovered facts
     project.identity.title = proposalData.projectTitle;

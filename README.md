@@ -149,21 +149,21 @@ When a user or scout nominates any public URL (YouTube, Vimeo, Kickstarter, pers
 
 ### 2. Parallel Systems Integration Matrix
 
-Audience Take integrates with **Parallel Systems** for real-time web intelligence and discovery:
+Audience Take integrates with **Parallel Systems** for real-time web intelligence, deep content extraction, and living dossier monitoring:
 
 | Parallel Capability | Status | Runtime Proof & Integration Notes |
 | :--- | :--- | :--- |
 | **Search API** | **Implemented** | Direct server-side REST request `POST https://api.parallel.ai/v1/search` in [`src/services/parallel-client.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/services/parallel-client.ts), called during research runs by [`src/agent/agent-runner.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/agent/agent-runner.ts). Returns ranked public URLs, titles, and excerpts used to ground Scout Card citations. |
-| **Extract API** | **Roadmap** | Potential future support for deep structured content extraction from supplied URLs via `/v1/extract`. |
-| **Monitor API** | **Roadmap** | Planned for living-dossier recurring change monitoring and automated milestone notifications. |
+| **Extract API** | **Implemented** | Direct server-side REST request `POST https://api.parallel.ai/v1/extract` in [`src/services/parallel-client.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/services/parallel-client.ts), called by [`src/agent/agent-runner.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/agent/agent-runner.ts) to extract structured, clean Markdown from non-video project URLs and crowdfunding pages. |
+| **Monitor API & Webhooks** | **Implemented** | Direct server-side REST request `POST https://api.parallel.ai/v1/monitors` in [`src/services/parallel-client.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/services/parallel-client.ts) to register living dossier sensors, paired with live webhook receiver endpoint [`src/app/api/webhooks/parallel/route.ts`](file:///Users/tarikmoody/Documents/Projects/audience-take-gemini/src/app/api/webhooks/parallel/route.ts) that automatically appends milestone updates to Firestore Scout Cards. |
 | **Responses API** | **Not Implemented** | Out of scope for current scouting workflows. |
 
 #### Provenance & Evidence Separation
 - User-submitted sources and Parallel-discovered web citations maintain strictly separate provenance in the Firestore evidence ledger (`origin: "user"` vs `origin: "parallel"` vs `origin: "inferred"`).
-- Parallel Search results pass through an SSRF validation guard before ingestion, ensuring returned links resolve only to public internet hosts.
+- All Parallel Search and Extract queries pass through an SSRF validation guard before ingestion, ensuring returned links resolve only to public internet hosts.
 
 #### Development Workflow vs Runtime
-- **Parallel CLI & Agent Skills**: Skills located in `.agents/skills/` (`parallel-web-search`, `parallel-web-extract`, `parallel-deep-research`, `parallel-data-enrichment`) are utilized for developer research and CLI operations. The deployed runtime service executes raw server-side REST calls against `https://api.parallel.ai/v1/search`.
+- **Parallel CLI & Agent Skills**: Skills located in `.agents/skills/` (`parallel-web-search`, `parallel-web-extract`, `parallel-deep-research`, `parallel-data-enrichment`) are utilized for developer research and CLI operations. The deployed runtime service executes raw server-side REST calls against `https://api.parallel.ai/v1/search`, `/v1/extract`, and `/v1/monitors`.
 
 ---
 
@@ -184,8 +184,8 @@ Audience Take integrates with **Parallel Systems** for real-time web intelligenc
 | Feature Area | Live Today in Production | Roadmap / Future Milestone |
 | :--- | :--- | :--- |
 | **Project Intake & Scouting** | Live public nomination at `/nominate` with SSRF guard and YouTube metadata parsing | Automated multi-platform RSS feed ingesters |
-| **Web Research** | Server-side Parallel Search API v1 (`POST /v1/search`) with bounded queries | Automated Parallel Extract API (`/v1/extract`) on arbitrary long-form PDFs/pitch decks |
-| **Dossier Freshness** | Verified creator update publishing (`/creator` & `/projects/[id]/manage`) | Automated webhooks via Parallel Monitor API for automated milestone alerts |
+| **Web Research & Extraction** | Server-side Parallel Search (`/v1/search`) and Parallel Extract (`/v1/extract`) | Automated PDF pitch deck vision OCR parsing |
+| **Dossier Freshness** | Parallel Monitor API (`/v1/monitors`) + `/api/webhooks/parallel` live webhook receiver | Real-time Slack/Discord channel notification bot |
 | **Audio Scout Briefs** | 2-speaker Gemini 3.5 / Gemini 3.1 Flash TTS audio briefings with interactive transcripts | Custom creator voice cloning for approved filmmaker dispatches |
 | **Audience Signals** | Organic vs demo separated commitments (Watch, Pay, City demand, Back) | Integrated ticket reservation and escrow crowdfunding checkout |
 
