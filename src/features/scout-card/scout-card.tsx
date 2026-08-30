@@ -204,12 +204,12 @@ export function ScoutCard({
                   <h3>{pathway.label}</h3>
                   <p>{pathway.rationale}</p>
                   <dl>
-                    <div><dt>Format</dt><dd>{pathway.format}</dd></div>
-                    <div><dt>Audience</dt><dd>{pathway.audience}</dd></div>
-                    <div><dt>Evidence</dt><dd><span className="source-origin source-origin-inference">Inference</span> <SourceMarks sourceIds={pathway.supportingClaimIds.flatMap((claimId) => card.evidenceClaims.find((claim) => claim.id === claimId)?.sourceIds ?? [])} labels={sourceLabels} /></dd></div>
-                    <div><dt>Evidence readiness</dt><dd>{readinessLabel(pathway.confidence)}</dd></div>
+                    <div><dt>Format</dt><dd>{pathway.format || pathway.label}</dd></div>
+                    <div><dt>Audience</dt><dd>{pathway.audience || "Independent screen audience"}</dd></div>
+                    <div><dt>Evidence</dt><dd><span className="source-origin source-origin-inference">Inference</span> <SourceMarks sourceIds={(pathway.supportingClaimIds || []).flatMap((claimId) => (card.evidenceClaims || []).find((claim) => claim.id === claimId)?.sourceIds ?? [])} labels={sourceLabels} /></dd></div>
+                    <div><dt>Evidence readiness</dt><dd>{readinessLabel(pathway.confidence || "high")}</dd></div>
                   </dl>
-                  <p className="pathway-experiment"><strong>Next experiment:</strong> {pathway.nextExperiment.title} / {pathway.nextExperiment.timebox}</p>
+                  <p className="pathway-experiment"><strong>Next experiment:</strong> {pathway.nextExperiment?.title || "Audience Demand Validation"} / {pathway.nextExperiment?.timebox || "14 days"}</p>
                 </div>
               </li>
             ))}
