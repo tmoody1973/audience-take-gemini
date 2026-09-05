@@ -47,5 +47,5 @@ Tracking implementation against `/Users/tarikmoody/Downloads/ANTIGRAVITY_SCOUT_C
 - [x] **Package D: Regression, Accessibility & Visual Verification**
   - [x] Full test suite execution across all test files (85/85 test files, 355/355 tests passed)
   - [x] Next.js production build (`npm run build`, 48/48 routes compiled cleanly)
-  - [ ] Capture desktop and mobile before/after screenshots
-  - [ ] Deploy to Cloud Run and verify live endpoints
+  - [x] Capture desktop and mobile before/after screenshots
+  - [x] Deploy to Cloud Run and verify live endpoints (`audience-take-web-00095-xd7`)
