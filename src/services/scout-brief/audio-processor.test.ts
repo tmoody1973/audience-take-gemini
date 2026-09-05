@@ -49,4 +49,17 @@ describe("Audio Processor (PCM to WAV Wrapping)", () => {
     const shortPcm = generateSyntheticPcm(5, 24000);
     expect(() => wrapPcmToWav(shortPcm, 24000, 30000, 300000)).toThrow("outside safe bounds");
   });
+
+  it("prevents double RIFF wrapping when input is already a WAV file", () => {
+    const rawPcm = generateSyntheticPcm(2, 24000);
+    const firstWav = wrapPcmToWav(rawPcm, 24000, 1000, 10000);
+
+    // If firstWav.wavBuffer is passed in again, wrapPcmToWav must NOT add a second 44-byte header!
+    const secondWav = wrapPcmToWav(firstWav.wavBuffer.toString("base64"), 24000, 1000, 10000);
+
+    expect(secondWav.sizeBytes).toBe(firstWav.sizeBytes);
+    expect(secondWav.wavBuffer.subarray(0, 4).toString("ascii")).toBe("RIFF");
+    // Offset 44 must be audio samples, NOT another "RIFF"
+    expect(secondWav.wavBuffer.subarray(44, 48).toString("ascii")).not.toBe("RIFF");
+  });
 });

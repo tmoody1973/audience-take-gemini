@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadScoutBriefForCard } from "./data";
+import { loadScoutBriefForCard, loadAllScoutBriefsForCard } from "./data";
 import type { ScoutCard } from "../scout-card/types";
 
 const mockCard = {
@@ -143,5 +143,17 @@ describe("Scout Brief Data Loader", () => {
     expect(brief?.audioUrl).toMatch(/^(\/api\/|https:\/\/)/);
     expect(brief?.mimeType).toBe("audio/wav");
     expect(brief?.sha256).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("loads both discover and pro briefs concurrently with distinct artifactIds", async () => {
+    const { discover, pro } = await loadAllScoutBriefsForCard(mockCard);
+
+    expect(discover).toBeDefined();
+    expect(pro).toBeDefined();
+    expect(discover?.variant).toBe("discover");
+    expect(pro?.variant).toBe("pro");
+    expect(discover?.artifactId).not.toBe(pro?.artifactId);
+    expect(discover?.transcript.segments.length).toBe(4);
+    expect(pro?.transcript.segments.length).toBe(6);
   });
 });

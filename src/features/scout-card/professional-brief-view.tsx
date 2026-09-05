@@ -579,7 +579,15 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
       </section>
 
       {/* 7. Changes, Audio Brief, & Methodology */}
-      {scoutBrief && <ScoutBriefPlayer brief={scoutBrief} unclaimed={card.claimStatus === "unclaimed"} />}
+      {scoutBrief && (
+        <ScoutBriefPlayer
+          brief={scoutBrief}
+          unclaimed={card.claimStatus === "unclaimed"}
+          sources={card.sourceLedger}
+          onOpenCitation={onOpenCitation}
+          audienceMode="professional"
+        />
+      )}
 
       <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
       <FandomDnaSection

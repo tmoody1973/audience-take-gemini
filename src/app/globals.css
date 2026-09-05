@@ -1632,6 +1632,24 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   color: #ffffff;
 }
 
+.brief-seek-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  background: #ffffff;
+  border: 1px solid var(--ink);
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.brief-seek-btn:hover {
+  background: var(--yellow);
+}
+
 .brief-scrubber-group {
   display: flex;
   align-items: center;

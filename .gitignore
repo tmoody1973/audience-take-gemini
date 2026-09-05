@@ -40,3 +40,7 @@ next-env.d.ts
 .DS_Store
 *.pem
 Thumbs.db
+
+# Audio migration quarantine & untracked docs
+/public/audio-cache/legacy-quarantine/
+docs/design/aboutus-prompt.md

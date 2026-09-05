@@ -8,15 +8,23 @@ import { scoutBriefStore } from "./store";
 
 export async function generateAndPublishScoutBrief(
   card: ScoutCard,
-  generationVersion = 1
+  generationVersion = 1,
+  variant: "discover" | "pro" = "pro"
 ): Promise<ScoutBrief> {
-  const artifactId = `scout-brief-${card.cardVersionId}-g${generationVersion}`;
+  const artifactId = `scout-brief-${card.cardVersionId}-${variant}-g${generationVersion}`;
   const now = new Date().toISOString();
 
-  // 1. Check existing ready artifact for idempotency
+  // 1. Check existing ready artifact for idempotency (or legacy pro artifact)
   const existing = await scoutBriefStore.getScoutBrief(artifactId);
   if (existing && existing.status === "ready") {
     return existing;
+  }
+  if (variant === "pro") {
+    const legacy = await scoutBriefStore.getScoutBrief(`scout-brief-${card.cardVersionId}-g${generationVersion}`);
+    if (legacy && legacy.status === "ready") {
+      if (!legacy.variant) legacy.variant = "pro";
+      return legacy;
+    }
   }
 
   // 2. Initialize private job lease
@@ -27,6 +35,7 @@ export async function generateAndPublishScoutBrief(
     runId: card.runId,
     researchVersion: card.researchVersion || 1,
     generationVersion,
+    variant,
     state: "generating_script",
     scriptRequestStartedAt: now,
     updatedAt: now,
@@ -34,7 +43,7 @@ export async function generateAndPublishScoutBrief(
   await scoutBriefStore.saveJob(job);
 
   // 3. Stage 1: Generate & Validate Structured Transcript
-  const transcript = await generateScoutBriefTranscript(card);
+  const transcript = await generateScoutBriefTranscript(card, "gemini-3.5-flash", variant);
   const wordCount = countTranscriptWords(transcript.segments);
 
   job.state = "script_ready";
@@ -54,7 +63,7 @@ export async function generateAndPublishScoutBrief(
   const processedAudio = wrapPcmToWav(ttsResult.base64Pcm, ttsResult.sampleRate);
   scoutBriefStore.saveAudioBuffer(artifactId, processedAudio.wavBuffer);
 
-  const storagePath = `public/projects/${card.projectId}/scout-briefs/${card.cardVersionId}/g${generationVersion}.wav`;
+  const storagePath = `public/projects/${card.projectId}/scout-briefs/${card.cardVersionId}/${variant}-g${generationVersion}.wav`;
   const audioUrl = `/api/scout-briefs/${artifactId}/audio`;
 
   // 6. Build immutable public ScoutBrief record
@@ -65,21 +74,22 @@ export async function generateAndPublishScoutBrief(
     runId: card.runId,
     researchVersion: card.researchVersion || 1,
     generationVersion,
+    variant,
     status: "ready",
     visibility: "public",
     language: "en-US",
-    title: `${card.title} — Audio Scout Brief`,
+    title: `${card.title} — Audio Scout Brief (${variant === "discover" ? "Discovery" : "Professional"})`,
     durationMs: processedAudio.durationMs,
     wordCount,
     scriptModelId: "gemini-3.5-flash",
-    ttsModelId: "gemini-3.1-flash-tts-preview",
+    ttsModelId: "gemini-2.5-flash-preview-tts",
     speakers: [
       { speaker: "Scout", voice: "Kore" },
       { speaker: "Analyst", voice: "Puck" },
     ],
     transcript,
     sourceIds: (card.sourceLedger || []).map((s) => s.id),
-    claimIds: ["claim-1", "claim-2", "claim-3"],
+    claimIds: (card.evidenceClaims || []).slice(0, 3).map((c) => c.id),
     pathwayIds: (card.pathways || []).map((p, idx) => p.id || `pathway-${idx + 1}`),
     storagePath,
     audioUrl,

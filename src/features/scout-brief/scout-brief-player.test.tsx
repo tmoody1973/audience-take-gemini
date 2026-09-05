@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ScoutBriefPlayer } from "./scout-brief-player";
 import type { ScoutBrief } from "./types";
@@ -46,27 +46,53 @@ const mockBrief: ScoutBrief = {
 };
 
 describe("ScoutBriefPlayer Component", () => {
-  it("renders player controls, title, and metadata without autoplay", () => {
-    render(<ScoutBriefPlayer brief={mockBrief} />);
+  beforeEach(() => {
+    vi.spyOn(window.HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+    vi.spyOn(window.HTMLMediaElement.prototype, "play").mockImplementation(async () => {});
+  });
+
+  const mockSources = [
+    { id: "S1", title: "YouTube Anime Pilot", url: "https://youtube.com/watch?v=123" },
+    { id: "S2", title: "Variety Trade Article", url: "https://variety.com/article" },
+  ];
+
+  it("renders player controls, title, relative seek buttons, and metadata without autoplay", () => {
+    render(<ScoutBriefPlayer brief={mockBrief} sources={mockSources} />);
 
     expect(screen.getByText("2-Speaker AI Scout Brief")).toBeDefined();
     expect(screen.getByText("Junichiro Jackson — Audio Scout Brief")).toBeDefined();
     expect(screen.getByLabelText("Play audio briefing")).toBeDefined();
     expect(screen.getByLabelText("Seek audio position")).toBeDefined();
+    expect(screen.getByLabelText("Seek back 15 seconds")).toBeDefined();
+    expect(screen.getByLabelText("Seek forward 15 seconds")).toBeDefined();
     expect(screen.getByText("1×")).toBeDefined();
   });
 
-  it("toggles expandable transcript with speaker labels and citations", () => {
-    render(<ScoutBriefPlayer brief={mockBrief} />);
+  it("toggles expandable transcript with AI disclosure and human-readable citations", () => {
+    const onOpenCitation = vi.fn();
+    render(
+      <ScoutBriefPlayer
+        brief={mockBrief}
+        sources={mockSources}
+        onOpenCitation={onOpenCitation}
+      />
+    );
 
     const transcriptBtn = screen.getByRole("button", { name: /transcript/i });
-    expect(screen.queryByText("Verified Dialogue Transcript")).toBeNull();
+    expect(screen.queryByText("AI Scout Briefing Transcript")).toBeNull();
 
     fireEvent.click(transcriptBtn);
 
-    expect(screen.getByText("Verified Dialogue Transcript")).toBeDefined();
+    expect(screen.getByText("AI Scout Briefing Transcript")).toBeDefined();
     expect(screen.getByText("Welcome to Audience Take audio briefing.")).toBeDefined();
     expect(screen.getByText("Unit economics are 20k per minute.")).toBeDefined();
     expect(screen.getByText("Animation tax credits pending")).toBeDefined();
+
+    // Human-readable source citations
+    const sourcePill = screen.getAllByRole("button", { name: /YouTube Anime Pilot/i })[0];
+    expect(sourcePill).toBeDefined();
+
+    fireEvent.click(sourcePill);
+    expect(onOpenCitation).toHaveBeenCalledWith(expect.objectContaining({ id: "S1", title: "YouTube Anime Pilot" }));
   });
 });

@@ -5,6 +5,8 @@
 
 export type ScoutBriefSpeakerRole = "Scout" | "Analyst";
 
+export type ScoutBriefVariant = "discover" | "pro";
+
 export type ScoutBriefSection =
   | "hook"
   | "project"
@@ -28,6 +30,7 @@ export interface ScoutBriefSegment {
 }
 
 export interface ScoutBriefTranscript {
+  variant?: ScoutBriefVariant;
   segments: ScoutBriefSegment[];
   limitations: string[];
   disclosure: string;
@@ -50,6 +53,7 @@ export interface ScoutBrief {
   runId: string;
   researchVersion: number;
   generationVersion: number;
+  variant?: ScoutBriefVariant;
   status: ScoutBriefStatus;
   visibility: ScoutBriefVisibility;
   language: "en-US";
@@ -78,6 +82,7 @@ export interface ScoutBriefJob {
   runId: string;
   researchVersion: number;
   generationVersion: number;
+  variant?: ScoutBriefVariant;
   state: ScoutBriefStatus;
   leaseOwner?: string;
   leaseExpiresAt?: string;

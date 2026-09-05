@@ -625,7 +625,15 @@ export function ScoutCard({
             </div>
           </article>
 
-          {scoutBrief && <ScoutBriefPlayer brief={scoutBrief} unclaimed={card.claimStatus === "unclaimed"} />}
+          {scoutBrief && (
+            <ScoutBriefPlayer
+              brief={scoutBrief}
+              unclaimed={card.claimStatus === "unclaimed"}
+              sources={card.sourceLedger}
+              onOpenCitation={handleOpenCitation}
+              audienceMode={view}
+            />
+          )}
 
           <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
           <FandomDnaSection

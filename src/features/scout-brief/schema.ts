@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const ScoutBriefSpeakerRoleSchema = z.enum(["Scout", "Analyst"]);
 
+export const ScoutBriefVariantSchema = z.enum(["discover", "pro"]);
+
 export const ScoutBriefSectionSchema = z.enum([
   "hook",
   "project",
@@ -26,6 +28,7 @@ export const ScoutBriefSegmentSchema = z.object({
 });
 
 export const ScoutBriefTranscriptSchema = z.object({
+  variant: ScoutBriefVariantSchema.optional(),
   segments: z.array(ScoutBriefSegmentSchema).min(4).max(30),
   limitations: z.array(z.string()),
   disclosure: z.string().min(5),
@@ -49,6 +52,7 @@ export const ScoutBriefSchema = z.object({
   runId: z.string().min(1),
   researchVersion: z.number().int().min(1),
   generationVersion: z.number().int().min(1),
+  variant: ScoutBriefVariantSchema.optional(),
   status: ScoutBriefStatusSchema,
   visibility: ScoutBriefVisibilitySchema,
   language: z.literal("en-US"),

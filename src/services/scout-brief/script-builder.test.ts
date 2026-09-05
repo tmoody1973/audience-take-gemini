@@ -164,15 +164,17 @@ const mockCard = {
 
 describe("Scout Brief Script Builder & Validator", () => {
   it("builds a closed-world input strictly from the ScoutCard", () => {
-    const input = buildClosedWorldScriptInput(mockCard);
+    const input = buildClosedWorldScriptInput(mockCard, "pro");
     expect(input.projectId).toBe("proj-test");
     expect(input.title).toBe("Test Project");
-    expect(input.pathways.length).toBe(3);
+    expect(input.evidenceClaims.length).toBe(2);
     expect(input.sources.length).toBe(2);
+    expect(input.developmentStage).toBe("Pilot");
   });
 
   it("validates a complete, compliant 6-section transcript", () => {
     const validTranscript: ScoutBriefTranscript = {
+      variant: "pro",
       segments: [
         { order: 1, section: "hook", speaker: "Scout", text: "Welcome to the Scout Brief hook.", claimIds: ["claim-1"], sourceIds: ["S1"] },
         { order: 2, section: "project", speaker: "Analyst", text: "Here is the project overview and details.", claimIds: ["claim-1"], sourceIds: ["S1"] },
@@ -193,11 +195,29 @@ describe("Scout Brief Script Builder & Validator", () => {
     expect(validation.errors).toEqual([]);
   });
 
-  it("rejects transcript missing required sections or speaker balance", () => {
+  it("validates a concise 4-turn Discovery transcript", () => {
+    const discoveryTranscript: ScoutBriefTranscript = {
+      variant: "discover",
+      segments: [
+        { order: 1, section: "hook", speaker: "Scout", text: "Test Project is an exciting animated pilot from Creator.", claimIds: ["claim-1"], sourceIds: ["S1"] },
+        { order: 2, section: "project", speaker: "Analyst", text: "Crafted as TV-MA animation, it balances distinct visuals with character focus.", claimIds: ["claim-1"], sourceIds: ["S1"] },
+        { order: 3, section: "evidence", speaker: "Scout", text: "Raised 200k on Kickstarter from community supporters.", claimIds: ["claim-1"], sourceIds: ["S1"] },
+        { order: 4, section: "next_move", speaker: "Analyst", text: "Fans can watch the proof-of-concept and follow development online.", claimIds: ["claim-2"], sourceIds: ["S2"] },
+      ],
+      limitations: ["Preliminary discovery briefing."],
+      disclosure: "AI-generated Scout Brief based on verified public evidence.",
+    };
+
+    const validation = validateScoutBriefTranscript(discoveryTranscript, mockCard, 20, 500);
+    expect(validation.valid).toBe(true);
+    expect(validation.errors).toEqual([]);
+  });
+
+  it("rejects transcript with invalid order or unknown speaker", () => {
     const invalidTranscript: ScoutBriefTranscript = {
       segments: [
-        { order: 1, section: "hook", speaker: "Scout", text: "Hook text", claimIds: [], sourceIds: [] },
-        { order: 2, section: "evidence", speaker: "Scout", text: "Evidence text", claimIds: [], sourceIds: [] },
+        { order: 2, section: "hook", speaker: "Scout", text: "Hook text", claimIds: [], sourceIds: [] },
+        { order: 3, section: "evidence", speaker: "Narrator" as any, text: "Evidence text", claimIds: [], sourceIds: [] },
       ],
       limitations: [],
       disclosure: "Short",

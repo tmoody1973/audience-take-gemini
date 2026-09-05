@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { scoutBriefStore } from "@/services/scout-brief/store";
 import { generateMultiSpeakerAudio } from "@/services/scout-brief/gemini-tts-client";
-import { wrapPcmToWav, generateSyntheticPcm } from "@/services/scout-brief/audio-processor";
+import { wrapPcmToWav } from "@/services/scout-brief/audio-processor";
 import type { ScoutBrief } from "@/features/scout-brief/types";
 
 export async function GET(
@@ -25,7 +25,10 @@ export async function GET(
   if (!audioBuffer) {
     const directPath = path.resolve(process.cwd(), `public/audio-cache/${artifactId}.wav`);
     const prefixedPath = path.resolve(process.cwd(), `public/audio-cache/scout-brief-${artifactId}-g1.wav`);
-    const targetPath = fs.existsSync(directPath) ? directPath : (fs.existsSync(prefixedPath) ? prefixedPath : null);
+    const legacyPath = path.resolve(process.cwd(), `public/audio-cache/${artifactId.replace("-pro-g1", "-g1").replace("-discover-g1", "-g1")}.wav`);
+    const targetPath = fs.existsSync(directPath)
+      ? directPath
+      : (fs.existsSync(prefixedPath) ? prefixedPath : (fs.existsSync(legacyPath) ? legacyPath : null));
 
     if (targetPath) {
       try {
@@ -42,44 +45,53 @@ export async function GET(
       brief = await scoutBriefStore.getScoutBriefByCardVersion(artifactId);
     }
 
-    const countWords = (t: any) =>
-      (t?.segments || []).reduce(
-        (acc: number, s: any) => acc + (s.text || "").trim().split(/\s+/).filter(Boolean).length,
-        0
-      );
-
-    if (!brief || countWords(brief.transcript) < 350) {
-      try {
-        const fixturePath = path.resolve(process.cwd(), "contracts/fixtures/junichiro-scout-brief.json");
-        if (fs.existsSync(fixturePath)) {
-          const content = fs.readFileSync(fixturePath, "utf-8");
-          const json = JSON.parse(content) as ScoutBrief;
-          brief = json;
-        }
-      } catch (err) {
-        console.warn("[ScoutBrief API] Fixture read error:", err);
-      }
-    }
-
     if (brief && brief.transcript) {
       try {
         const ttsResult = await generateMultiSpeakerAudio(brief.transcript);
-        const processed = wrapPcmToWav(ttsResult.base64Pcm, ttsResult.sampleRate);
-        audioBuffer = processed.wavBuffer;
-        scoutBriefStore.saveAudioBuffer(artifactId, audioBuffer);
+        if (ttsResult && ttsResult.base64Pcm) {
+          const processed = wrapPcmToWav(ttsResult.base64Pcm, ttsResult.sampleRate);
+          audioBuffer = processed.wavBuffer;
+          scoutBriefStore.saveAudioBuffer(artifactId, audioBuffer);
+        }
       } catch (err) {
         console.warn("[ScoutBrief API] Audio generation error:", err);
       }
     }
+  }
 
-    // 3. Fallback: generate synthetic WAV audio only if TTS completely failed
-    if (!audioBuffer) {
-      const durationSeconds = brief?.durationMs ? brief.durationMs / 1000 : 30;
-      const syntheticPcm = generateSyntheticPcm(durationSeconds, 24000);
-      const processed = wrapPcmToWav(syntheticPcm, 24000);
-      audioBuffer = processed.wavBuffer;
-      scoutBriefStore.saveAudioBuffer(artifactId, audioBuffer);
+  if (!audioBuffer) {
+    return NextResponse.json(
+      { error: "Audio briefing not found or not yet generated" },
+      { status: 404 }
+    );
+  }
+
+  const range = request.headers.get("range");
+  const totalLength = audioBuffer.length;
+
+  if (range && range.startsWith("bytes=")) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10) || 0;
+    const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+
+    if (start >= totalLength || end >= totalLength || start > end) {
+      return new Response(null, {
+        status: 416,
+        headers: { "Content-Range": `bytes */${totalLength}` },
+      });
     }
+
+    const chunk = audioBuffer.subarray(start, end + 1);
+    return new Response(new Uint8Array(chunk), {
+      status: 206,
+      headers: {
+        "Content-Type": "audio/wav",
+        "Content-Range": `bytes ${start}-${end}/${totalLength}`,
+        "Content-Length": String(chunk.length),
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      },
+    });
   }
 
   return new Response(new Uint8Array(audioBuffer), {

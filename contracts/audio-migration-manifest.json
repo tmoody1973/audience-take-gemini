@@ -1,0 +1,150 @@
+{
+  "migrationTimestamp": "2026-09-05T00:52:09.758Z",
+  "totalFilesMigrated": 16,
+  "entries": [
+    {
+      "filename": "card-junichiro-live-20260826-1918-v1-correction-5ea5f36d0447.wav",
+      "originalSizeBytes": 11840340,
+      "originalSha256": "7554e68b3cff57e1c0ad1055c73a4753888e2999bce53125a8fa1afb518c5655",
+      "cleanedSizeBytes": 11652524,
+      "cleanedSha256": "6e0d30640bea13e8e9be80021ccd14e1c2229c0efc322ca87b40aa6a0be29d29",
+      "cleanedDurationMs": 242760,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-proj-1787999939817-25f9r-v1.wav",
+      "originalSizeBytes": 11825896,
+      "originalSha256": "c2d02c9f50737f999c95c8de4308e06420a18e159266f01bc8e75f1620968208",
+      "cleanedSizeBytes": 11652524,
+      "cleanedSha256": "609e633b0409a5ef09678964eea7346da63dcd855886d11ea299494053071031",
+      "cleanedDurationMs": 242760,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-proj-1788033835868-tfn0k-v1.wav",
+      "originalSizeBytes": 3927668,
+      "originalSha256": "78ba6abbbf649249f8d89ad9db6d4c39ec7bf0d9901019eb26824c363d9162d0",
+      "cleanedSizeBytes": 3855404,
+      "cleanedSha256": "aab6133091796dac118321788b00915ae8f7c31cd33d661906786d396cac6868",
+      "cleanedDurationMs": 80320,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-proj-1788041505393-xon0r-v1.wav",
+      "originalSizeBytes": 12011132,
+      "originalSha256": "c6e50adad028dedac6dc0c615a9c06eae3ada488b685722c8383bfcd04b7c24b",
+      "cleanedSizeBytes": 11852204,
+      "cleanedSha256": "dc4d53e047127b28a36fb8861435e691ff438041346250d9c2b7badc77d65c41",
+      "cleanedDurationMs": 246920,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-proj-1788044913156-2qno0-v1.wav",
+      "originalSizeBytes": 10535392,
+      "originalSha256": "cbb5d79eac1c94b05c196f2a7d6d6da510571982ebbef9469ae786e40d9d957c",
+      "cleanedSizeBytes": 10448684,
+      "cleanedSha256": "ca7514745f5f16b828d512833233cb197e0ef514750b5e69133fd77d4c1f78fb",
+      "cleanedDurationMs": 217680,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-proj-1788046652955-oh5cx-v1.wav",
+      "originalSizeBytes": 10789008,
+      "originalSha256": "499482b7d598320dd6d35c5254475189f2b2ec0c58ada8b9c3772c598cd12e1a",
+      "cleanedSizeBytes": 10644524,
+      "cleanedSha256": "ef4b91c814236d1c35f94274e73e98c4980963b1df8da6c8dfa20fc06a7f6c38",
+      "cleanedDurationMs": 221760,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-proj-1788052813569-38yli-v1.wav",
+      "originalSizeBytes": 9650448,
+      "originalSha256": "9a0d96b96d97034689e545508536b1e1d9ec81313db50a0580aa0a6a5b5d13fe",
+      "cleanedSizeBytes": 9505964,
+      "cleanedSha256": "9cce779e6b74e0a522e29e0dfa9e4bdf130b10d6f941dd24cc0a483bd7d846cf",
+      "cleanedDurationMs": 198040,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "card-vSU2DLAPidOArl8MbA5E-v1-correction-b8983b06ad45.wav",
+      "originalSizeBytes": 7199348,
+      "originalSha256": "e11616b049c3a39f58b107734c94cde67e14f482368f0b5e2186a4051da48f80",
+      "cleanedSizeBytes": 7127084,
+      "cleanedSha256": "e9eb5e625fcf5a4276eb5b57de4dd8695ae449035da9623ef2070f1d50a06ad1",
+      "cleanedDurationMs": 148480,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-junichiro-live-20260826-1918-v1-correction-5ea5f36d0447-g1.wav",
+      "originalSizeBytes": 11840340,
+      "originalSha256": "7554e68b3cff57e1c0ad1055c73a4753888e2999bce53125a8fa1afb518c5655",
+      "cleanedSizeBytes": 11652524,
+      "cleanedSha256": "6e0d30640bea13e8e9be80021ccd14e1c2229c0efc322ca87b40aa6a0be29d29",
+      "cleanedDurationMs": 242760,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-proj-1787999939817-25f9r-v1-g1.wav",
+      "originalSizeBytes": 11825896,
+      "originalSha256": "c2d02c9f50737f999c95c8de4308e06420a18e159266f01bc8e75f1620968208",
+      "cleanedSizeBytes": 11652524,
+      "cleanedSha256": "609e633b0409a5ef09678964eea7346da63dcd855886d11ea299494053071031",
+      "cleanedDurationMs": 242760,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-proj-1788033835868-tfn0k-v1-g1.wav",
+      "originalSizeBytes": 3927668,
+      "originalSha256": "78ba6abbbf649249f8d89ad9db6d4c39ec7bf0d9901019eb26824c363d9162d0",
+      "cleanedSizeBytes": 3855404,
+      "cleanedSha256": "aab6133091796dac118321788b00915ae8f7c31cd33d661906786d396cac6868",
+      "cleanedDurationMs": 80320,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-proj-1788041505393-xon0r-v1-g1.wav",
+      "originalSizeBytes": 12011132,
+      "originalSha256": "c6e50adad028dedac6dc0c615a9c06eae3ada488b685722c8383bfcd04b7c24b",
+      "cleanedSizeBytes": 11852204,
+      "cleanedSha256": "dc4d53e047127b28a36fb8861435e691ff438041346250d9c2b7badc77d65c41",
+      "cleanedDurationMs": 246920,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-proj-1788044913156-2qno0-v1-g1.wav",
+      "originalSizeBytes": 10535392,
+      "originalSha256": "cbb5d79eac1c94b05c196f2a7d6d6da510571982ebbef9469ae786e40d9d957c",
+      "cleanedSizeBytes": 10448684,
+      "cleanedSha256": "ca7514745f5f16b828d512833233cb197e0ef514750b5e69133fd77d4c1f78fb",
+      "cleanedDurationMs": 217680,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-proj-1788046652955-oh5cx-v1-g1.wav",
+      "originalSizeBytes": 10789008,
+      "originalSha256": "499482b7d598320dd6d35c5254475189f2b2ec0c58ada8b9c3772c598cd12e1a",
+      "cleanedSizeBytes": 10644524,
+      "cleanedSha256": "ef4b91c814236d1c35f94274e73e98c4980963b1df8da6c8dfa20fc06a7f6c38",
+      "cleanedDurationMs": 221760,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-proj-1788052813569-38yli-v1-g1.wav",
+      "originalSizeBytes": 9650448,
+      "originalSha256": "9a0d96b96d97034689e545508536b1e1d9ec81313db50a0580aa0a6a5b5d13fe",
+      "cleanedSizeBytes": 9505964,
+      "cleanedSha256": "9cce779e6b74e0a522e29e0dfa9e4bdf130b10d6f941dd24cc0a483bd7d846cf",
+      "cleanedDurationMs": 198040,
+      "hadDoubleRiff": true
+    },
+    {
+      "filename": "scout-brief-card-vSU2DLAPidOArl8MbA5E-v1-correction-b8983b06ad45-g1.wav",
+      "originalSizeBytes": 7199348,
+      "originalSha256": "e11616b049c3a39f58b107734c94cde67e14f482368f0b5e2186a4051da48f80",
+      "cleanedSizeBytes": 7127084,
+      "cleanedSha256": "e9eb5e625fcf5a4276eb5b57de4dd8695ae449035da9623ef2070f1d50a06ad1",
+      "cleanedDurationMs": 148480,
+      "hadDoubleRiff": true
+    }
+  ]
+}

@@ -40,10 +40,16 @@ export const scoutBriefStore = {
     return null;
   },
 
-  async getScoutBriefByCardVersion(cardVersionId: string): Promise<ScoutBrief | null> {
+  async getScoutBriefByCardVersion(
+    cardVersionId: string,
+    variant?: "discover" | "pro"
+  ): Promise<ScoutBrief | null> {
+    // 1. Check in-memory briefs
     for (const brief of memoryBriefs.values()) {
       if (brief.cardVersionId === cardVersionId && brief.status === "ready") {
-        return brief;
+        if (!variant || brief.variant === variant) {
+          return brief;
+        }
       }
     }
 
@@ -51,24 +57,46 @@ export const scoutBriefStore = {
       const db = getAdminFirestore();
       const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
       const lookupPromise = (async () => {
-        // Direct doc lookup first (fast & requires no composite query index)
+        // Direct doc lookups first (fast & requires no composite index)
+        if (variant) {
+          const variantDoc = await db.collection("scoutBriefs").doc(`scout-brief-${cardVersionId}-${variant}-g1`).get();
+          if (variantDoc.exists) {
+            const data = variantDoc.data() as ScoutBrief;
+            memoryBriefs.set(data.artifactId, data);
+            return data;
+          }
+        }
+
         const directDoc = await db.collection("scoutBriefs").doc(`scout-brief-${cardVersionId}-g1`).get();
         if (directDoc.exists) {
           const data = directDoc.data() as ScoutBrief;
-          memoryBriefs.set(data.artifactId, data);
-          return data;
+          if (!data.variant) data.variant = "pro";
+          if (!variant || data.variant === variant) {
+            memoryBriefs.set(data.artifactId, data);
+            return data;
+          }
         }
 
         const snapshot = await db
           .collection("scoutBriefs")
           .where("cardVersionId", "==", cardVersionId)
-          .limit(1)
+          .limit(4)
           .get();
 
         if (!snapshot.empty) {
-          const data = snapshot.docs[0].data() as ScoutBrief;
-          memoryBriefs.set(data.artifactId, data);
-          return data;
+          for (const doc of snapshot.docs) {
+            const data = doc.data() as ScoutBrief;
+            if (!data.variant) data.variant = "pro";
+            memoryBriefs.set(data.artifactId, data);
+            if (!variant || data.variant === variant) {
+              return data;
+            }
+          }
+          if (!variant) {
+            const first = snapshot.docs[0].data() as ScoutBrief;
+            if (!first.variant) first.variant = "pro";
+            return first;
+          }
         }
         return null;
       })().catch(() => null);
