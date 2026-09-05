@@ -20,6 +20,8 @@ export function PathwayVotingSection({ card, onVote }: PathwayVotingSectionProps
     }
   };
 
+  const creatorAmbition = card.creatorContext?.summary || null;
+
   return (
     <section
       className="pathway-voting-section"
@@ -27,11 +29,25 @@ export function PathwayVotingSection({ card, onVote }: PathwayVotingSectionProps
     >
       <div className="pathway-voting-heading">
         <span className="pathway-voting-kicker">COMMUNITY PREFERENCE</span>
-        <h2 id="pathway-voting-title">How would you like this story to grow?</h2>
+        <h2 id="pathway-voting-title">What should happen next?</h2>
         <p className="pathway-voting-desc">
-          Vote for the development direction you would most want to watch or support.
-          Voting expresses audience preference; it does not direct the creator or promise production.
+          Vote for the development or release direction you would most want to watch or support.
+          Voting expresses community perspective; it does not direct the creator or guarantee production.
         </p>
+
+        {creatorAmbition ? (
+          <div className="creator-ambition-banner">
+            <span className="creator-ambition-tag">CREATOR&apos;S STATED AMBITION</span>
+            <p className="creator-ambition-text">{creatorAmbition}</p>
+          </div>
+        ) : (
+          <div className="creator-ambition-banner is-undocumented">
+            <span className="creator-ambition-tag">CREATOR&apos;S STATED AMBITION</span>
+            <p className="creator-ambition-text">
+              Not publicly documented. The pathways below represent community and scout hypotheses.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="pathway-voting-grid">

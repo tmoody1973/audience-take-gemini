@@ -25,7 +25,7 @@ const FORBIDDEN_HYPE_PATTERNS = [
 
 export function checkMediumConcordance(
   medium: MediumType,
-  pathways: [PathwayHypothesis, PathwayHypothesis, PathwayHypothesis]
+  pathways: PathwayHypothesis[]
 ): { concordant: boolean; error?: string } {
   const allPathwayText = pathways
     .map((p) => `${p.title} ${p.mediumFitRationale} ${p.targetAudience}`)
@@ -44,22 +44,27 @@ export function checkMediumConcordance(
     }
   }
 
-  // Rule 2: A short or proof of concept must have realistic expansion or festival pathways
+  // Rule 2: A short or proof of concept must have realistic expansion, festival, screening, or recognition pathways
   if (medium === "proof_of_concept" || medium === "short") {
-    const hasGrowthPath = pathways.some(
+    const hasRealisticPath = pathways.some(
       (p) =>
         p.title.toLowerCase().includes("expansion") ||
         p.title.toLowerCase().includes("feature") ||
         p.title.toLowerCase().includes("series") ||
         p.title.toLowerCase().includes("festival") ||
         p.title.toLowerCase().includes("proof") ||
+        p.title.toLowerCase().includes("screening") ||
+        p.title.toLowerCase().includes("recognition") ||
+        p.title.toLowerCase().includes("showcase") ||
         p.mediumFitRationale.toLowerCase().includes("short") ||
+        p.mediumFitRationale.toLowerCase().includes("festival") ||
+        p.mediumFitRationale.toLowerCase().includes("screening") ||
         p.mediumFitRationale.toLowerCase().includes("proof")
     );
-    if (!hasGrowthPath) {
+    if (!hasRealisticPath) {
       return {
         concordant: false,
-        error: "Short/Proof of concept lacks pathways addressing expansion or short-form festival strategy.",
+        error: "Short/Proof of concept lacks pathways addressing expansion, festival, screening, or recognition strategy.",
       };
     }
   }

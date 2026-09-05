@@ -103,8 +103,11 @@ export function TrailerCritic({
     <section className="trailer-critic" aria-labelledby={`${idPrefix}-title`} data-state={previewState}>
       <header className="section-heading-line trailer-critic-heading">
         <div>
-          <span>Gemini video reading / sampled audiovisual analysis</span>
-          <h2 id={`${idPrefix}-title`}>Trailer critic</h2>
+          <span>Creative notes · Sampled audiovisual reading</span>
+          <h2 id={`${idPrefix}-title`}>Creative notes</h2>
+          <p className="trailer-critic-disclaimer">
+            Descriptive AI interpretation of sampled audiovisual pacing, craft, and tone. This is an editorial observation and not a frame-perfect technical audit or commercial judgment.
+          </p>
         </div>
         <strong>{analyses.length} {analyses.length === 1 ? "video" : "videos"} analyzed</strong>
       </header>

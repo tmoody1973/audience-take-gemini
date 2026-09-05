@@ -92,11 +92,7 @@ export const LLMScoutProposalSchema = z.object({
   whyScouted: z.string().min(10).max(800),
   sourceMedia: z.array(SourceMediaSchema).default([]),
   evidenceLedger: z.array(EvidenceItemSchema).min(1),
-  pathways: z.tuple([
-    PathwayHypothesisSchema,
-    PathwayHypothesisSchema,
-    PathwayHypothesisSchema,
-  ]),
+  pathways: z.array(PathwayHypothesisSchema).min(1).max(3),
   decisionBrief: DecisionBriefSchema,
   industryLens: IndustryLensSchema,
 });

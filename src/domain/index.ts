@@ -110,7 +110,7 @@ export interface ScoutCard {
   whyScouted: string;
   sourceMedia: SourceMedia[];
   evidenceLedger: EvidenceItem[];
-  pathways: [PathwayHypothesis, PathwayHypothesis, PathwayHypothesis];
+  pathways: PathwayHypothesis[];
   decisionBrief: DecisionBrief;
   industryLens: IndustryLens;
   trailerCriticId: string | null;

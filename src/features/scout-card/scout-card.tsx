@@ -115,11 +115,15 @@ function ScoutMediaContent({ card }: { card: ScoutCardModel }) {
 }
 
 function ScoutMedia({ card }: { card: ScoutCardModel }) {
+  const assetType = card.storyContext.currentFormat || "Proof of concept / Teaser";
   return (
     <section className="scout-start-here" aria-labelledby="start-here-title">
       <div className="scout-start-here-heading">
-        <span>Start here / source media</span>
+        <span className="scout-media-badge">WATCH NOW · {assetType.toUpperCase()}</span>
         <h2 id="start-here-title">Watch before you judge</h2>
+        <p className="scout-media-sub">
+          Available sample: <strong>{assetType}</strong> · Intended target format: <strong>{card.projectType.replace("_", " ")}</strong>
+        </p>
       </div>
       <ScoutMediaContent card={card} />
     </section>
@@ -141,13 +145,20 @@ function ProjectHeader({
   cardStructureStatus: string;
   cardEvidenceLabel: string;
 }) {
+  const creatorName = card.creatorContext.displayName || "Independent creators";
+  const claimStatusLabel =
+    card.claimStatus === "approved"
+      ? "Creator verified"
+      : "Unclaimed on Audience Take (rights remain with creators)";
+
   return (
     <header className="scout-header-module">
       <div className="scout-header-top">
         <h1 id="scout-card-title" className="scout-header-title">{card.title}</h1>
         <dl className="scout-header-metadata">
           <div><dt>FORMAT</dt><dd>{card.projectType.replace("_", " ")}</dd></div>
-          <div><dt>CLAIM</dt><dd>{card.claimStatus}</dd></div>
+          <div><dt>CREATOR</dt><dd>{creatorName}</dd></div>
+          <div><dt>CLAIM</dt><dd>{claimStatusLabel}</dd></div>
           <div><dt>PUBLISHED</dt><dd>{formatDate(card.publishedAt)}</dd></div>
         </dl>
       </div>
@@ -179,22 +190,22 @@ function ProjectHeader({
         </div>
 
         <div className="score-cell">
-          <span className="score-icon score-icon-heat" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg>
+          <span className="score-icon score-icon-work" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
           </span>
           <div className="score-cell-text">
-            <small>AUDIENCE HEAT</small>
-            <strong>{card.marketViability ? `${card.marketViability.audienceHeatScore}/100` : "—"}</strong>
+            <small>AVAILABLE ASSET</small>
+            <strong>{card.storyContext.currentFormat || "Proof of Concept / Teaser"}</strong>
           </div>
         </div>
 
         <div className="score-cell">
-          <span className="score-icon score-icon-viability" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+          <span className="score-icon score-icon-creator" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </span>
           <div className="score-cell-text">
-            <small>MARKET VIABILITY</small>
-            <strong>{card.marketViability ? `${card.marketViability.marketReadinessScore}/100` : "—"}</strong>
+            <small>CREATOR ATTRIBUTION</small>
+            <strong>{creatorName}</strong>
           </div>
         </div>
       </div>
@@ -222,7 +233,23 @@ function ScoutingStatusPanel({
         <h2 id="scouting-status-title">SCOUTING STATUS</h2>
       </div>
 
-      {/* SECTION A: WHY THIS SURFACED */}
+      {/* SECTION A: WHY SOMEONE NOTICED IT (HUMAN NOMINATOR CONTEXT) */}
+      <div className="scouting-status-section scout-nomination-section">
+        <div className="section-subheading-row">
+          <h3>WHY SOMEONE NOTICED IT</h3>
+          <span className="evidence-state evidence-state-reported">COMMUNITY SCOUT</span>
+        </div>
+        <div className="scout-nomination-content">
+          <p className="scout-nominator-quote">
+            “{card.provenance.nominationLabel || "Distinctive independent work nominated for community scouting."}”
+          </p>
+          <span className="scout-nominator-attribution">
+            Nominated by {card.provenance.nominatedByLabel || "Community scout"} · Human perspective (distinct from AI analysis below)
+          </span>
+        </div>
+      </div>
+
+      {/* SECTION B: WHY THIS SURFACED (AI OBSERVATIONS) */}
       <div className="scouting-status-section why-surfaced-section">
         <div className="section-subheading-row">
           <h3>WHY THIS SURFACED</h3>
@@ -246,7 +273,7 @@ function ScoutingStatusPanel({
         </ul>
       </div>
 
-      {/* SECTION B: NEEDS VERIFICATION */}
+      {/* SECTION C: NEEDS VERIFICATION */}
       <div className="scouting-status-section needs-verification-section">
         <div className="section-subheading-row">
           <h3>NEEDS VERIFICATION</h3>
@@ -261,7 +288,7 @@ function ScoutingStatusPanel({
         </ul>
       </div>
 
-      {/* SECTION C: PRIMARY OPEN QUESTION */}
+      {/* SECTION D: PRIMARY OPEN QUESTION */}
       <div className="scouting-status-section primary-open-q-section">
         <span className="open-q-label">PRIMARY OPEN QUESTION</span>
         <p className="open-q-text">{activeQuestion}</p>
@@ -428,7 +455,9 @@ export function ScoutCard({
   scoutBrief?: ScoutBrief | null;
   initialView?: "discover" | "pro";
 }) {
-  if (card.pathways.length !== 3) throw new Error("A Scout Card requires exactly three pathways.");
+  if (!card.pathways || card.pathways.length < 1 || card.pathways.length > 3) {
+    throw new Error("A Scout Card requires between one and three pathways.");
+  }
 
   const [view, setView] = useState<"discover" | "pro">(initialView);
   const [activeCitationSource, setActiveCitationSource] = useState<SourceLedgerEntry | null>(null);
@@ -600,13 +629,42 @@ export function ScoutCard({
               </div>
             </div>
 
-            {/* 3. Compact Audience Action Strip */}
+            {/* 3. Compact Audience Action Strip (Question 4: How can I participate?) */}
             <AudienceActionStrip card={card} />
 
-            {/* 4. Pathway Voting Section */}
-            <PathwayVotingSection card={card} />
+            {/* 4. Latest Updates & What Happens Next (Question 5) */}
+            {livingUpdates && livingUpdates.length > 0 ? (
+              <LivingUpdates updates={livingUpdates} />
+            ) : null}
 
-            {/* 5. Research Grid (Evidence Ledger + Pathway Hypotheses) */}
+            <PathwayVotingSection card={card} />
+          </article>
+
+          {/* 5. Progressive Disclosure: Learn More (Question 6) */}
+          <section className="scout-learn-more-section" aria-labelledby="learn-more-title">
+            <div className="section-heading-line">
+              <div>
+                <span className="route-label">Progressive Disclosure</span>
+                <h2 id="learn-more-title">Where can I learn more?</h2>
+              </div>
+              <span>Takes, creative notes, and evidence ledger</span>
+            </div>
+
+            {scoutBrief && (
+              <ScoutBriefPlayer
+                brief={scoutBrief}
+                unclaimed={card.claimStatus === "unclaimed"}
+                sources={card.sourceLedger}
+                onOpenCitation={handleOpenCitation}
+                audienceMode={view}
+              />
+            )}
+
+            <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
+
+            <ScoutSocialPanel card={card} />
+
+            {/* Research Grid (Evidence Ledger + Pathway Hypotheses) */}
             <div className="scout-research-grid">
               <div className="scout-evidence-ledger-column">
                 <EvidenceLedgerPanel
@@ -623,75 +681,62 @@ export function ScoutCard({
                 />
               </div>
             </div>
-          </article>
 
-          {scoutBrief && (
-            <ScoutBriefPlayer
-              brief={scoutBrief}
-              unclaimed={card.claimStatus === "unclaimed"}
-              sources={card.sourceLedger}
-              onOpenCitation={handleOpenCitation}
-              audienceMode={view}
+            <FandomDnaSection
+              fandomDna={card.fandomDna}
+              marketViability={card.marketViability}
+              livingDossier={card.livingDossier}
+              channelEcosystem={card.channelEcosystem}
             />
-          )}
 
-          <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
-          <FandomDnaSection
-            fandomDna={card.fandomDna}
-            marketViability={card.marketViability}
-            livingDossier={card.livingDossier}
-            channelEcosystem={card.channelEcosystem}
-          />
+            <DecisionBrief card={card} />
+            <IndustryLens card={card} />
+            <ScoutTrustPanel card={card} />
 
-          <DecisionBrief card={card} />
-          <ScoutSocialPanel card={card} />
-          <IndustryLens card={card} />
-          <LivingUpdates updates={livingUpdates ?? []} />
-          <ScoutTrustPanel card={card} />
-
-          <section className="evidence-section" aria-labelledby="evidence-title">
-            <div className="section-heading-line"><h2 id="evidence-title">Evidence &amp; citations</h2><span>Claims stay qualified</span></div>
-            <div className="evidence-grid">
-              <div className="claim-ledger">
-                <h3>Claim ledger</h3>
-                {card.evidenceClaims.map((claim) => (
-                  <article key={claim.id}>
-                    <span className={`evidence-state evidence-state-${claimEvidenceState(claim, card.sourceLedger)}`}>{evidenceStateLabel(claimEvidenceState(claim, card.sourceLedger))}</span>
-                    <p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} onOpenCitation={handleOpenCitation} allSources={card.sourceLedger} claim={claim} /></p>
-                    {claim.qualification ? <small>{claim.qualification}</small> : null}
-                  </article>
-                ))}
-              </div>
-              <div className="source-ledger-public">
-                <h3>Source ledger</h3>
-                <ol>
-                  {card.sourceLedger.map((source) => (
-                    <li key={source.id} id={`source-${source.id.replace(/^source-/, "")}`}>
-                      <span className="source-index">{sourceLabels.get(source.id)}</span>
-                      <div>
-                        <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
-                        {source.excerpt ? (
-                          <p className="source-passage-excerpt">“{source.excerpt}”</p>
-                        ) : null}
-                        <p>{sourcePresentation(source).role} / {sourcePresentation(source).tier} / {source.availability}</p>
-                        <small>{source.publishedAt ? `Published ${formatDate(source.publishedAt)} · ` : ""}Retrieved {formatDate(source.retrievedAt)}</small>
-                      </div>
-                    </li>
+            <section className="evidence-section" aria-labelledby="evidence-title">
+              <div className="section-heading-line"><h2 id="evidence-title">Evidence &amp; citations</h2><span>Claims stay qualified</span></div>
+              <div className="evidence-grid">
+                <div className="claim-ledger">
+                  <h3>Claim ledger</h3>
+                  {card.evidenceClaims.map((claim) => (
+                    <article key={claim.id}>
+                      <span className={`evidence-state evidence-state-${claimEvidenceState(claim, card.sourceLedger)}`}>{evidenceStateLabel(claimEvidenceState(claim, card.sourceLedger))}</span>
+                      <p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} onOpenCitation={handleOpenCitation} allSources={card.sourceLedger} claim={claim} /></p>
+                      {claim.qualification ? <small>{claim.qualification}</small> : null}
+                    </article>
                   ))}
-                </ol>
+                </div>
+                <div className="source-ledger-public">
+                  <h3>Source ledger</h3>
+                  <ol>
+                    {card.sourceLedger.map((source) => (
+                      <li key={source.id} id={`source-${source.id.replace(/^source-/, "")}`}>
+                        <span className="source-index">{sourceLabels.get(source.id)}</span>
+                        <div>
+                          <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+                          {source.excerpt ? (
+                            <p className="source-passage-excerpt">“{source.excerpt}”</p>
+                          ) : null}
+                          <p>{sourcePresentation(source).role} / {sourcePresentation(source).tier} / {source.availability}</p>
+                          <small>{source.publishedAt ? `Published ${formatDate(source.publishedAt)} · ` : ""}Retrieved {formatDate(source.retrievedAt)}</small>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          <section className="external-signals" aria-labelledby="signals-title">
-            <div><h2 id="signals-title">External signals</h2><p>Public-web observations remain separate from Audience Take-native participation.</p></div>
-            {card.externalSignals.length ? <ul>{card.externalSignals.map((signal) => <li key={signal.label}><strong>{signal.label}</strong><p>{signal.analysis}</p><small>Not an Audience Take-native count.</small></li>)}</ul> : <p className="signals-empty">No external signals were included in this Scout Card. No native audience count is claimed.</p>}
-          </section>
+            <section className="external-signals" aria-labelledby="signals-title">
+              <div><h2 id="signals-title">External signals</h2><p>Public-web observations remain separate from Audience Take-native participation.</p></div>
+              {card.externalSignals.length ? <ul>{card.externalSignals.map((signal) => <li key={signal.label}><strong>{signal.label}</strong><p>{signal.analysis}</p><small>Not an Audience Take-native count.</small></li>)}</ul> : <p className="signals-empty">No external signals were included in this Scout Card. No native audience count is claimed.</p>}
+            </section>
 
-          <section className="scout-limitations" aria-labelledby="limitations-title">
-            <h2 id="limitations-title">What this card cannot establish</h2>
-            <ul>{card.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
-            {card.missingSections.length ? <div><strong>Missing sections</strong><p>{card.missingSections.map((item) => item.replaceAll("_", " ")).join(" / ")}</p></div> : null}
+            <section className="scout-limitations" aria-labelledby="limitations-title">
+              <h2 id="limitations-title">What this card cannot establish</h2>
+              <ul>{card.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
+              {card.missingSections.length ? <div><strong>Missing sections</strong><p>{card.missingSections.map((item) => item.replaceAll("_", " ")).join(" / ")}</p></div> : null}
+            </section>
           </section>
         </div>
       ) : (

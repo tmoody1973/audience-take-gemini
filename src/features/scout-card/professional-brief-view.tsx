@@ -498,14 +498,32 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
         </div>
       </section>
 
-      {/* 5. Three Pathways as Comparable Options */}
+      {/* 5. Comparable Pathways (Variable 1 to 3 Options) */}
       <section className="pro-pathways-section" aria-labelledby="pro-pathways-heading">
         <div className="pro-section-title-wrap">
           <span className="pro-section-kicker">DEVELOPMENT HYPOTHESES</span>
           <h2 id="pro-pathways-heading">Comparable Pathways</h2>
           <p className="pro-disclaimer">
-            Presented as three comparable options. Pathway ranking does not imply commercial probability.
+            Presented as comparable options ({card.pathways.length} grounded {card.pathways.length === 1 ? "pathway" : "pathways"}). Pathway ranking does not imply commercial probability.
           </p>
+        </div>
+
+        {/* Shared Context: Deduplicated Prerequisites, Limitations & Creator Status */}
+        <div className="pro-pathways-shared-context">
+          <div className="pro-shared-item">
+            <span className="pro-shared-label">SHARED PREREQUISITES &amp; CREATOR STATUS</span>
+            <p>
+              {card.claimStatus === "approved"
+                ? "Creator identity verified on Audience Take. Underlying rights, chain of title, and representation status apply across all potential pathways."
+                : "Unclaimed on Audience Take (creator identity/representation not verified). Chain of title and rights clearance remain essential prerequisites before pursuing any development pathway."}
+            </p>
+          </div>
+          {card.limitations && card.limitations.length > 0 ? (
+            <div className="pro-shared-item">
+              <span className="pro-shared-label">CROSS-PATHWAY LIMITATION</span>
+              <p>{card.limitations[0]}</p>
+            </div>
+          ) : null}
         </div>
 
         <div className="pro-pathways-grid">
@@ -523,15 +541,19 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                   <p>{pathway.rationale}</p>
                 </div>
 
-                <div>
-                  <h4 className="pro-sub-kicker">PREREQUISITES</h4>
-                  <p>{pathway.prerequisites && pathway.prerequisites.length > 0 ? pathway.prerequisites.join("; ") : "Rights clearance and format rights option."}</p>
-                </div>
+                {pathway.prerequisites && pathway.prerequisites.length > 0 ? (
+                  <div>
+                    <h4 className="pro-sub-kicker">PATHWAY-SPECIFIC PREREQUISITES</h4>
+                    <p>{pathway.prerequisites.join("; ")}</p>
+                  </div>
+                ) : null}
 
-                <div>
-                  <h4 className="pro-sub-kicker">KNOWN BLOCKERS</h4>
-                  <p>{pathway.blockers && pathway.blockers.length > 0 ? pathway.blockers.join("; ") : "Capitalization and production lead commitment."}</p>
-                </div>
+                {pathway.blockers && pathway.blockers.length > 0 ? (
+                  <div>
+                    <h4 className="pro-sub-kicker">KNOWN BLOCKERS</h4>
+                    <p>{pathway.blockers.join("; ")}</p>
+                  </div>
+                ) : null}
 
                 <div>
                   <h4 className="pro-sub-kicker">NEXT BOUNDED EXPERIMENT</h4>

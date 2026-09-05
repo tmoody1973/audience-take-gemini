@@ -9,7 +9,7 @@ interface AudiencePulsePanelProps {
   projectTitle?: string;
   initialMetrics: PulseMetrics;
   initialUserEngagement: UserEngagementRecord | null;
-  pathways: [PathwayHypothesis, PathwayHypothesis, PathwayHypothesis];
+  pathways: PathwayHypothesis[];
 }
 
 export function AudiencePulsePanel({

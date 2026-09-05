@@ -122,9 +122,9 @@ const scoutCardSchema = z.object({
   sourceIds: stringList.min(1), claimIds: stringList.min(1),
   evidenceClaims: z.array(z.object({ id: text, statement: text, status: z.enum(["supported", "qualified", "conflicting", "unsupported", "inference"]), sourceIds: stringList, qualification: nullableText })).min(1),
   externalSignals: z.array(z.object({ label: text, analysis: text, sourceIds: stringList.min(1), limitations: stringList.min(1), nativeAudienceCount: z.literal(false) })),
-  pathwayIds: stringList.length(3), pathways: z.array(pathwaySchema).length(3), sourceLedger: z.array(sourceLedgerSchema).min(1),
+  pathwayIds: stringList.min(1).max(3), pathways: z.array(pathwaySchema).min(1).max(3), sourceLedger: z.array(sourceLedgerSchema).min(1),
   missingSections: stringList, limitations: stringList.min(1),
-  industryLens: z.object({ pathwayIds: stringList.length(3), comparables: z.array(z.object({ title: text, relevance: text, sourceIds: stringList.min(1), limitations: stringList.min(1) })), risks: stringList.min(1), unresolvedQuestions: stringList.min(1), signalLimitations: stringList.min(1), creatorClaimStatus: claimStatus, recommendedNextExperiment: nextExperimentSchema }),
+  industryLens: z.object({ pathwayIds: stringList.min(1).max(3), comparables: z.array(z.object({ title: text, relevance: text, sourceIds: stringList.min(1), limitations: stringList.min(1) })), risks: stringList.min(1), unresolvedQuestions: stringList.min(1), signalLimitations: stringList.min(1), creatorClaimStatus: claimStatus, recommendedNextExperiment: nextExperimentSchema }),
   publishedAt: dateTime,
 });
 
@@ -660,13 +660,13 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         claimIds,
         evidenceClaims,
         externalSignals: [],
-        pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
+        pathwayIds: pathways.map((p) => p.id),
         pathways,
         sourceLedger: sourceLedgerEntries,
         missingSections: [],
         limitations: ["Based on public web reporting and submitted video evidence."],
         industryLens: {
-          pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
+          pathwayIds: pathways.map((p) => p.id),
           comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((cmpTitle: string) => {
             const matchingSources = findSupportingSourceIds(cmpTitle, sourceLedgerEntries);
             return {

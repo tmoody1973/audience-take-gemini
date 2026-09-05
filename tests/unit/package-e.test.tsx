@@ -73,6 +73,18 @@ describe("Package E: Dual-Audience Scout Card UX & Hallmark Craft", () => {
       expect(proTab).toHaveAttribute("aria-selected", "true");
       expect(screen.getByRole("heading", { name: /Development Triage/i })).toBeInTheDocument();
     });
+
+    it("gracefully supports variable pathway counts (1 or 2 pathways) without requiring filler padding", () => {
+      const singlePathwayCard = structuredClone(getScoutCardFixture("complete"));
+      singlePathwayCard.pathways = [singlePathwayCard.pathways[0]];
+      singlePathwayCard.pathwayIds = [singlePathwayCard.pathways[0].id];
+      singlePathwayCard.industryLens.pathwayIds = [singlePathwayCard.pathways[0].id];
+
+      // Should render without throwing "requires exactly three pathways"
+      const { container } = render(<ScoutCard card={singlePathwayCard} />);
+      expect(screen.getByRole("heading", { level: 1, name: /Junichiro Jackson/i })).toBeInTheDocument();
+      expect(container.querySelectorAll(".pathway-decision-card")).toHaveLength(1);
+    });
   });
 
   describe("Discover View: Fan Experience & Action Strip", () => {
@@ -105,8 +117,8 @@ describe("Package E: Dual-Audience Scout Card UX & Hallmark Craft", () => {
       const onVoteMock = vi.fn();
       render(<PathwayVotingSection card={card} onVote={onVoteMock} />);
 
-      expect(screen.getByRole("heading", { name: /How would you like this story to grow\?/i })).toBeInTheDocument();
-      expect(screen.getByText(/Voting expresses audience preference; it does not direct the creator or promise production/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /What should happen next\?/i })).toBeInTheDocument();
+      expect(screen.getByText(/Voting expresses community perspective; it does not direct the creator or guarantee production/i)).toBeInTheDocument();
 
       const voteButtons = screen.getAllByRole("button", { name: /Vote for pathway/i });
       expect(voteButtons).toHaveLength(3);

@@ -101,7 +101,7 @@ describe("ScoutCard", () => {
 
     render(<ScoutCard card={card} />);
 
-    expect(screen.getByRole("heading", { name: "Trailer critic" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Creative notes" })).toBeInTheDocument();
     expect(screen.getByText("Genre")).toBeInTheDocument();
     expect(screen.getByText("Form")).toBeInTheDocument();
     const disclosure = screen.getByText("Show full analysis").closest("details");
@@ -131,9 +131,9 @@ describe("ScoutCard", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Previously generated — live refresh unavailable.");
   });
 
-  it("rejects malformed cards that do not contain exactly three pathways", () => {
+  it("rejects malformed cards that do not contain between one and three pathways", () => {
     const card = structuredClone(getScoutCardFixture("complete"));
-    card.pathways.pop();
-    expect(() => render(<ScoutCard card={card} />)).toThrow("exactly three pathways");
+    card.pathways = [];
+    expect(() => render(<ScoutCard card={card} />)).toThrow("between one and three pathways");
   });
 });

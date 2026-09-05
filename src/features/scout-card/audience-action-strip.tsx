@@ -146,6 +146,15 @@ export function AudienceActionStrip({ card, onWatchClick }: AudienceActionStripP
           ) : null}
         </button>
 
+        <a
+          href="#audience-pulse"
+          className="action-btn action-take"
+          aria-label="Add Take to Audience Pulse"
+        >
+          <span className="action-icon" aria-hidden="true">✍</span>
+          <strong>Add Take</strong>
+        </a>
+
         <button
           type="button"
           className="action-btn action-share"
@@ -167,10 +176,14 @@ export function AudienceActionStrip({ card, onWatchClick }: AudienceActionStripP
         {!followFeedback && !shareFeedback ? (
           <span className="action-semantics-note">
             {wouldWatchCount === 0 && followerCount === 0
-              ? "No Audience Take interest signals yet — add yours above."
-              : `Signals: ${followerCount} followers · ${wouldWatchCount} watch intents (non-binding).`}
+              ? "No Audience Take interest signals yet — add yours above (external platform audience is not measured here)."
+              : `Signals: ${followerCount} followers · ${wouldWatchCount} watch intents (non-binding audience interest).`}
           </span>
         ) : null}
+      </div>
+
+      <div className="action-benefit-note">
+        <small>Following alerts you to verified updates and release milestones · Audience signals remain non-commercial</small>
       </div>
     </section>
   );
