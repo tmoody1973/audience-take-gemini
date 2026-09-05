@@ -16,6 +16,7 @@ import { TrailerCritic } from "./trailer-critic";
 import { FandomDnaSection } from "./fandom-dna-section";
 import type { ScoutBrief } from "../scout-brief/types";
 import { ScoutBriefPlayer } from "../scout-brief/scout-brief-player";
+import { ProductionScenariosSection } from "../production-scenarios/production-scenarios-section";
 
 function formatDate(value: string | undefined | null): string {
   if (!value) return "Recently published";
@@ -423,6 +424,9 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
           </table>
         </div>
       </section>
+ 
+      {/* 3B. Production Scenarios (Physical Production Diligence) */}
+      <ProductionScenariosSection card={card} />
 
       {/* 4. Evidence that Matters */}
       <section className="pro-evidence-section" aria-labelledby="pro-evidence-heading">
