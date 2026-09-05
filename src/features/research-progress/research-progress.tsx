@@ -176,14 +176,7 @@ export function ResearchProgress({ runId }: { runId: string }) {
     let received = false;
     let unsubscribe = () => {};
 
-    // For live runs, ensure background execution is triggered immediately
-    if (!isDemoRun) {
-      void fetch("/api/agent/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ runId }),
-      }).catch(() => {});
-    }
+    // Component strictly observes progress; background execution is managed server-side
 
     // 1. Poll /api/agent/run for live runner state
     const pollInterval = window.setInterval(async () => {
@@ -346,7 +339,30 @@ export function ResearchProgress({ runId }: { runId: string }) {
             ) : (
               <div className="receipt-empty"><strong>No public receipts yet</strong><p>The ledger will update when the worker publishes its first safe event.</p></div>
             )}
-            {run.publicFailureMessage ? <div className="research-failure" role="alert"><strong>{run.retryEligible ? "Automatic retry eligible" : "Research interrupted"}</strong><p>{run.publicFailureMessage}</p>{run.retryEligible ? <button type="button" onClick={() => window.location.reload()}>Check retry status</button> : null}</div> : null}
+            {run.publicFailureMessage ? (
+              <div className="research-failure" role="alert">
+                <strong>{run.retryEligible ? "Automatic retry eligible" : "Research interrupted"}</strong>
+                <p>{run.publicFailureMessage}</p>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                  {run.retryEligible ? <button type="button" onClick={() => window.location.reload()}>Check retry status</button> : null}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await fetch("/api/agent/run", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ runId, forceRetry: true }),
+                        });
+                        window.location.reload();
+                      } catch {}
+                    }}
+                  >
+                    Retry research
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </aside>
       </div>

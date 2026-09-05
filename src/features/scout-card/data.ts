@@ -9,8 +9,7 @@ import { youtubeVideoId } from "../../lib/media/youtube";
 import { dataRepo } from "../../services/firestore-repo";
 import { cleanTextExcerpt } from "./evidence-display";
 import { computeMarketViability } from "../../critic/market-viability-engine";
-import { evaluateLivingDossier } from "../../services/re-scout-engine";
-import type { ClaimStatus, ScoutCard } from "./types";
+import type { ClaimStatus, EvidenceClaim, ScoutCard, ScoutPathway, SourceLedgerEntry } from "./types";
 
 export const JUNICHIO_SLUG = "junichiro-jackson";
 export const JUNICHIO_LIVE_SLUG = "junichiro-live-project";
@@ -37,6 +36,7 @@ const pathwaySchema = z.object({
   crossFormat: z.boolean().optional(), crossFormatClaimIds: stringList.optional(),
   supportingClaimIds: stringList.min(1), comparableSourceIds: stringList, strengths: stringList.min(1), risks: stringList.min(1),
   openQuestions: stringList.min(1), confidence: z.enum(["low", "medium", "high"]), nextExperiment: nextExperimentSchema,
+  prerequisites: stringList.optional(), owner: text.optional(), blockers: stringList.optional(),
 });
 const sourceLedgerSchema = z.object({
   id: text, origin: z.enum(["submitted", "parallel", "community_lead", "creator"]), title: text, url: httpUrl,
@@ -45,6 +45,7 @@ const sourceLedgerSchema = z.object({
   sourceRole: z.enum(["primary_work", "commentary", "trade_reporting", "community", "creator_statement", "other"]).optional(),
   sourceTier: z.enum(["primary", "creator_authorized", "reputable_trade", "platform_metadata", "secondary", "community"]).optional(),
   externalCommentary: z.boolean(),
+  excerpt: text.optional(),
 });
 const mediaSchema = z.discriminatedUnion("state", [
   z.object({ state: z.literal("authorized_embed"), title: text, sourceUrl: httpUrl, embedUrl: httpUrl, attribution: text, accessibleFallback: text }),
@@ -246,151 +247,9 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
   const directTrailerCritiques = Array.isArray(cardData?.trailerCritiques) && cardData.trailerCritiques.length > 0
     ? cardData.trailerCritiques
     : trailerCritiques;
-  const titleLower = (card.title || "").toLowerCase();
-  const slugLower = (card.slug || "").toLowerCase();
-  const typeLower = (card.projectType || "").toLowerCase();
-
-  const isDocumentary =
-    typeLower.includes("doc") ||
-    titleLower.includes("valdez") ||
-    titleLower.includes("pachuco") ||
-    slugLower.includes("pachuco");
-
-  const isGothic =
-    titleLower.includes("vampair") ||
-    slugLower.includes("tfn0k") ||
-    titleLower.includes("dracula");
-
-  const isLiveActionComedy =
-    typeLower.includes("comedy") ||
-    typeLower.includes("live-action") ||
-    titleLower.includes("fruity") ||
-    slugLower.includes("25f9r");
-
-  const computedViability =
-    cardData?.marketViability ||
-    computeMarketViability(card.sourceLedger, undefined, undefined, {
-      projectType: card.projectType,
-      title: card.title,
-      slug: card.slug,
-    });
-
-  const computedFandom = cardData?.fandomDna || (isDocumentary
-    ? {
-        characterAndLoreObsessions: [
-          "Deep reverence for Luis Valdez as the father of Chicano cinema and founder of El Teatro Campesino",
-          "Praise for authentic restoration of archival 1940s Zoot Suit Riots history and farmworker theater activism",
-          "High audience engagement with Danny Trejo and Edward James Olmos historical commentary",
-        ],
-        merchandiseDemandSignals: [
-          "High demand for university and public library educational distribution licenses",
-          "Strong grassroots support across Hispanic Heritage Month community screenings",
-        ],
-        toneAndWritingReception: {
-          praise: [
-            "Exceptional archival restoration and emotional depth",
-            "Vital American civil rights and theater historiography",
-          ],
-          critiques: [
-            "Desire for expanded theatrical run beyond initial festival circuit",
-          ],
-        },
-        demographicAndFandomComps: [
-          "DOCUMENTARY FILMGOERS",
-          "CHICANO & LATINO HISTORIANS",
-          "THEATER & ARTS ENTHUSIASTS",
-          "INDEPENDENT CINEMA FANS",
-        ],
-        communitySentimentScore: 96,
-        audienceHeatScore: 90,
-      }
-    : isGothic
-    ? {
-        characterAndLoreObsessions: [
-          "Obsession with gothic musical numbers and stylized vampire romance",
-          "Deep lore analysis of character backstories and supernatural mechanics",
-          "Active fan art, animatics, and musical covers across social channels",
-        ],
-        merchandiseDemandSignals: [
-          "Over 3,500 Kickstarter backers for vinyl OST pressings and companion art books",
-          "High demand for apparel and collector pins",
-        ],
-        toneAndWritingReception: {
-          praise: [
-            "Exceptional musical theatricality and dark comedic timing",
-            "Distinctive gothic art direction and character design",
-          ],
-          critiques: [
-            "Desire for faster turnaround on episodic season delivery",
-          ],
-        },
-        demographicAndFandomComps: [
-          "GOTHIC & DARK FANTASY FANS",
-          "THEATRE & MUSICAL ANIMATION",
-          "YA STREAMING AUDIENCE",
-        ],
-        communitySentimentScore: 95,
-        audienceHeatScore: 93,
-      }
-    : isLiveActionComedy
-    ? {
-        characterAndLoreObsessions: [
-          "Praise for sharp, farcical comic timing and fresh sapphic dynamic between Alice and Clarke",
-          "Viral engagement across TikTok and Instagram for relatable young-adult roommate chaos and startup tropes",
-          "Enthusiasm for Irish comedic talent Madison Cawley and Carys Clempner",
-        ],
-        merchandiseDemandSignals: [
-          "High audience demand for branded spoof merchandise and live screening events",
-          "Direct engagement with digital behind-the-scenes content and creator social posts",
-        ],
-        toneAndWritingReception: {
-          praise: [
-            "Brisk pacing, authentic humor, and joy-focused LGBTQ+ storytelling",
-            "Sharp, witty modern dialogue without heavy-handed tropes",
-          ],
-          critiques: [
-            "Eager anticipation for full-length 22-minute episodic series expansion",
-          ],
-        },
-        demographicAndFandomComps: [
-          "QUEER & SAPPHIC COMEDY AUDIENCE",
-          "GEN-Z & MILLENNIAL DIGITAL VIEWERS",
-          "BROAD CITY & FLEABAG FANS",
-          "IRISH & UK INDIE COMEDY ENTHUSIASTS",
-        ],
-        communitySentimentScore: 92,
-        audienceHeatScore: 88,
-      }
-    : {
-        characterAndLoreObsessions: [
-          "Obsession with 90s hand-drawn anime aesthetic and fluid 2D keyframing",
-          "Praise for authentic futuristic Chicago worldbuilding and boom-bap soundtrack integration",
-          "High anticipation for full-series narrative development and character rivalries",
-        ],
-        merchandiseDemandSignals: [
-          "Over 1,200 fan backers for Kickstarter companion manga release",
-          "Direct requests for vinyl OST pressings and art books",
-        ],
-        toneAndWritingReception: {
-          praise: ["Kinetic pacing and exceptional anime choreography", "Authentic cultural identity"],
-          critiques: ["Desire for longer episodes beyond proof-of-concept format"],
-        },
-        demographicAndFandomComps: [
-          "90S ANIME PURISTS",
-          "HIP-HOP & BOOM-BAP HEADS",
-          "MECHA & CYBERPUNK ENTHUSIASTS",
-          "YA STREAMING AUDIENCE",
-        ],
-        communitySentimentScore: 94,
-        audienceHeatScore: 92,
-      });
-
-  const computedLivingDossier =
-    cardData?.livingDossier ||
-    evaluateLivingDossier(
-      isDocumentary ? { views: 450000, likes: 28000, comments: 1400 } : { views: 850000, likes: 45000, comments: 2800 },
-      isDocumentary ? { pledged: 85000, goal: 75000, backers: 1450 } : { pledged: 220000, goal: 100000, backers: 1200 }
-    );
+  const computedViability = cardData?.marketViability ?? undefined;
+  const computedFandom = cardData?.fandomDna ?? undefined;
+  const computedLivingDossier = cardData?.livingDossier ?? undefined;
 
   return {
     ...card,
@@ -403,6 +262,79 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
     fandomDna: computedFandom,
     livingDossier: computedLivingDossier,
   };
+}
+
+export function canonicalizeUrl(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl);
+    parsed.hash = "";
+    parsed.searchParams.delete("utm_source");
+    parsed.searchParams.delete("utm_medium");
+    parsed.searchParams.delete("utm_campaign");
+    parsed.searchParams.delete("ref");
+    let normalized = parsed.toString();
+    if (normalized.endsWith("/") && parsed.pathname !== "/") {
+      normalized = normalized.slice(0, -1);
+    }
+    return normalized.toLowerCase();
+  } catch {
+    return (rawUrl || "").trim().toLowerCase();
+  }
+}
+
+const STOPWORDS = new Set([
+  "about", "above", "after", "again", "against", "all", "also", "and", "any", "are", "aren't",
+  "because", "been", "before", "being", "below", "between", "both", "but", "can", "cannot",
+  "could", "couldn't", "did", "didn't", "does", "doesn't", "doing", "don't", "down", "during",
+  "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't",
+  "having", "how", "into", "itself", "just", "more", "most", "mustn't", "not", "off", "once",
+  "only", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't",
+  "she", "should", "shouldn't", "some", "such", "than", "that", "the", "their", "theirs",
+  "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll",
+  "they're", "they've", "this", "those", "through", "under", "until", "very", "was", "wasn't",
+  "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while",
+  "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd",
+  "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves", "project", "public"
+]);
+
+export function findSupportingSourceIds(
+  claimText: string,
+  sources: Array<{ id: string; title: string; excerpt?: string; url: string }>
+): string[] {
+  if (!claimText || sources.length === 0) return [];
+  const normalizedClaim = claimText.toLowerCase();
+
+  const words = normalizedClaim
+    .replace(/[^\w\s-]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4 && !STOPWORDS.has(w));
+
+  const matchingSourceIds: string[] = [];
+
+  for (const source of sources) {
+    const sourceContent = `${source.title} ${source.excerpt || ""} ${source.url}`.toLowerCase();
+
+    let matchCount = 0;
+    for (const word of words) {
+      if (sourceContent.includes(word)) {
+        matchCount++;
+      }
+    }
+
+    const distinctRatio = words.length > 0 ? matchCount / words.length : 0;
+    const hasPhraseMatch = Boolean(
+      source.excerpt &&
+      source.excerpt.length > 15 &&
+      (normalizedClaim.includes(source.excerpt.slice(0, 30).toLowerCase()) ||
+       sourceContent.includes(normalizedClaim.slice(0, 30)))
+    );
+
+    if ((matchCount >= 2 && distinctRatio >= 0.2) || hasPhraseMatch || matchCount >= 3) {
+      matchingSourceIds.push(source.id);
+    }
+  }
+
+  return matchingSourceIds;
 }
 
 export async function loadPublishedScoutCard(slug: string, database?: ScoutCardFirestore): Promise<ScoutCard | null> {
@@ -481,23 +413,65 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
       const dynamicCritic = await dataRepo.getTrailerCriticById(dynamicProject?.id || slug);
       const originalUrl = dynamicProject?.identity?.originalUrl || dynamicCard.sourceMedia?.[0]?.url || dynamicCard.evidenceLedger?.[0]?.sourceUrl || "https://www.youtube.com";
 
-      const sourceLedgerEntries = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => {
-        const isSubmitted = ev.sourceUrl === originalUrl || (ev.sourceUrl && originalUrl.includes(ev.sourceUrl)) || (originalUrl && ev.sourceUrl.includes(originalUrl));
-        return {
-          id: ev.id || `source-${idx + 1}`,
+      // Deduplicate canonical sources from evidenceLedger
+      const canonUrlToSourceId = new Map<string, string>();
+      const sourceLedgerEntries: SourceLedgerEntry[] = [];
+
+      for (let idx = 0; idx < (dynamicCard.evidenceLedger || []).length; idx++) {
+        const ev = dynamicCard.evidenceLedger[idx];
+        const rawUrl = ev.sourceUrl || originalUrl;
+        const canonUrl = canonicalizeUrl(rawUrl);
+        if (canonUrlToSourceId.has(canonUrl)) {
+          continue;
+        }
+
+        const sourceId = ev.id || `source-${idx + 1}`;
+        canonUrlToSourceId.set(canonUrl, sourceId);
+
+        const isSubmitted =
+          canonUrl === canonicalizeUrl(originalUrl) ||
+          canonUrl.includes(canonicalizeUrl(originalUrl)) ||
+          canonicalizeUrl(originalUrl).includes(canonUrl);
+
+        const rawExcerpt = ev.excerpt || ev.title || "";
+        const cleanedExcerpt = cleanTextExcerpt(rawExcerpt, ev.title);
+
+        sourceLedgerEntries.push({
+          id: sourceId,
           origin: isSubmitted ? ("submitted" as const) : ("parallel" as const),
           title: ev.title || (isSubmitted ? "Submitted Project Media" : "Parallel Web Discovery"),
-          url: ev.sourceUrl || originalUrl,
-          publishedAt: new Date().toISOString(),
-          retrievedAt: new Date().toISOString(),
+          url: rawUrl,
+          publishedAt: ev.publishedAt || ev.publish_date || null,
+          retrievedAt: ev.retrievedAt || ev.timestamp || dynamicCard.createdAt || dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
           availability: "available" as const,
-          verificationStatus: "verified" as const,
-          supportsClaimIds: [ev.id || `claim-${idx + 1}`],
+          verificationStatus: isSubmitted ? ("observed" as const) : (ev.verified ? "verified" as const : "observed" as const),
+          sourceRole: isSubmitted ? ("primary_work" as const) : ("trade_reporting" as const),
+          sourceTier: isSubmitted ? ("primary" as const) : ("secondary" as const),
+          supportsClaimIds: [],
           externalCommentary: false,
-        };
-      });
-      const sourceIds = sourceLedgerEntries.map((s: any) => s.id);
-      const claimIds = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ev.id || `claim-${idx + 1}`);
+          excerpt: cleanedExcerpt,
+        });
+      }
+
+      if (sourceLedgerEntries.length === 0) {
+        sourceLedgerEntries.push({
+          id: "source-1",
+          origin: "submitted" as const,
+          title: "Submitted Project Media",
+          url: originalUrl,
+          publishedAt: null,
+          retrievedAt: dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
+          availability: "available" as const,
+          verificationStatus: "observed" as const,
+          sourceRole: "primary_work" as const,
+          sourceTier: "primary" as const,
+          supportsClaimIds: [],
+          externalCommentary: false,
+          excerpt: undefined,
+        });
+      }
+
+      const sourceIds = sourceLedgerEntries.map((s) => s.id);
 
       const youtubeCandidate =
         dynamicCard.sourceMedia?.find((m: any) => m.url?.includes("youtube.com") || m.url?.includes("youtu.be"))?.url
@@ -525,6 +499,120 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
       const claimStatusVal = (dynamicProject?.creatorClaim?.status || "unclaimed") as ClaimStatus;
       const resolvedCardVersionId = dynamicCard.cardVersionId || dynamicCard.id || dyn?.latestCardVersionId || (dyn as any)?.publishedCardId || `card-${slug}-v1`;
 
+      const evidenceClaims: EvidenceClaim[] = [];
+      const seenStatements = new Set<string>();
+
+      // 1. Ground synthesized claims from whatWeKnow against source ledger
+      if (Array.isArray(dynamicCard.whatWeKnow)) {
+        dynamicCard.whatWeKnow.forEach((text: string, idx: number) => {
+          const stmt = cleanTextExcerpt(text);
+          if (!stmt || stmt.length < 15 || seenStatements.has(stmt.toLowerCase())) return;
+          seenStatements.add(stmt.toLowerCase());
+
+          const claimId = `claim-synthesized-${idx + 1}`;
+          const matchingSources = findSupportingSourceIds(stmt, sourceLedgerEntries);
+
+          if (matchingSources.length > 0) {
+            evidenceClaims.push({
+              id: claimId,
+              statement: stmt,
+              status: "supported",
+              sourceIds: matchingSources,
+              qualification: null,
+            });
+            for (const sId of matchingSources) {
+              const src = sourceLedgerEntries.find((s) => s.id === sId);
+              if (src && !src.supportsClaimIds.includes(claimId)) {
+                src.supportsClaimIds.push(claimId);
+              }
+            }
+          } else {
+            // Truthful abstention without inventing fake citations
+            evidenceClaims.push({
+              id: claimId,
+              statement: stmt,
+              status: "inference",
+              sourceIds: [],
+              qualification: "Synthesized observation without direct passage match in retrieved sources.",
+            });
+          }
+        });
+      }
+
+      // 2. Direct passage claims from evidenceLedger
+      (dynamicCard.evidenceLedger || []).forEach((ev: any, idx: number) => {
+        const stmt = cleanTextExcerpt(ev.excerpt || ev.title, ev.title);
+        if (!stmt || stmt.length < 15 || seenStatements.has(stmt.toLowerCase())) return;
+        seenStatements.add(stmt.toLowerCase());
+
+        const canonUrl = canonicalizeUrl(ev.sourceUrl || originalUrl);
+        const canonSourceId = canonUrlToSourceId.get(canonUrl) || ev.id || `source-${idx + 1}`;
+        const claimId = ev.id ? `claim-${ev.id}` : `claim-ev-${idx + 1}`;
+
+        const isConflict = ev.claimType === "conflict";
+        const isInference = ev.claimType === "inference";
+
+        evidenceClaims.push({
+          id: claimId,
+          statement: stmt,
+          status: isConflict ? "conflicting" : isInference ? "inference" : "supported",
+          sourceIds: [canonSourceId],
+          qualification: isConflict ? "Source reports conflicting information." : null,
+        });
+
+        const src = sourceLedgerEntries.find((s) => s.id === canonSourceId);
+        if (src && !src.supportsClaimIds.includes(claimId)) {
+          src.supportsClaimIds.push(claimId);
+        }
+      });
+
+      const claimIds = evidenceClaims.map((c) => c.id);
+
+      const pathways: ScoutPathway[] = (dynamicCard.pathways || []).slice(0, 3).map((pw: any, idx: number) => {
+        const pathwayClaimIds: string[] = [];
+        const pwTokens = `${pw.title} ${pw.mediumFitRationale || ""}`.toLowerCase();
+        for (const claim of evidenceClaims) {
+          const claimTokens = claim.statement.toLowerCase().split(/\s+/).filter((w) => w.length >= 4);
+          if (claimTokens.some((tok) => pwTokens.includes(tok))) {
+            pathwayClaimIds.push(claim.id);
+          }
+        }
+        if (pathwayClaimIds.length === 0 && evidenceClaims[0]) {
+          pathwayClaimIds.push(evidenceClaims[0].id);
+        }
+        if (pathwayClaimIds.length === 0) {
+          pathwayClaimIds.push(`claim-pathway-${idx + 1}`);
+        }
+
+        const comparableSourceIds = findSupportingSourceIds(pw.title, sourceLedgerEntries);
+
+        return {
+          id: `pathway-${idx + 1}`,
+          order: idx + 1,
+          label: pw.title,
+          format: pw.title,
+          audience: pw.targetAudience,
+          rationale: pw.mediumFitRationale,
+          supportingClaimIds: pathwayClaimIds,
+          comparableSourceIds,
+          strengths: [pw.mediumFitRationale],
+          risks: pw.risksAndUncertainties || ["Development and audience validation risks."],
+          openQuestions: ["How will audience feedback shape development?"],
+          confidence: "medium" as const,
+          prerequisites: Array.isArray(pw.prerequisites) ? pw.prerequisites : [],
+          owner: typeof pw.owner === "string" ? pw.owner : undefined,
+          blockers: Array.isArray(pw.blockers) ? pw.blockers : [],
+          nextExperiment: {
+            title: pw.nextBoundedExperiment?.name || "Audience Feedback Pulse",
+            hypothesis: pw.nextBoundedExperiment?.description || "Audience will validate interest",
+            method: "Collect structured feedback on Audience Take",
+            participantAction: "Vote and submit Takes",
+            signal: pw.nextBoundedExperiment?.successMetric || "50+ positive takes",
+            timebox: "14 days",
+          },
+        };
+      });
+
       return {
         cardVersionId: resolvedCardVersionId,
         runId: "run-dynamic",
@@ -543,7 +631,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           submittedSourceUrl: originalUrl,
           nominationLabel: "Fan-submitted public project source",
           nominatedByLabel: "Community scout",
-          researchedAt: dynamicProject?.createdAt || new Date().toISOString(),
+          researchedAt: dynamicProject?.createdAt || dynamicCard.createdAt || "2026-08-26T12:00:00Z",
         },
         media: {
           state: vidId ? ("authorized_embed" as const) : ("editorial_fallback" as const),
@@ -570,76 +658,26 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         },
         sourceIds,
         claimIds,
-        evidenceClaims: (() => {
-          const synthesizedClaims = Array.isArray(dynamicCard.whatWeKnow)
-            ? dynamicCard.whatWeKnow.map((text: string, idx: number) => {
-                const s1 = sourceIds[(idx * 2) % Math.max(1, sourceIds.length)] || sourceIds[0] || "source-1";
-                const s2 = sourceIds[(idx * 2 + 1) % Math.max(1, sourceIds.length)] || sourceIds[1] || sourceIds[0] || "source-2";
-                return {
-                  id: `claim-synthesized-${idx + 1}`,
-                  statement: cleanTextExcerpt(text),
-                  status: "supported" as const,
-                  sourceIds: [s1, s2].filter(Boolean),
-                  qualification: null,
-                };
-              })
-            : [];
-
-          const rawClaims = (dynamicCard.evidenceLedger || []).map((ev: any, idx: number) => ({
-            id: ev.id || `claim-${idx + 1}`,
-            statement: cleanTextExcerpt(ev.excerpt || ev.title, ev.title),
-            status: "supported" as const,
-            sourceIds: [ev.id || `source-${idx + 1}`],
-            qualification: null,
-          }));
-
-          const all = [...synthesizedClaims, ...rawClaims];
-          const seen = new Set<string>();
-          return all.filter((c: any) => {
-            if (!c.statement || c.statement.length < 15 || seen.has(c.statement.toLowerCase())) return false;
-            seen.add(c.statement.toLowerCase());
-            return true;
-          });
-        })(),
+        evidenceClaims,
         externalSignals: [],
         pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
-        pathways: (dynamicCard.pathways || []).slice(0, 3).map((pw: any, idx: number) => {
-          const assignedClaimId = `claim-synthesized-${idx + 1}`;
-          const assignedSourceId = sourceIds[(idx + 1) % Math.max(1, sourceIds.length)] || sourceIds[0] || "source-1";
-          return {
-            id: `pathway-${idx + 1}`,
-            order: idx + 1,
-            label: pw.title,
-            format: pw.title,
-            audience: pw.targetAudience,
-            rationale: pw.mediumFitRationale,
-            supportingClaimIds: [assignedClaimId, claimIds[idx] || `claim-${idx + 1}`],
-            comparableSourceIds: [assignedSourceId],
-            strengths: [pw.mediumFitRationale],
-            risks: pw.risksAndUncertainties,
-            openQuestions: ["How will audience feedback shape development?"],
-            confidence: "high" as const,
-            nextExperiment: {
-              title: pw.nextBoundedExperiment?.name || "Audience Feedback Pulse",
-              hypothesis: pw.nextBoundedExperiment?.description || "Audience will validate interest",
-              method: "Collect structured feedback on Audience Take",
-              participantAction: "Vote and submit Takes",
-              signal: pw.nextBoundedExperiment?.successMetric || "50+ positive takes",
-              timebox: "14 days",
-            },
-          };
-        }),
+        pathways,
         sourceLedger: sourceLedgerEntries,
         missingSections: [],
         limitations: ["Based on public web reporting and submitted video evidence."],
         industryLens: {
           pathwayIds: ["pathway-1", "pathway-2", "pathway-3"],
-          comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((cmpTitle: string, cIdx: number) => ({
-            title: cmpTitle,
-            relevance: "Comparable market trajectory and audience crossover.",
-            sourceIds: [sourceIds[(cIdx + 3) % Math.max(1, sourceIds.length)] || sourceIds[0] || "source-1"],
-            limitations: ["Market conditions differ."],
-          })),
+          comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((cmpTitle: string) => {
+            const matchingSources = findSupportingSourceIds(cmpTitle, sourceLedgerEntries);
+            return {
+              title: cmpTitle,
+              relevance: "Comparable market trajectory and audience crossover.",
+              sourceIds: matchingSources,
+              limitations: matchingSources.length > 0
+                ? ["Market conditions differ."]
+                : ["Market conditions differ; no dedicated public trade source retrieved for this comparable."],
+            };
+          }),
           risks: [dynamicCard.decisionBrief?.primaryRisk || "Financing and distribution alignment."],
           unresolvedQuestions: ["Distribution rights exclusivity."],
           signalLimitations: ["Early audience demand signals."],
@@ -653,253 +691,11 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
             timebox: "30 days",
           },
         },
-        marketViability: (() => {
-          const cardTitle = dynamicCard?.title || dyn?.title || "";
-          const dynTitleLower = cardTitle.toLowerCase();
-          const dynSlugLower = slug.toLowerCase();
-          const dynTypeLower = (dynamicCard?.projectType || dyn?.projectType || "").toLowerCase();
-          const dynIsDoc = dynTypeLower.includes("doc") || dynTitleLower.includes("valdez") || dynTitleLower.includes("pachuco") || dynSlugLower.includes("pachuco");
-          const dynIsGoth = dynTitleLower.includes("vampair") || dynSlugLower.includes("tfn0k") || dynTitleLower.includes("dracula");
-          const dynIsComedy = dynTypeLower.includes("comedy") || dynTypeLower.includes("live-action") || dynTitleLower.includes("fruity") || dynSlugLower.includes("25f9r");
-
-          return dynamicCard?.marketViability ||
-            computeMarketViability(
-              sourceLedgerEntries,
-              dynIsDoc
-                ? { pledged: 85000, goal: 75000, backers: 1450 }
-                : dynIsComedy
-                ? { pledged: 45000, goal: 35000, backers: 980 }
-                : dynIsGoth
-                ? { pledged: 225460, goal: 135000, backers: 3512 }
-                : { pledged: 220000, goal: 100000, backers: 1200 },
-              dynIsDoc
-                ? { views: 450000, likes: 28000, comments: 1400 }
-                : dynIsComedy
-                ? { views: 180000, likes: 14500, comments: 850 }
-                : dynIsGoth
-                ? { views: 266756, likes: 6825, comments: 430 }
-                : { views: 850000, likes: 45000, comments: 2800 },
-              {
-                projectType: dynamicCard?.projectType,
-                title: cardTitle,
-                slug,
-              }
-            );
-        })(),
-        livingDossier: (() => {
-          const cardTitle = dynamicCard?.title || dyn?.title || "";
-          const dynTitleLower = cardTitle.toLowerCase();
-          const dynSlugLower = slug.toLowerCase();
-          const dynTypeLower = (dynamicCard?.projectType || dyn?.projectType || "").toLowerCase();
-          const dynIsDoc = dynTypeLower.includes("doc") || dynTitleLower.includes("valdez") || dynTitleLower.includes("pachuco") || dynSlugLower.includes("pachuco");
-          const dynIsGoth = dynTitleLower.includes("vampair") || dynSlugLower.includes("tfn0k") || dynTitleLower.includes("dracula");
-          const dynIsComedy = dynTypeLower.includes("comedy") || dynTypeLower.includes("live-action") || dynTitleLower.includes("fruity") || dynSlugLower.includes("25f9r");
-
-          return dynamicCard?.livingDossier ||
-            evaluateLivingDossier(
-              dynIsDoc
-                ? { views: 450000, likes: 28000, comments: 1400 }
-                : dynIsComedy
-                ? { views: 180000, likes: 14500, comments: 850 }
-                : dynIsGoth
-                ? { views: 266756, likes: 6825, comments: 430 }
-                : { views: 850000, likes: 45000, comments: 2800 },
-              dynIsDoc
-                ? { pledged: 85000, goal: 75000, backers: 1450 }
-                : dynIsComedy
-                ? { pledged: 45000, goal: 35000, backers: 980 }
-                : dynIsGoth
-                ? { pledged: 225460, goal: 135000, backers: 3512 }
-                : { pledged: 220000, goal: 100000, backers: 1200 },
-              {
-                title: cardTitle,
-                projectType: dynamicCard?.projectType,
-                slug,
-              }
-            );
-        })(),
-        fandomDna: (() => {
-          const cardTitle = dynamicCard?.title || dyn?.title || "";
-          const dynTitleLower = cardTitle.toLowerCase();
-          const dynSlugLower = slug.toLowerCase();
-          const dynTypeLower = (dynamicCard?.projectType || dyn?.projectType || "").toLowerCase();
-          const dynIsDoc = dynTypeLower.includes("doc") || dynTitleLower.includes("valdez") || dynTitleLower.includes("pachuco") || dynSlugLower.includes("pachuco");
-          const dynIsGoth = dynTitleLower.includes("vampair") || dynSlugLower.includes("tfn0k") || dynTitleLower.includes("dracula");
-          const dynIsComedy = dynTypeLower.includes("comedy") || dynTypeLower.includes("live-action") || dynTitleLower.includes("fruity") || dynSlugLower.includes("25f9r");
-
-          if (dynamicCard?.fandomDna) return dynamicCard.fandomDna;
-          if (dynIsDoc) {
-            return {
-              characterAndLoreObsessions: [
-                "Deep reverence for Luis Valdez as the father of Chicano cinema and founder of El Teatro Campesino",
-                "Praise for authentic restoration of archival 1940s Zoot Suit Riots history and farmworker theater activism",
-                "High audience engagement with Danny Trejo and Edward James Olmos historical commentary",
-              ],
-              merchandiseDemandSignals: [
-                "High demand for university and public library educational distribution licenses",
-                "Strong grassroots support across Hispanic Heritage Month community screenings",
-              ],
-              toneAndWritingReception: {
-                praise: [
-                  "Exceptional archival restoration and emotional depth",
-                  "Vital American civil rights and theater historiography",
-                ],
-                critiques: [
-                  "Desire for expanded theatrical run beyond initial festival circuit",
-                ],
-              },
-              demographicAndFandomComps: [
-                "DOCUMENTARY FILMGOERS",
-                "CHICANO & LATINO HISTORIANS",
-                "THEATER & ARTS ENTHUSIASTS",
-                "INDEPENDENT CINEMA FANS",
-              ],
-              communitySentimentScore: 96,
-              audienceHeatScore: 90,
-            };
-          }
-          if (dynIsComedy) {
-            return {
-              characterAndLoreObsessions: [
-                "Praise for sharp, farcical comic timing and fresh sapphic dynamic between Alice and Clarke",
-                "Viral engagement across TikTok and Instagram for relatable young-adult roommate chaos and startup tropes",
-                "Enthusiasm for Irish comedic talent Madison Cawley and Carys Clempner",
-              ],
-              merchandiseDemandSignals: [
-                "High audience demand for branded spoof merchandise and live screening events",
-                "Direct engagement with digital behind-the-scenes content and creator social posts",
-              ],
-              toneAndWritingReception: {
-                praise: [
-                  "Brisk pacing, authentic humor, and joy-focused LGBTQ+ storytelling",
-                  "Sharp, witty modern dialogue without heavy-handed tropes",
-                ],
-                critiques: [
-                  "Eager anticipation for full-length 22-minute episodic series expansion",
-                ],
-              },
-              demographicAndFandomComps: [
-                "QUEER & SAPPHIC COMEDY AUDIENCE",
-                "GEN-Z & MILLENNIAL DIGITAL VIEWERS",
-                "BROAD CITY & FLEABAG FANS",
-                "IRISH & UK INDIE COMEDY ENTHUSIASTS",
-              ],
-              communitySentimentScore: 92,
-              audienceHeatScore: 88,
-            };
-          }
-          if (dynIsGoth) {
-            return {
-              characterAndLoreObsessions: [
-                "Extreme focus on Duke and Missi's adversarial chemistry and backstory dynamics",
-                "Widespread excitement over the original theatrical musical score",
-                "Praise for high-contrast gothic ballroom shadow lighting and expressive 2D choreography",
-              ],
-              merchandiseDemandSignals: [
-                "Direct requests for vinyl OST pressings and art books",
-                "Crowdfunding backers confirming high physical reward tier pledges",
-                "Apparel and character plushie purchase intent voiced in comment threads",
-              ],
-              toneAndWritingReception: {
-                praise: [
-                  "Perfect fusion of dark comedy with Broadway-style villain song energy",
-                  "Fluid hand-drawn 2D animation timing synced to musical downbeats",
-                ],
-                critiques: [
-                  "Desire for deeper serialized lore explanation in the extended pilot episode",
-                ],
-              },
-              demographicAndFandomComps: [
-                "Hazbin Hotel / SpindleHorse Productions",
-                "Lackadaisy (Iron Circus Animation)",
-                "Castlevania / Castlevania: Nocturne",
-                "The Nightmare Before Christmas / Tim Burton Gothic Musicals",
-              ],
-              organicVsBrigadedFlag: "concentrated_cult",
-              audienceResonanceSummary:
-                "High-intensity cult engagement with exceptional commercial monetization propensity (€64/backer average). The audience demonstrates genuine artistic loyalty and strong transmedia merchandise demand.",
-              sentimentScore: 94,
-              analyzedAt: new Date().toISOString(),
-            };
-          }
-          return {
-            characterAndLoreObsessions: [
-              "Obsession with 90s hand-drawn anime aesthetic and fluid 2D keyframing",
-              "Praise for authentic futuristic Chicago worldbuilding and boom-bap soundtrack integration",
-              "High anticipation for full-series narrative development and character rivalries",
-            ],
-            merchandiseDemandSignals: [
-              "Over 1,200 fan backers for Kickstarter companion manga release",
-              "Direct requests for vinyl OST pressings and art books",
-            ],
-            toneAndWritingReception: {
-              praise: ["Kinetic pacing and exceptional anime choreography", "Authentic cultural identity"],
-              critiques: ["Desire for longer episodes beyond proof-of-concept format"],
-            },
-            demographicAndFandomComps: [
-              "90S ANIME PURISTS",
-              "HIP-HOP & BOOM-BAP HEADS",
-              "MECHA & CYBERPUNK ENTHUSIASTS",
-              "YA STREAMING AUDIENCE",
-            ],
-            communitySentimentScore: 94,
-            audienceHeatScore: 92,
-          };
-        })(),
-        channelEcosystem: (() => {
-          const cardTitle = dynamicCard?.title || dyn?.title || "";
-          const dynTitleLower = cardTitle.toLowerCase();
-          const dynSlugLower = slug.toLowerCase();
-          const dynTypeLower = (dynamicCard?.projectType || dyn?.projectType || "").toLowerCase();
-          const dynIsDoc = dynTypeLower.includes("doc") || dynTitleLower.includes("valdez") || dynTitleLower.includes("pachuco") || dynSlugLower.includes("pachuco");
-          const dynIsGoth = dynTitleLower.includes("vampair") || dynSlugLower.includes("tfn0k") || dynTitleLower.includes("dracula");
-          const dynIsComedy = dynTypeLower.includes("comedy") || dynTypeLower.includes("live-action") || dynTitleLower.includes("fruity") || dynSlugLower.includes("25f9r");
-
-          if (dynamicCard?.channelEcosystem) return dynamicCard.channelEcosystem;
-          if (dynIsComedy) {
-            return {
-              channelTitle: "Shannon & Megan Haly (FRUITY)",
-              channelHandle: "@fruityseries",
-              subscribers: 45000,
-              totalUniverseViews: 1800000,
-              universeVideoCount: 8,
-              activeRetentionRate: "38.2%",
-              catalogLongevity: "Digital Web Series (2026 Rollout)",
-            };
-          }
-          if (dynIsDoc) {
-            return {
-              channelTitle: "El Teatro Campesino Archives / American Pachuco",
-              channelHandle: "@ElTeatroCampesino",
-              subscribers: 12000,
-              totalUniverseViews: 650000,
-              universeVideoCount: 12,
-              activeRetentionRate: "44.1%",
-              catalogLongevity: "Historical Archive & Feature Doc",
-            };
-          }
-          if (dynIsGoth) {
-            return {
-              channelTitle: "Daria Cohen",
-              channelHandle: "@DariaCohen",
-              subscribers: 905000,
-              totalUniverseViews: 42500000,
-              universeVideoCount: 14,
-              activeRetentionRate: "29.4%",
-              catalogLongevity: "7 Years (Active since 2017)",
-            };
-          }
-          return {
-            channelTitle: "TeamTOKO / Christian Robinson",
-            channelHandle: "@TeamTOKO",
-            subscribers: 185000,
-            totalUniverseViews: 4800000,
-            universeVideoCount: 6,
-            activeRetentionRate: "31.5%",
-            catalogLongevity: "Active since 2024",
-          };
-        })(),
-        publishedAt: dynamicProject?.updatedAt || new Date().toISOString(),
+        marketViability: dynamicCard?.marketViability ?? undefined,
+        livingDossier: dynamicCard?.livingDossier ?? undefined,
+        fandomDna: dynamicCard?.fandomDna ?? undefined,
+        channelEcosystem: dynamicCard?.channelEcosystem ?? undefined,
+        publishedAt: dynamicCard?.publishedAt || dynamicProject?.updatedAt || dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
         trailerCritiques: dynamicCritic ? [{
           artifactId: dynamicCritic.id,
           projectId: dynamicProject?.id || slug,
@@ -910,13 +706,13 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           analysisVersion: 1,
           cardVersionId: dynamicCard.id,
           structuralNarrative: {
-            genreSignaling: dynamicCritic.genreAndForm || "Animated Series Pilot / Gothic Musical Horror",
-            narrativeDelivery: dynamicCritic.summary || "Atmospheric character-driven animation trailer",
-            trailerType: dynamicCritic.genreAndForm?.includes("Trailer") ? "Official Trailer" : "Series Pilot Trailer",
+            genreSignaling: dynamicCritic.genreAndForm || "Independent Screen Project",
+            narrativeDelivery: dynamicCritic.summary || "Audiovisual scene development",
+            trailerType: dynamicCritic.genreAndForm?.includes("Trailer") ? "Official Trailer" : "Project Media Preview",
             beats: (dynamicCritic.timestampedBeats || []).slice(0, 6).map((b: any, bIdx: number, allBeats: any[]) => {
               const nextBeat = allBeats[bIdx + 1];
               const start = b.timestampFormatted || "0:00";
-              const end = nextBeat?.timestampFormatted || "1:16";
+              const end = nextBeat?.timestampFormatted || "1:00";
               return {
                 label: b.label || "Narrative Beat",
                 start,
@@ -927,32 +723,32 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
             }),
           },
           technicalCraft: {
-            editingAndPace: dynamicCritic.craftAnalysis?.editingAndPacing || "Rhythmic sync to audio cue.",
-            cinematographyAndFraming: dynamicCritic.craftAnalysis?.cinematography || "Cinematic aspect ratio.",
-            soundAndScore: dynamicCritic.craftAnalysis?.soundAndScore || "Original score blend.",
-            graphicsAndTitles: dynamicCritic.craftAnalysis?.graphicsAndText || "Clean typography.",
+            editingAndPace: dynamicCritic.craftAnalysis?.editingAndPacing || "Media analysis pending or unavailable.",
+            cinematographyAndFraming: dynamicCritic.craftAnalysis?.cinematography || "Media analysis pending or unavailable.",
+            soundAndScore: dynamicCritic.craftAnalysis?.soundAndScore || "Media analysis pending or unavailable.",
+            graphicsAndTitles: dynamicCritic.craftAnalysis?.graphicsAndText || "Media analysis pending or unavailable.",
           },
           marketingPersuasion: {
-            uniqueSellingProposition: dynamicCritic.whyItMayConnect || "Independent animation subculture crossover.",
-            targetAudienceHypothesis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Core independent animation community.",
-            conceptVsStarEmphasis: "Hand-drawn artistry and character rivalry led.",
-            representationCaveat: "Authentic creator-driven indie animation.",
+            uniqueSellingProposition: dynamicCritic.whyItMayConnect || "Media analysis pending or unavailable.",
+            targetAudienceHypothesis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Audience hypothesis pending direct community feedback.",
+            conceptVsStarEmphasis: "Independent creative concept led.",
+            representationCaveat: "Subject to public community verification.",
           },
           emotionalRhetorical: {
-            emotionalHook: dynamicCritic.whyItMayConnect || dynamicCritic.persuasionAndEmotion?.emotionalArc || "Engaging gothic spectacle.",
-            toneAndMoodBalance: dynamicCritic.craftAnalysis?.cinematography || "Balanced tone and pacing.",
-            persuasiveArgument: dynamicCritic.persuasionAndEmotion?.callToAction || "Call to support project.",
+            emotionalHook: dynamicCritic.whyItMayConnect || dynamicCritic.persuasionAndEmotion?.emotionalArc || "Grounded story hook.",
+            toneAndMoodBalance: dynamicCritic.craftAnalysis?.cinematography || "Tone and pacing observed in sample.",
+            persuasiveArgument: dynamicCritic.persuasionAndEmotion?.callToAction || "Explore project on Audience Take.",
           },
           matrix: [
-            { category: "genre" as const, analysis: dynamicCritic.genreAndForm || "Animated Series Pilot / Gothic Musical Horror" },
-            { category: "narrative_stance" as const, analysis: dynamicCritic.summary || "High-stakes, theatrical gothic confrontation" },
-            { category: "usp" as const, analysis: dynamicCritic.whyItMayConnect || "Cult animation following and musical theater crossover." },
-            { category: "target_audience" as const, analysis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Fans of stylized 2D animation, vampires, and dark fantasy." },
-            { category: "sound_music" as const, analysis: dynamicCritic.craftAnalysis?.soundAndScore || "Fusion of gothic orchestration and modern rock." },
-            { category: "camera_editing" as const, analysis: dynamicCritic.craftAnalysis?.cinematography || "Dynamic 2D camera angles and high-contrast palette." },
+            { category: "genre" as const, analysis: dynamicCritic.genreAndForm || "Independent Screen Project" },
+            { category: "narrative_stance" as const, analysis: dynamicCritic.summary || "Narrative delivery observed from submitted media." },
+            { category: "usp" as const, analysis: dynamicCritic.whyItMayConnect || "Creative identity and distinct perspective." },
+            { category: "target_audience" as const, analysis: dynamicCritic.persuasionAndEmotion?.targetPersona || "Prospective audience for independent screen storytelling." },
+            { category: "sound_music" as const, analysis: dynamicCritic.craftAnalysis?.soundAndScore || "Audio craft observed from submitted media." },
+            { category: "camera_editing" as const, analysis: dynamicCritic.craftAnalysis?.cinematography || "Visual framing observed from submitted media." },
           ],
           sourceIds: [sourceIds[0] || "source-1"],
-          limitations: ["Based on multimodal audiovisual stream analysis."],
+          limitations: [dynamicCritic.limitations || "Based on multimodal audiovisual stream analysis."],
           analyzedAt: dynamicCritic.analyzedAt || new Date().toISOString(),
           visibility: "public" as const,
         }] : [],

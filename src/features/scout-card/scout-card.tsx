@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
 import { IndustryLens } from "../industry-lens/industry-lens";
 import { citationText, createCitationLabels } from "./citation-labels";
 import { DecisionBrief } from "./decision-brief";
@@ -8,7 +11,11 @@ import {
   sourcePresentation,
   structureStatus,
 } from "./evidence-display";
-import type { ScoutCard as ScoutCardModel } from "./types";
+import type {
+  EvidenceClaim,
+  ScoutCard as ScoutCardModel,
+  SourceLedgerEntry,
+} from "./types";
 import type { ProjectLivingUpdate } from "./living-updates";
 import { LivingUpdates } from "./living-updates";
 import { ScoutSocialPanel } from "../social/scout-social-panel";
@@ -18,6 +25,10 @@ import { TrailerCritic } from "./trailer-critic";
 import { FandomDnaSection } from "./fandom-dna-section";
 import type { ScoutBrief } from "../scout-brief/types";
 import { ScoutBriefPlayer } from "../scout-brief/scout-brief-player";
+import { CitationDrawer } from "./citation-drawer";
+import { AudienceActionStrip } from "./audience-action-strip";
+import { PathwayVotingSection } from "./pathway-voting-section";
+import { ProfessionalBriefView } from "./professional-brief-view";
 
 function formatDate(value: string | undefined | null): string {
   if (!value) return "Recently published";
@@ -30,27 +41,50 @@ function formatDate(value: string | undefined | null): string {
   }
 }
 
-function SourceMarks({ sourceIds, labels }: { sourceIds: string[]; labels: Map<string, string> }) {
+function SourceMarks({
+  sourceIds,
+  labels,
+  onOpenCitation,
+  allSources,
+  claim,
+}: {
+  sourceIds: string[];
+  labels: Map<string, string>;
+  onOpenCitation?: (source: SourceLedgerEntry, claim?: EvidenceClaim, el?: HTMLElement) => void;
+  allSources?: SourceLedgerEntry[];
+  claim?: EvidenceClaim;
+}) {
   if (!sourceIds || sourceIds.length === 0) return null;
-  const visible = sourceIds.slice(0, 3);
+  const uniqueSourceIds = [...new Set(sourceIds)];
+  const visible = uniqueSourceIds.slice(0, 3);
+
   return (
-    <span className="citation-marks-group" aria-label={`Citations ${citationText(sourceIds, labels)}`}>
+    <span className="citation-marks-group" aria-label={`Citations ${citationText(uniqueSourceIds, labels)}`}>
       {visible.map((id) => {
         const label = labels.get(id) || "[S]";
+        const source = allSources?.find((s) => s.id === id);
+
         return (
           <a
             key={id}
             href={`#source-${id.replace(/^source-/, "")}`}
             className="citation-badge"
             title={`View source ${label}`}
+            aria-label={`View source citation ${label}`}
+            onClick={(e) => {
+              if (onOpenCitation && source) {
+                e.preventDefault();
+                onOpenCitation(source, claim, e.currentTarget);
+              }
+            }}
           >
             {label}
           </a>
         );
       })}
-      {sourceIds.length > 3 ? (
-        <span className="citation-badge-overflow" title={`${sourceIds.length - 3} more sources in source ledger`}>
-          +{sourceIds.length - 3}
+      {uniqueSourceIds.length > 3 ? (
+        <span className="citation-badge-overflow" title={`${uniqueSourceIds.length - 3} more sources in source ledger`}>
+          +{uniqueSourceIds.length - 3}
         </span>
       ) : null}
     </span>
@@ -63,8 +97,13 @@ function ScoutMediaContent({ card }: { card: ScoutCardModel }) {
     return <SourceVideoCarousel card={card} />;
   }
   if (media.state === "authorized_image" && media.imageUrl) {
-    return <figure className="scout-media-frame">{/* The authorized source URL is contract data and cannot be constrained to Next Image remote patterns. */}<img // eslint-disable-line @next/next/no-img-element
-      src={media.imageUrl} alt={media.title} /><figcaption>{media.attribution}</figcaption></figure>;
+    return (
+      <figure className="scout-media-frame">
+        {/* The authorized source URL is contract data and cannot be constrained to Next Image remote patterns. */}
+        <img src={media.imageUrl} alt={media.title} />
+        <figcaption>{media.attribution}</figcaption>
+      </figure>
+    );
   }
   return (
     <div className="scout-media-unavailable" role="img" aria-label={media.title}>
@@ -166,9 +205,11 @@ function ProjectHeader({
 function ScoutingStatusPanel({
   card,
   sourceLabels,
+  onOpenCitation,
 }: {
   card: ScoutCardModel;
   sourceLabels: Map<string, string>;
+  onOpenCitation?: (source: SourceLedgerEntry, claim?: EvidenceClaim, el?: HTMLElement) => void;
 }) {
   const observationSourceIds = claimSourceIds(card, card.storyContext.claimIds).slice(0, 2);
   const hooks = card.storyContext.audienceHooks.slice(0, 3);
@@ -193,7 +234,12 @@ function ScoutingStatusPanel({
               <span className="signal-bullet" aria-hidden="true" />
               <div className="signal-content">
                 <span className="signal-text">{hook}</span>
-                <SourceMarks sourceIds={observationSourceIds} labels={sourceLabels} />
+                <SourceMarks
+                  sourceIds={observationSourceIds}
+                  labels={sourceLabels}
+                  onOpenCitation={onOpenCitation}
+                  allSources={card.sourceLedger}
+                />
               </div>
             </li>
           ))}
@@ -230,9 +276,11 @@ function ScoutingStatusPanel({
 function EvidenceLedgerPanel({
   card,
   sourceLabels,
+  onOpenCitation,
 }: {
   card: ScoutCardModel;
   sourceLabels: Map<string, string>;
+  onOpenCitation?: (source: SourceLedgerEntry, claim?: EvidenceClaim, el?: HTMLElement) => void;
 }) {
   const knownClaims = card.evidenceClaims.filter(
     (claim) => claimEvidenceState(claim, card.sourceLedger) !== "unknown",
@@ -248,17 +296,28 @@ function EvidenceLedgerPanel({
       <div className="evidence-ledger-body">
         {knownClaims.length ? (
           <ul className="ledger-entries-list">
-            {knownClaims.map((claim) => (
-              <li key={claim.id} className="ledger-entry-item">
-                <div className="ledger-tag-col">
-                  <span className="evidence-state evidence-state-reported">REPORTED</span>
-                </div>
-                <div className="ledger-content-col">
-                  <p className="ledger-statement-text">{claim.statement}</p>
-                  <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} />
-                </div>
-              </li>
-            ))}
+            {knownClaims.map((claim) => {
+              const state = claimEvidenceState(claim, card.sourceLedger);
+              return (
+                <li key={claim.id} className="ledger-entry-item">
+                  <div className="ledger-tag-col">
+                    <span className={`evidence-state evidence-state-${state}`}>
+                      {evidenceStateLabel(state)}
+                    </span>
+                  </div>
+                  <div className="ledger-content-col">
+                    <p className="ledger-statement-text">{claim.statement}</p>
+                    <SourceMarks
+                      sourceIds={claim.sourceIds}
+                      labels={sourceLabels}
+                      onOpenCitation={onOpenCitation}
+                      allSources={card.sourceLedger}
+                      claim={claim}
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="ledger-empty-text">No public claim has enough usable source support yet.</p>
@@ -271,15 +330,17 @@ function EvidenceLedgerPanel({
 function PathwayHypothesesPanel({
   card,
   sourceLabels,
+  onOpenCitation,
 }: {
   card: ScoutCardModel;
   sourceLabels: Map<string, string>;
+  onOpenCitation?: (source: SourceLedgerEntry, claim?: EvidenceClaim, el?: HTMLElement) => void;
 }) {
   return (
     <section className="pathway-hypotheses-panel" aria-labelledby="pathway-hypotheses-title">
       <div className="pathway-hypotheses-header">
         <h2 id="pathway-hypotheses-title">PATHWAY HYPOTHESES</h2>
-        <span className="pathway-hypotheses-sub">EXACTLY THREE / BOUNDED</span>
+        <span className="pathway-hypotheses-sub">THREE BOUNDED DIRECTIONS</span>
       </div>
 
       <div className="pathway-cards-stack">
@@ -313,6 +374,8 @@ function PathwayHypothesesPanel({
                         (claimId) => (card.evidenceClaims || []).find((claim) => claim.id === claimId)?.sourceIds ?? [],
                       )}
                       labels={sourceLabels}
+                      onOpenCitation={onOpenCitation}
+                      allSources={card.sourceLedger}
                     />
                   </div>
                 </div>
@@ -358,107 +421,297 @@ export function ScoutCard({
   card,
   livingUpdates,
   scoutBrief,
+  initialView = "discover",
 }: {
   card: ScoutCardModel;
   livingUpdates?: ProjectLivingUpdate[];
   scoutBrief?: ScoutBrief | null;
+  initialView?: "discover" | "pro";
 }) {
   if (card.pathways.length !== 3) throw new Error("A Scout Card requires exactly three pathways.");
+
+  const [view, setView] = useState<"discover" | "pro">(initialView);
+  const [activeCitationSource, setActiveCitationSource] = useState<SourceLedgerEntry | null>(null);
+  const [activeCitationClaim, setActiveCitationClaim] = useState<EvidenceClaim | null>(null);
+  const [citationReturnFocusEl, setCitationReturnFocusEl] = useState<HTMLElement | null>(null);
+
+  const tabDiscoverRef = useRef<HTMLButtonElement>(null);
+  const tabProRef = useRef<HTMLButtonElement>(null);
+
   const sourceLabels = createCitationLabels(card.sourceLedger);
   const cardStructureStatus = structureStatus(card);
   const cardEvidenceLabel = evidenceStatusLabel(card);
 
+  // Read URL query parameter on mount if present
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlView = searchParams.get("view");
+      if (urlView === "pro" || urlView === "professional") {
+        setView("pro");
+      } else if (urlView === "discover") {
+        setView("discover");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleViewChange = (newView: "discover" | "pro") => {
+    setView(newView);
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", newView);
+        window.history.replaceState(null, "", url.toString());
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  const handleTabKeyDown = (
+    e: React.KeyboardEvent,
+    currentTab: "discover" | "pro"
+  ) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      const nextTab = currentTab === "discover" ? "pro" : "discover";
+      handleViewChange(nextTab);
+      if (nextTab === "discover") {
+        tabDiscoverRef.current?.focus();
+      } else {
+        tabProRef.current?.focus();
+      }
+    }
+  };
+
+  const handleOpenCitation = (
+    source: SourceLedgerEntry,
+    claim?: EvidenceClaim,
+    el?: HTMLElement
+  ) => {
+    setActiveCitationSource(source);
+    setActiveCitationClaim(claim || null);
+    if (el) setCitationReturnFocusEl(el);
+  };
+
+  const handleCloseCitation = () => {
+    setActiveCitationSource(null);
+    setActiveCitationClaim(null);
+  };
+
   return (
     <main className="scout-card-page paper-texture">
+      {/* Top Release Strip */}
       <div className="scout-release-strip" aria-label={`${cardStructureStatus} structure; ${cardEvidenceLabel}`}>
-        <strong>Scout Card — public evidence summary<span className="tear-holes" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <i key={index} />)}</span></strong>
-        <span className="tear-label">Scout Card tear-off<span className="tear-dashes" aria-hidden="true" /><i className="fold-wedge" aria-hidden="true" /></span>
+        <strong>
+          Scout Card — public evidence summary
+          <span className="tear-holes" aria-hidden="true">
+            {Array.from({ length: 10 }, (_, index) => <i key={index} />)}
+          </span>
+        </strong>
+        <span className="tear-label">
+          Scout Card tear-off
+          <span className="tear-dashes" aria-hidden="true" />
+          <i className="fold-wedge" aria-hidden="true" />
+        </span>
         <span>AT—{card.cardVersionId.slice(-8).toUpperCase()}</span>
       </div>
+
       <CardStatus card={card} />
 
-      <article className="scout-dossier-redesign" aria-labelledby="scout-card-title">
-        {/* 1. Full-Width Project Header */}
-        <ProjectHeader
-          card={card}
-          cardStructureStatus={cardStructureStatus}
-          cardEvidenceLabel={cardEvidenceLabel}
-        />
+      {/* Role-Based Dual Audience Toggle Bar */}
+      <div className="scout-view-switcher-bar">
+        <div
+          className="scout-view-tabs"
+          role="tablist"
+          aria-label="Scout Card audience perspective"
+        >
+          <button
+            ref={tabDiscoverRef}
+            type="button"
+            id="tab-discover"
+            role="tab"
+            aria-selected={view === "discover"}
+            aria-controls="scout-view-discover"
+            tabIndex={view === "discover" ? 0 : -1}
+            className={`scout-tab-btn ${view === "discover" ? "is-active" : ""}`}
+            onClick={() => handleViewChange("discover")}
+            onKeyDown={(e) => handleTabKeyDown(e, "discover")}
+          >
+            <span className="scout-tab-badge">AUDIENCE</span>
+            <span className="scout-tab-label">DISCOVER</span>
+            <span className="scout-tab-sub">Fans &amp; Community</span>
+          </button>
 
-        {/* 2. Primary Grid (Video + Scouting Status) */}
-        <div className="scout-primary-grid">
-          <div className="scout-video-column">
-            <ScoutMedia card={card} />
-          </div>
-          <div className="scout-status-column">
-            <ScoutingStatusPanel card={card} sourceLabels={sourceLabels} />
-          </div>
+          <button
+            ref={tabProRef}
+            type="button"
+            id="tab-pro"
+            role="tab"
+            aria-selected={view === "pro"}
+            aria-controls="scout-view-pro"
+            tabIndex={view === "pro" ? 0 : -1}
+            className={`scout-tab-btn ${view === "pro" ? "is-active" : ""}`}
+            onClick={() => handleViewChange("pro")}
+            onKeyDown={(e) => handleTabKeyDown(e, "pro")}
+          >
+            <span className="scout-tab-badge">INDUSTRY</span>
+            <span className="scout-tab-label">PROFESSIONAL BRIEF</span>
+            <span className="scout-tab-sub">Development &amp; Triage</span>
+          </button>
         </div>
 
-        {/* 3. Research Grid (Evidence Ledger + Pathway Hypotheses) */}
-        <div className="scout-research-grid">
-          <div className="scout-evidence-ledger-column">
-            <EvidenceLedgerPanel card={card} sourceLabels={sourceLabels} />
-          </div>
-          <div className="scout-hypotheses-column">
-            <PathwayHypothesesPanel card={card} sourceLabels={sourceLabels} />
-          </div>
+        <div className="scout-view-meta">
+          <span className="scout-shared-facts-note">
+            Single Evidence Record · Canonical Card Version
+          </span>
         </div>
-      </article>
+      </div>
 
-      {scoutBrief && <ScoutBriefPlayer brief={scoutBrief} unclaimed={card.claimStatus === "unclaimed"} />}
+      {/* VIEW 1: DISCOVER (FANS & AUDIENCE) */}
+      {view === "discover" ? (
+        <div
+          id="scout-view-discover"
+          role="tabpanel"
+          aria-labelledby="tab-discover"
+        >
+          <article className="scout-dossier-redesign" aria-labelledby="scout-card-title">
+            {/* 1. Full-Width Project Header */}
+            <ProjectHeader
+              card={card}
+              cardStructureStatus={cardStructureStatus}
+              cardEvidenceLabel={cardEvidenceLabel}
+            />
 
-      <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
-      <FandomDnaSection
-        fandomDna={card.fandomDna}
-        marketViability={card.marketViability}
-        livingDossier={card.livingDossier}
-        channelEcosystem={card.channelEcosystem}
+            {/* 2. Primary Grid (Video + Scouting Status) */}
+            <div className="scout-primary-grid">
+              <div className="scout-video-column">
+                <ScoutMedia card={card} />
+              </div>
+              <div className="scout-status-column">
+                <ScoutingStatusPanel
+                  card={card}
+                  sourceLabels={sourceLabels}
+                  onOpenCitation={handleOpenCitation}
+                />
+              </div>
+            </div>
+
+            {/* 3. Compact Audience Action Strip */}
+            <AudienceActionStrip card={card} />
+
+            {/* 4. Pathway Voting Section */}
+            <PathwayVotingSection card={card} />
+
+            {/* 5. Research Grid (Evidence Ledger + Pathway Hypotheses) */}
+            <div className="scout-research-grid">
+              <div className="scout-evidence-ledger-column">
+                <EvidenceLedgerPanel
+                  card={card}
+                  sourceLabels={sourceLabels}
+                  onOpenCitation={handleOpenCitation}
+                />
+              </div>
+              <div className="scout-hypotheses-column">
+                <PathwayHypothesesPanel
+                  card={card}
+                  sourceLabels={sourceLabels}
+                  onOpenCitation={handleOpenCitation}
+                />
+              </div>
+            </div>
+          </article>
+
+          {scoutBrief && <ScoutBriefPlayer brief={scoutBrief} unclaimed={card.claimStatus === "unclaimed"} />}
+
+          <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
+          <FandomDnaSection
+            fandomDna={card.fandomDna}
+            marketViability={card.marketViability}
+            livingDossier={card.livingDossier}
+            channelEcosystem={card.channelEcosystem}
+          />
+
+          <DecisionBrief card={card} />
+          <ScoutSocialPanel card={card} />
+          <IndustryLens card={card} />
+          <LivingUpdates updates={livingUpdates ?? []} />
+          <ScoutTrustPanel card={card} />
+
+          <section className="evidence-section" aria-labelledby="evidence-title">
+            <div className="section-heading-line"><h2 id="evidence-title">Evidence &amp; citations</h2><span>Claims stay qualified</span></div>
+            <div className="evidence-grid">
+              <div className="claim-ledger">
+                <h3>Claim ledger</h3>
+                {card.evidenceClaims.map((claim) => (
+                  <article key={claim.id}>
+                    <span className={`evidence-state evidence-state-${claimEvidenceState(claim, card.sourceLedger)}`}>{evidenceStateLabel(claimEvidenceState(claim, card.sourceLedger))}</span>
+                    <p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} onOpenCitation={handleOpenCitation} allSources={card.sourceLedger} claim={claim} /></p>
+                    {claim.qualification ? <small>{claim.qualification}</small> : null}
+                  </article>
+                ))}
+              </div>
+              <div className="source-ledger-public">
+                <h3>Source ledger</h3>
+                <ol>
+                  {card.sourceLedger.map((source) => (
+                    <li key={source.id} id={`source-${source.id.replace(/^source-/, "")}`}>
+                      <span className="source-index">{sourceLabels.get(source.id)}</span>
+                      <div>
+                        <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+                        {source.excerpt ? (
+                          <p className="source-passage-excerpt">“{source.excerpt}”</p>
+                        ) : null}
+                        <p>{sourcePresentation(source).role} / {sourcePresentation(source).tier} / {source.availability}</p>
+                        <small>{source.publishedAt ? `Published ${formatDate(source.publishedAt)} · ` : ""}Retrieved {formatDate(source.retrievedAt)}</small>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <section className="external-signals" aria-labelledby="signals-title">
+            <div><h2 id="signals-title">External signals</h2><p>Public-web observations remain separate from Audience Take-native participation.</p></div>
+            {card.externalSignals.length ? <ul>{card.externalSignals.map((signal) => <li key={signal.label}><strong>{signal.label}</strong><p>{signal.analysis}</p><small>Not an Audience Take-native count.</small></li>)}</ul> : <p className="signals-empty">No external signals were included in this Scout Card. No native audience count is claimed.</p>}
+          </section>
+
+          <section className="scout-limitations" aria-labelledby="limitations-title">
+            <h2 id="limitations-title">What this card cannot establish</h2>
+            <ul>{card.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
+            {card.missingSections.length ? <div><strong>Missing sections</strong><p>{card.missingSections.map((item) => item.replaceAll("_", " ")).join(" / ")}</p></div> : null}
+          </section>
+        </div>
+      ) : (
+        /* VIEW 2: PROFESSIONAL BRIEF (INDUSTRY & DEVELOPMENT) */
+        <div
+          id="scout-view-pro"
+          role="tabpanel"
+          aria-labelledby="tab-pro"
+        >
+          <ProfessionalBriefView
+            card={card}
+            sourceLabels={sourceLabels}
+            livingUpdates={livingUpdates}
+            scoutBrief={scoutBrief}
+            onOpenCitation={handleOpenCitation}
+          />
+        </div>
+      )}
+
+      {/* Interactive Citation Drawer */}
+      <CitationDrawer
+        isOpen={Boolean(activeCitationSource)}
+        onClose={handleCloseCitation}
+        source={activeCitationSource}
+        claim={activeCitationClaim}
+        sourceLabels={sourceLabels}
+        returnFocusEl={citationReturnFocusEl}
       />
-
-      <DecisionBrief card={card} />
-      <ScoutSocialPanel card={card} />
-      <IndustryLens card={card} />
-      <LivingUpdates updates={livingUpdates ?? []} />
-      <ScoutTrustPanel card={card} />
-
-      <section className="evidence-section" aria-labelledby="evidence-title">
-        <div className="section-heading-line"><h2 id="evidence-title">Evidence &amp; citations</h2><span>Claims stay qualified</span></div>
-        <div className="evidence-grid">
-          <div className="claim-ledger">
-            <h3>Claim ledger</h3>
-            {card.evidenceClaims.map((claim) => (
-              <article key={claim.id}>
-                <span className={`evidence-state evidence-state-${claimEvidenceState(claim, card.sourceLedger)}`}>{evidenceStateLabel(claimEvidenceState(claim, card.sourceLedger))}</span>
-                <p>{claim.statement} <SourceMarks sourceIds={claim.sourceIds} labels={sourceLabels} /></p>
-                {claim.qualification ? <small>{claim.qualification}</small> : null}
-              </article>
-            ))}
-          </div>
-          <div className="source-ledger-public">
-            <h3>Source ledger</h3>
-            <ol>
-              {card.sourceLedger.map((source) => (
-                <li key={source.id} id={`source-${source.id.replace(/^source-/, "")}`}>
-                  <span className="source-index">{sourceLabels.get(source.id)}</span>
-                  <div><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a><p>{sourcePresentation(source).role} / {sourcePresentation(source).tier} / {source.availability}</p><small>Retrieved {formatDate(source.retrievedAt)}</small></div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section className="external-signals" aria-labelledby="signals-title">
-        <div><h2 id="signals-title">External signals</h2><p>Public-web observations remain separate from Audience Take-native participation.</p></div>
-        {card.externalSignals.length ? <ul>{card.externalSignals.map((signal) => <li key={signal.label}><strong>{signal.label}</strong><p>{signal.analysis}</p><small>Not an Audience Take-native count.</small></li>)}</ul> : <p className="signals-empty">No external signals were included in this Scout Card. No native audience count is claimed.</p>}
-      </section>
-
-      <section className="scout-limitations" aria-labelledby="limitations-title">
-        <h2 id="limitations-title">What this card cannot establish</h2>
-        <ul>{card.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
-        {card.missingSections.length ? <div><strong>Missing sections</strong><p>{card.missingSections.map((item) => item.replaceAll("_", " ")).join(" / ")}</p></div> : null}
-      </section>
     </main>
   );
 }

@@ -42,7 +42,8 @@ export interface ParallelExtractOptions {
 export interface ParallelMonitorOptions {
   name: string;
   targetUrl: string;
-  frequency?: "daily" | "weekly" | "hourly";
+  query?: string;
+  frequency?: "daily" | "weekly" | "hourly" | "1d" | "1w" | "1h";
   webhookUrl?: string;
   metadata?: Record<string, string>;
 }
@@ -50,7 +51,7 @@ export interface ParallelMonitorOptions {
 export interface ParallelMonitorResponse {
   monitor_id: string;
   status: "active" | "pending" | "disabled";
-  target_url: string;
+  target_url?: string;
   created_at: string;
   warnings?: string[] | null;
 }
@@ -207,10 +208,29 @@ export class ParallelSearchClient {
       };
     }
 
+    const freq =
+      options.frequency === "hourly" || options.frequency === "1h"
+        ? "1h"
+        : options.frequency === "weekly" || options.frequency === "1w"
+          ? "1w"
+          : "1d";
+
+    const query =
+      options.query || `${options.name} development financing production partners festival distribution rights`;
+
     const body = {
       name: options.name,
-      target_url: options.targetUrl,
-      frequency: options.frequency || "daily",
+      type: "event_stream",
+      frequency: freq,
+      processor: "lite",
+      settings: {
+        query,
+        include_backfill: false,
+      },
+      webhook: {
+        url: options.webhookUrl,
+        event_types: ["monitor.event.detected", "monitor.milestone_reached", "monitor.diff_detected"],
+      },
       webhook_url: options.webhookUrl,
       metadata: options.metadata || {},
     };
@@ -237,11 +257,11 @@ export class ParallelSearchClient {
     }
 
     return {
-      monitor_id: `monitor_mock_${Date.now()}`,
-      status: "active",
+      monitor_id: `monitor_disabled_${Date.now()}`,
+      status: "disabled",
       target_url: options.targetUrl,
       created_at: new Date().toISOString(),
-      warnings: ["Fallback simulated monitor registration active."],
+      warnings: ["Monitor registration failed or was unavailable."],
     };
   }
 

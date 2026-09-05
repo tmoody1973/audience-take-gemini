@@ -6,10 +6,17 @@ import { ScoutCard } from "@/features/scout-card/scout-card";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ view?: string }>;
 }
 
-export default async function ScoutCardPage({ params }: PageProps) {
+export default async function ScoutCardPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const initialView =
+    resolvedSearchParams?.view === "pro" || resolvedSearchParams?.view === "professional"
+      ? "pro"
+      : "discover";
+
   const projectId = resolvedParams.id;
 
   const card = await loadPublishedScoutCard(projectId);
@@ -20,7 +27,7 @@ export default async function ScoutCardPage({ params }: PageProps) {
   return (
     <>
       <SiteHeader />
-      <ScoutCard card={card} />
+      <ScoutCard card={card} initialView={initialView} />
     </>
   );
 }

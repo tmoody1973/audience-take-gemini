@@ -94,74 +94,33 @@ export function NominationForm({ initialUrl = "" }: { initialUrl?: string }) {
         user = null;
       }
 
-      if (user) {
-        try {
-          const headers = await nominationCommandHeaders();
-          const response = await fetch("/api/nominations", {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              submittedUrl: values.projectUrl.trim(),
-              mediaUrl: values.mediaUrl.trim() || undefined,
-              whyItShouldGrow: values.reason.trim(),
-              submissionType: mode,
-              suggestedFormat: values.potential.trim() || undefined,
-              audienceFit: values.audience.trim() || undefined,
-              supportingUrls: completedSupportingLinks,
-            }),
-          });
-
-          if (response.ok) {
-            const result = (await response.json().catch(() => ({}))) as {
-              data?: { duplicate?: boolean; researchUrl?: string; canonicalUrl?: string };
-            };
-            const destination = result.data?.duplicate
-              ? result.data.canonicalUrl
-              : result.data?.researchUrl;
-            if (destination) {
-              window.location.assign(destination);
-              return;
-            }
-          }
-        } catch {
-          // Fallback to direct intake
-        }
-      }
-
-      // Guest / Direct Scout Agent Intake fallback
-      const fallbackResponse = await fetch("/api/nominate", {
+      const headers = await nominationCommandHeaders();
+      const response = await fetch("/api/nominations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
-          projectUrl: values.projectUrl.trim(),
-          youtubeVideoUrl: values.mediaUrl.trim() || undefined,
-          reason: values.reason.trim(),
-          nominatorRole: mode,
-          formatNotes: values.potential.trim() || undefined,
-          audienceNotes: values.audience.trim() || undefined,
-          supportingLinks: completedSupportingLinks,
+          submittedUrl: values.projectUrl.trim(),
+          mediaUrl: values.mediaUrl.trim() || undefined,
+          whyItShouldGrow: values.reason.trim(),
+          submissionType: mode,
+          suggestedFormat: values.potential.trim() || undefined,
+          audienceFit: values.audience.trim() || undefined,
+          supportingUrls: completedSupportingLinks,
         }),
       });
 
-      const fallbackData = await fallbackResponse.json();
-      if (!fallbackResponse.ok) {
-        throw new Error(fallbackData.error || "The research desk could not start this nomination.");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorMsg = data?.error?.message || data?.error || "The research desk could not start this nomination.";
+        throw new Error(errorMsg);
       }
 
-      // Kick off research run
-      if (fallbackData.runId) {
-        void fetch("/api/agent/run", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ runId: fallbackData.runId }),
-        }).catch(() => {});
+      const destination = data?.data?.duplicate
+        ? data.data.canonicalUrl
+        : data?.data?.researchUrl || (data?.data?.runId ? `/research/${data.data.runId}` : null);
 
-        window.location.assign(`/research/${fallbackData.runId}`);
-        return;
-      }
-
-      if (fallbackData.projectId) {
-        window.location.assign(`/projects/${fallbackData.projectId}`);
+      if (destination) {
+        window.location.assign(destination);
         return;
       }
 

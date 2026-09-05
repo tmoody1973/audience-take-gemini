@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { computeMarketViability } from "./market-viability-engine";
 
 describe("Market Viability Engine", () => {
-  it("computes 4 dimensions and returns institutional buyer decision matrix", () => {
+  it("computes 4 dimensions from verified sources, crowdfunding, and metrics without inventing buyers or false precision", () => {
     const mockSources = [
       {
         id: "s1",
@@ -30,11 +30,31 @@ describe("Market Viability Engine", () => {
       },
     ];
 
-    const report = computeMarketViability(mockSources, { pledged: 225460, goal: 135000, backers: 3512 }, { views: 1800000, likes: 140000, comments: 9000 });
+    const report = computeMarketViability(
+      mockSources,
+      { pledged: 225460, goal: 135000, backers: 3512 },
+      { views: 1800000, likes: 140000, comments: 9000 },
+      { projectType: "animation" }
+    );
     expect(report).toBeDefined();
-    expect(report.overallScore).toBeGreaterThanOrEqual(70);
+    expect(report.overallScore).toBeGreaterThanOrEqual(60);
     expect(report.dimensions.crossPlatformDiffusion.hasTradePress).toBe(true);
-    expect(report.dimensions.buyerSlateAlignment.topBuyers.length).toBeGreaterThan(0);
-    expect(report.buyerDecisionMatrix.recommendedAction).toBeDefined();
+    expect(report.buyerDecisionMatrix.recommendedAction).toBe("Acquire & Slate for Coproduction");
+  });
+
+  it("abstains from optimistic scores when evidence and crowdfunding are completely absent (EI-1)", () => {
+    const report = computeMarketViability(
+      [],
+      undefined,
+      undefined,
+      { title: "Unknown Indie Film", slug: "unknown-indie", projectType: "short" }
+    );
+
+    expect(report.dimensions.crossPlatformDiffusion.distinctDomainsCount).toBe(0);
+    expect(report.dimensions.crossPlatformDiffusion.score).toBe(0);
+    expect(report.dimensions.budgetToFormatRealism.score).toBe(0);
+    expect(report.audienceHeatScore).toBe(0);
+    expect(report.buyerDecisionMatrix.primaryBuyerTargets).toEqual([]);
+    expect(report.buyerDecisionMatrix.recommendedAction).toBe("Pass / Too Early");
   });
 });

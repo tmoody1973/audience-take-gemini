@@ -19,6 +19,8 @@ import type {
   Correction,
   MediumType,
   LifecycleStage,
+  ProjectMonitor,
+  WebhookReceipt,
 } from "@/domain";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 
@@ -35,6 +37,8 @@ class InMemoryStore {
   creatorUpdates = new Map<string, CreatorUpdate>();
   reports = new Map<string, Report>();
   corrections = new Map<string, Correction>();
+  projectMonitors = new Map<string, ProjectMonitor>();
+  webhookReceipts = new Map<string, WebhookReceipt>();
 
   constructor() {
     this.seedInitialData();
@@ -852,12 +856,56 @@ export const dataRepo = {
     const direct = store.projects.get(id);
     if (direct) return direct;
 
+    // Check alias or title slug match in memory store
+    for (const proj of store.projects.values()) {
+      if (
+        proj.id === id ||
+        proj.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") === id ||
+        (proj.id === "proj-junichiro" && (id === "junichiro-jackson" || id === "junichiro-live-project"))
+      ) {
+        return proj;
+      }
+    }
+
     // Check Firestore directly
     try {
       const db = getAdminFirestore();
       const doc = await db.collection("projects").doc(id).get();
       if (doc.exists) {
-        const p = doc.data() as Project;
+        const raw = doc.data() as any;
+        const p: Project = {
+          id: raw.id || doc.id,
+          identity: raw.identity || {
+            title: raw.title || "Project under research",
+            normalizedUrl: raw.canonicalSourceUrl || "",
+            originalUrl: raw.canonicalSourceUrl || "",
+            medium: raw.projectType || "short",
+            currentStage: "concept",
+            logline: raw.logline || "",
+            creators: raw.creators || [],
+          },
+          publishedCardId: raw.publishedCardId || raw.latestCardVersionId || null,
+          nomination: raw.nomination || {
+            submittedByUid: raw.nominatorUid || "anonymous-scout",
+            nominatorRole: raw.submissionType || "fan",
+            reason: raw.whyItShouldGrow || "",
+            initialLinks: raw.canonicalSourceUrl ? [raw.canonicalSourceUrl] : [],
+            createdAt: raw.createdAt || new Date().toISOString(),
+          },
+          creatorClaim: raw.creatorClaim || {
+            status: raw.claimStatus || "unclaimed",
+          },
+          metrics: raw.metrics || {
+            watchCount: raw.followerCount || 0,
+            payCount: 0,
+            cityDemandCount: 0,
+            backCount: 0,
+            pathwayVotes: [0, 0, 0],
+            cities: {},
+          },
+          createdAt: raw.createdAt || new Date().toISOString(),
+          updatedAt: raw.updatedAt || new Date().toISOString(),
+        };
         store.projects.set(p.id, p);
         return p;
       }
@@ -943,6 +991,9 @@ export const dataRepo = {
       }), { merge: true });
     } catch (err) {
       console.warn("Could not persist scout card to Firestore:", err);
+      if (process.env.NODE_ENV === "production" || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        throw new Error(`Database error: failed to persist scout card: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
   },
 
@@ -989,7 +1040,29 @@ export const dataRepo = {
       const db = getAdminFirestore();
       const doc = await db.collection("researchRuns").doc(runId).get();
       if (doc.exists) {
-        const r = doc.data() as ResearchRunState;
+        const raw = doc.data() as any;
+        const r: ResearchRunState = {
+          id: raw.id || doc.id,
+          projectId: raw.projectId || "",
+          nominatorUid: raw.nominatorUid || raw.requestedByUid || "anonymous-scout",
+          sourceUrl: raw.sourceUrl || raw.canonicalSourceUrl || "",
+          currentStep: raw.currentStep || (raw.status === "complete" ? "complete" : raw.status === "failed" ? "failed" : "fetching"),
+          progressPercent: raw.progressPercent ?? (raw.status === "complete" ? 100 : 10),
+          stepLogs: Array.isArray(raw.stepLogs) && raw.stepLogs.length > 0 ? raw.stepLogs : [
+            {
+              timestamp: new Date().toISOString(),
+              step: "intake",
+              message: "Research run queued.",
+              status: "done",
+            },
+          ],
+          cardId: raw.cardId,
+          partialCard: raw.partialCard,
+          errorMessage: raw.errorMessage || raw.publicFailureMessage,
+          completedAt: raw.completedAt,
+          lease: raw.lease || null,
+          attempt: raw.attempt || raw.attemptCount || 1,
+        };
         store.researchRuns.set(r.id, r);
         return r;
       }
@@ -1187,5 +1260,74 @@ export const dataRepo = {
     } catch {
       return [];
     }
+  },
+
+  async saveProjectMonitor(monitor: ProjectMonitor): Promise<void> {
+    try {
+      const db = getAdminFirestore();
+      await db.collection("projectMonitors").doc(monitor.id).set(monitor);
+    } catch {}
+    store.projectMonitors.set(monitor.id, monitor);
+  },
+
+  async getProjectMonitorById(monitorId: string): Promise<ProjectMonitor | null> {
+    try {
+      const db = getAdminFirestore();
+      const doc = await db.collection("projectMonitors").doc(monitorId).get();
+      if (doc.exists) {
+        const data = doc.data() as ProjectMonitor;
+        return {
+          id: doc.id,
+          projectId: String(data.projectId),
+          queryScope: String(data.queryScope || ""),
+          providerState: data.providerState || "active",
+          createdAt: typeof data.createdAt === "string" ? data.createdAt : new Date().toISOString(),
+          lastCheckedAt: data.lastCheckedAt,
+          lastEventAt: data.lastEventAt,
+          targetUrl: data.targetUrl,
+        };
+      }
+    } catch {}
+    return store.projectMonitors.get(monitorId) || null;
+  },
+
+  async listProjectMonitors(projectId: string): Promise<ProjectMonitor[]> {
+    try {
+      const db = getAdminFirestore();
+      const snap = await db.collection("projectMonitors").where("projectId", "==", projectId).get();
+      if (!snap.empty) {
+        return snap.docs.map((doc) => {
+          const data = doc.data() as ProjectMonitor;
+          return {
+            id: doc.id,
+            projectId: String(data.projectId),
+            queryScope: String(data.queryScope || ""),
+            providerState: data.providerState || "active",
+            createdAt: typeof data.createdAt === "string" ? data.createdAt : new Date().toISOString(),
+            lastCheckedAt: data.lastCheckedAt,
+            lastEventAt: data.lastEventAt,
+            targetUrl: data.targetUrl,
+          };
+        });
+      }
+    } catch {}
+    return Array.from(store.projectMonitors.values()).filter((m) => m.projectId === projectId);
+  },
+
+  async recordWebhookReceipt(receipt: WebhookReceipt): Promise<void> {
+    try {
+      const db = getAdminFirestore();
+      await db.collection("webhookReceipts").doc(receipt.webhookId).set(receipt);
+    } catch {}
+    store.webhookReceipts.set(receipt.webhookId, receipt);
+  },
+
+  async hasWebhookReceipt(webhookId: string): Promise<boolean> {
+    try {
+      const db = getAdminFirestore();
+      const doc = await db.collection("webhookReceipts").doc(webhookId).get();
+      if (doc.exists) return true;
+    } catch {}
+    return store.webhookReceipts.has(webhookId);
   },
 };

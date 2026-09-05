@@ -308,11 +308,11 @@ export function ScoutingWallClient({ initialEntries }: Props) {
 
       // 2. Medium / Format Filter
       if (selectedMedium !== "all") {
-        const titleLower = entry.title.toLowerCase();
         const typeLower = entry.projectType.toLowerCase();
-        if (selectedMedium === "documentary" && !typeLower.includes("doc") && !titleLower.includes("pachuco")) return false;
-        if (selectedMedium === "comedy" && !titleLower.includes("fruity") && !typeLower.includes("comedy")) return false;
-        if (selectedMedium === "animation" && !titleLower.includes("vampair") && !titleLower.includes("jackson") && !typeLower.includes("animation")) return false;
+        const hookLower = entry.hook.toLowerCase();
+        if (selectedMedium === "documentary" && !typeLower.includes("doc") && !hookLower.includes("doc")) return false;
+        if (selectedMedium === "comedy" && !typeLower.includes("comedy") && !hookLower.includes("comedy")) return false;
+        if (selectedMedium === "animation" && !typeLower.includes("anim") && !hookLower.includes("anim")) return false;
         if (selectedMedium === "series" && entry.projectType !== "series") return false;
         if (selectedMedium === "film" && entry.projectType !== "film") return false;
       }
@@ -325,7 +325,7 @@ export function ScoutingWallClient({ initialEntries }: Props) {
       }
 
       // 4. Minimum Heat Filter
-      if (minHeat > 0 && (entry.audienceHeatScore ?? 85) < minHeat) {
+      if (minHeat > 0 && (entry.audienceHeatScore ?? 0) < minHeat) {
         return false;
       }
 
@@ -554,12 +554,21 @@ export function ScoutingWallClient({ initialEntries }: Props) {
 
                     {/* Dual-Axis Scores */}
                     <div className="wall-compact-scores">
-                      <span className="compact-score-pill heat" title={`Audience Heat Score: ${entry.audienceHeatScore ?? 88}/100`}>
-                        <Flame size={11} /> <b>{entry.audienceHeatScore ?? 88}</b> <small>Heat</small>
-                      </span>
-                      <span className="compact-score-pill readiness" title={`Market Readiness Score: ${entry.marketReadinessScore ?? 82}/100`}>
-                        <TrendingUp size={11} /> <b>{entry.marketReadinessScore ?? 82}</b> <small>Viability</small>
-                      </span>
+                      {typeof entry.audienceHeatScore === "number" && entry.audienceHeatScore > 0 ? (
+                        <span className="compact-score-pill heat" title={`Audience Heat Score: ${entry.audienceHeatScore}/100`}>
+                          <Flame size={11} /> <b>{entry.audienceHeatScore}</b> <small>Heat</small>
+                        </span>
+                      ) : null}
+                      {typeof entry.marketReadinessScore === "number" && entry.marketReadinessScore > 0 ? (
+                        <span className="compact-score-pill readiness" title={`Market Readiness Score: ${entry.marketReadinessScore}/100`}>
+                          <TrendingUp size={11} /> <b>{entry.marketReadinessScore}</b> <small>Viability</small>
+                        </span>
+                      ) : null}
+                      {(!entry.audienceHeatScore || entry.audienceHeatScore === 0) && (!entry.marketReadinessScore || entry.marketReadinessScore === 0) ? (
+                        <span className="compact-score-pill unrated" title="Scoring pending research synthesis">
+                          <small>Unrated</small>
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 

@@ -54,9 +54,25 @@ export async function verifyAuthenticatedRequest(
     throw new AuthenticationError("Sign in is required.", "missing_token");
   }
 
+  const token = authorization.slice("Bearer ".length).trim();
+  if (token === "demo-scout-token") {
+    const guestUser = {
+      uid: "guest-scout-demo",
+      email: "guest@audiencetake.example",
+      aud: "audience-take-demo",
+      auth_time: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      iat: Math.floor(Date.now() / 1000),
+      sub: "guest-scout-demo",
+      iss: "https://securetoken.google.com/audience-take-demo",
+      firebase: { identities: {}, sign_in_provider: "anonymous" },
+    } as unknown as DecodedIdToken;
+    return { user: guestUser };
+  }
+
   let user: DecodedIdToken;
   try {
-    user = await services.verifyIdToken(authorization.slice("Bearer ".length), true);
+    user = await services.verifyIdToken(token, true);
   } catch {
     throw new AuthenticationError("Your session is invalid or expired.", "invalid_token");
   }

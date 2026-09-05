@@ -12,7 +12,10 @@ import {
 } from "../../../features/scout-card/data";
 import { ScoutCard } from "../../../features/scout-card/scout-card";
 
-type ProjectPageProps = { params: Promise<{ slug: string }> };
+type ProjectPageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ view?: string }>;
+};
 
 const PROJECT_ROUTE_ALIASES: Readonly<Record<string, string>> = {
   // The preserved research card still treats the exact Junichiro identity as
@@ -51,8 +54,14 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   };
 }
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
+export default async function ProjectPage({ params, searchParams }: ProjectPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const initialView =
+    resolvedSearchParams?.view === "pro" || resolvedSearchParams?.view === "professional"
+      ? "pro"
+      : "discover";
+
   const aliasedSlug = PROJECT_ROUTE_ALIASES[slug];
   if (aliasedSlug) permanentRedirect(`/projects/${aliasedSlug}`);
   const card = await loadCardForRequest(slug);
@@ -76,7 +85,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <>
       <SiteHeader />
-      <ScoutCard card={card} livingUpdates={livingUpdates} scoutBrief={scoutBrief} />
+      <ScoutCard
+        card={card}
+        livingUpdates={livingUpdates}
+        scoutBrief={scoutBrief}
+        initialView={initialView}
+      />
     </>
   );
 }

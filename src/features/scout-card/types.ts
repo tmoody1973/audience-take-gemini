@@ -39,6 +39,9 @@ export type ScoutPathway = {
   openQuestions: string[];
   confidence: Confidence;
   nextExperiment: NextExperiment;
+  prerequisites?: string[];
+  owner?: string;
+  blockers?: string[];
 };
 
 export type EvidenceClaim = {
@@ -62,6 +65,7 @@ export type SourceLedgerEntry = {
   sourceTier?: SourceTier;
   supportsClaimIds: string[];
   externalCommentary: boolean;
+  excerpt?: string;
 };
 
 export type TrailerCriticAnalysis = {

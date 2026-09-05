@@ -44,6 +44,9 @@ export const EvidenceItemSchema = z.object({
   excerpt: z.string().min(5).max(1000),
   verified: z.boolean().default(true),
   timestamp: z.string().optional(),
+  publishedAt: z.string().nullable().optional(),
+  retrievedAt: z.string().optional(),
+  supportingClaimIds: z.array(z.string()).optional(),
 });
 
 export const BoundedExperimentSchema = z.object({
@@ -58,6 +61,9 @@ export const PathwayHypothesisSchema = z.object({
   targetAudience: z.string().min(5).max(400),
   risksAndUncertainties: z.array(z.string().min(5).max(300)).min(1).max(5),
   nextBoundedExperiment: BoundedExperimentSchema,
+  prerequisites: z.array(z.string().min(3).max(300)).max(5).optional(),
+  owner: z.string().max(100).optional(),
+  blockers: z.array(z.string().min(3).max(300)).max(5).optional(),
 });
 
 export const DecisionBriefSchema = z.object({
@@ -65,6 +71,9 @@ export const DecisionBriefSchema = z.object({
   coreHook: z.string().min(5).max(300),
   comparativeTitles: z.array(z.string().min(1).max(100)).min(1).max(5),
   primaryRisk: z.string().min(5).max(300),
+  triageSummary: z.string().max(800).optional(),
+  materialUncertainty: z.string().max(400).optional(),
+  nextDiligenceStep: z.string().max(400).optional(),
 });
 
 export const IndustryLensSchema = z.object({
@@ -164,23 +173,23 @@ export const LLMTrailerCriticSchema = z.object({
       label: z.string().min(2).max(100),
       description: z.string().min(5).max(300),
     })
-  ).min(2).max(10),
+  ).min(0).max(10),
   craftAnalysis: z.object({
-    cinematography: z.string().min(10).max(600),
-    soundAndScore: z.string().min(10).max(600),
-    editingAndPacing: z.string().min(10).max(600),
-    graphicsAndText: z.string().min(10).max(600),
+    cinematography: z.string().min(3).max(600),
+    soundAndScore: z.string().min(3).max(600),
+    editingAndPacing: z.string().min(3).max(600),
+    graphicsAndText: z.string().min(3).max(600),
   }),
   persuasionAndEmotion: z.object({
-    emotionalArc: z.string().min(10).max(600),
-    targetPersona: z.string().min(10).max(600),
-    callToAction: z.string().min(5).max(400),
+    emotionalArc: z.string().min(3).max(600),
+    targetPersona: z.string().min(3).max(600),
+    callToAction: z.string().min(3).max(400),
   }),
   criticMatrix: z.object({
-    clarity: z.number().min(1).max(10),
-    toneConsistency: z.number().min(1).max(10),
-    visualOriginality: z.number().min(1).max(10),
-    narrativeTension: z.number().min(1).max(10),
+    clarity: z.number().min(0).max(10),
+    toneConsistency: z.number().min(0).max(10),
+    visualOriginality: z.number().min(0).max(10),
+    narrativeTension: z.number().min(0).max(10),
   }),
   limitations: z.string().min(10).max(600),
 });

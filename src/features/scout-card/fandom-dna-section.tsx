@@ -80,9 +80,9 @@ export function FandomDnaSection({
               <div className="score-explanation-body">
                 <p><strong>Audience Heat Formula:</strong></p>
                 <ul>
-                  <li><strong>Cross-Platform Diffusion:</strong> {marketViability.dimensions?.crossPlatformDiffusion?.explanation || "Measured via organic view velocity and cross-domain fan discovery."}</li>
-                  <li><strong>Budget &amp; Capitalization:</strong> {marketViability.dimensions?.budgetToFormatRealism?.capitalizationRatio || "100%"} funded ({marketViability.dimensions?.budgetToFormatRealism?.explanation || "Independent grassroots backing."}).</li>
-                  <li><strong>Discretionary Spend ARPU:</strong> {marketViability.dimensions?.commercialCeilingTam?.averageSpendPerBacker || "$45.00 / backer"} (Derived from verified crowdfunding commitment and merchandise propensity).</li>
+                  <li><strong>Cross-Platform Diffusion:</strong> {marketViability.dimensions?.crossPlatformDiffusion?.explanation || "Awaiting cross-domain diffusion metrics."}</li>
+                  <li><strong>Budget &amp; Capitalization:</strong> {marketViability.dimensions?.budgetToFormatRealism?.capitalizationRatio ? `${marketViability.dimensions.budgetToFormatRealism.capitalizationRatio} funded` : "Capitalization unverified"} ({marketViability.dimensions?.budgetToFormatRealism?.explanation || "Awaiting budget data"}).</li>
+                  <li><strong>Discretionary Spend ARPU:</strong> {marketViability.dimensions?.commercialCeilingTam?.averageSpendPerBacker || "N/A"} {marketViability.dimensions?.commercialCeilingTam?.averageSpendPerBacker ? "(Derived from verified crowdfunding commitment)" : "(No crowdfunding data)"}</li>
                 </ul>
               </div>
             </details>
@@ -97,16 +97,16 @@ export function FandomDnaSection({
               <b>{marketViability.marketReadinessScore}</b>
               <small>/100</small>
             </div>
-            <p>{marketViability.tier} · Bounded by co-production studio attachment.</p>
+            <p>{marketViability.tier} · {marketViability.buyerDecisionMatrix?.recommendedAction || "Evaluation in progress"}.</p>
             <details className="score-explanation-disclosure">
               <summary><span className="info-pill-badge">? How is this calculated?</span></summary>
               <div className="score-explanation-body">
                 <p><strong>4-Dimension Buyer Sanity Check:</strong></p>
                 <ul>
-                  <li><strong>Cross-Platform Diffusion (30%):</strong> Score {marketViability.dimensions?.crossPlatformDiffusion?.score || 75}/100 across {marketViability.dimensions?.crossPlatformDiffusion?.distinctDomainsCount || 3} independent domains {marketViability.dimensions?.crossPlatformDiffusion?.hasTradePress ? "(Verified trade press present)" : ""}.</li>
-                  <li><strong>Budget Realism (25%):</strong> Score {marketViability.dimensions?.budgetToFormatRealism?.score || 80}/100. Cost: {marketViability.dimensions?.budgetToFormatRealism?.estCostPerMinute || "Standard indie tier"}. Studio Attachment: {marketViability.dimensions?.budgetToFormatRealism?.studioAttachment || "Independent Production"}.</li>
-                  <li><strong>Buyer Slate Fit (25%):</strong> Score {marketViability.dimensions?.buyerSlateAlignment?.score || 85}/100 with {(marketViability.dimensions?.buyerSlateAlignment?.topBuyers || ["Target Buyers"]).slice(0, 3).join(", ")}.</li>
-                  <li><strong>Commercial Ceiling (20%):</strong> Score {marketViability.dimensions?.commercialCeilingTam?.score || 80}/100 ({marketViability.dimensions?.commercialCeilingTam?.estTam || "Independent Market TAM"}).</li>
+                  <li><strong>Cross-Platform Diffusion (30%):</strong> Score {marketViability.dimensions?.crossPlatformDiffusion?.score ?? 0}/100 across {marketViability.dimensions?.crossPlatformDiffusion?.distinctDomainsCount ?? 0} independent domains {marketViability.dimensions?.crossPlatformDiffusion?.hasTradePress ? "(Verified trade press present)" : "(No trade press verified)"}.</li>
+                  <li><strong>Budget Realism (25%):</strong> Score {marketViability.dimensions?.budgetToFormatRealism?.score ?? 0}/100. Cost: {marketViability.dimensions?.budgetToFormatRealism?.estCostPerMinute || "Unverified"}. Studio Attachment: {marketViability.dimensions?.budgetToFormatRealism?.studioAttachment || "None verified"}.</li>
+                  <li><strong>Buyer Slate Fit (25%):</strong> Score {marketViability.dimensions?.buyerSlateAlignment?.score ?? 0}/100 {marketViability.dimensions?.buyerSlateAlignment?.topBuyers && marketViability.dimensions.buyerSlateAlignment.topBuyers.length > 0 ? `with ${marketViability.dimensions.buyerSlateAlignment.topBuyers.slice(0, 3).join(", ")}` : "(No buyer attachments verified)"}.</li>
+                  <li><strong>Commercial Ceiling (20%):</strong> Score {marketViability.dimensions?.commercialCeilingTam?.score ?? 0}/100 ({marketViability.dimensions?.commercialCeilingTam?.estTam || "TAM unquantified"}).</li>
                 </ul>
               </div>
             </details>
@@ -114,13 +114,15 @@ export function FandomDnaSection({
 
           <div className="dual-axis-decision-card">
             <span>Executive Acquisition Matrix</span>
-            <strong>{marketViability.buyerDecisionMatrix?.recommendedAction || "Acquisition Viable"}</strong>
-            <p>{marketViability.buyerDecisionMatrix?.commercialCeilingVerdict || "High commercial potential."}</p>
-            <div className="buyer-tags">
-              {(marketViability.buyerDecisionMatrix?.primaryBuyerTargets || ["PBS", "Specialty Theatrical", "Educational"]).map((b) => (
-                <span key={b} className="buyer-tag">{b}</span>
-              ))}
-            </div>
+            <strong>{marketViability.buyerDecisionMatrix?.recommendedAction || "Review Required"}</strong>
+            <p>{marketViability.buyerDecisionMatrix?.commercialCeilingVerdict || "Commercial ceiling pending additional evidence."}</p>
+            {marketViability.buyerDecisionMatrix?.primaryBuyerTargets && marketViability.buyerDecisionMatrix.primaryBuyerTargets.length > 0 ? (
+              <div className="buyer-tags">
+                {marketViability.buyerDecisionMatrix.primaryBuyerTargets.map((b) => (
+                  <span key={b} className="buyer-tag">{b}</span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -129,7 +131,7 @@ export function FandomDnaSection({
       {livingDossier ? (
         <details className="living-dossier-disclosure">
           <summary>
-            <span className="living-dossier-badge">Living Dossier Status: Live Verified</span>
+            <span className="living-dossier-badge">Living Dossier: {livingDossier.status === "live_verified" ? "Monitored updates" : livingDossier.status === "milestone_triggered" ? "Milestone Triggered" : "Update Pending"}</span>
             <span className="living-dossier-milestone">Latest Milestone: {livingDossier.latestMilestone || "Initial Scout Verification"}</span>
             <span className="living-dossier-toggle">View auto-re-scouting changelog <b>+</b></span>
           </summary>
@@ -202,13 +204,22 @@ export function FandomDnaSection({
             <span className="fandom-card-kicker">Audience Cohort Comps</span>
             <h3>Demographic Affinity</h3>
             <div className="comps-tags-wrap">
-              {(fandomDna.demographicAndFandomComps || ["Independent Cinema Fans", "Documentary Filmgoers", "Cultural Enthusiasts"]).map((comp, idx) => (
-                <span key={idx} className="fandom-comp-pill">{comp}</span>
-              ))}
+              {fandomDna.demographicAndFandomComps && fandomDna.demographicAndFandomComps.length > 0 ? (
+                fandomDna.demographicAndFandomComps.map((comp, idx) => (
+                  <span key={idx} className="fandom-comp-pill">{comp}</span>
+                ))
+              ) : (
+                <small className="fandom-pending-note">No comparative cohorts identified from comment corpus.</small>
+              )}
             </div>
             <div className="anti-brigade-callout">
-              <small>Anti-Brigade Sanity Check:</small>
-              <p>{fandomDna.audienceResonanceSummary || "Authentic audience engagement signals verified across public channels."}</p>
+              <small>Comment sample observations:</small>
+              <p>{fandomDna.audienceResonanceSummary || "Observations limited to sampled public commentary."}</p>
+              {fandomDna.samplingLimitations ? (
+                <small style={{ display: "block", marginTop: "0.35rem", color: "var(--ink-subtle, #737373)", fontStyle: "italic" }}>
+                  {fandomDna.samplingLimitations}
+                </small>
+              ) : null}
             </div>
           </div>
         </div>

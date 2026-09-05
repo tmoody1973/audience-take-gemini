@@ -5,6 +5,7 @@ import { parallelClient } from "@/services/parallel-client";
 import { POST as handleParallelWebhook } from "@/app/api/webhooks/parallel/route";
 import { NextRequest } from "next/server";
 import type { Project, ResearchRunState } from "@/domain";
+import * as genaiClient from "@/lib/google/genai-client";
 
 describe("Parallel End-to-End Autonomous Agent Workflow", () => {
   const projectId = `proj-parallel-e2e-${Date.now()}`;
@@ -66,15 +67,17 @@ describe("Parallel End-to-End Autonomous Agent Workflow", () => {
     await dataRepo.saveResearchRun(run);
 
     // 3. Spy on Parallel Extract, Search, and Monitor
-    const extractSpy = vi.spyOn(parallelClient, "extract").mockResolvedValueOnce({
-      extract_id: "ext_e2e_test_123",
-      results: [
-        {
-          url: nonVideoKickstarterUrl,
-          title: "Neo Tokyo Pilot Kickstarter Campaign",
-          markdown: "# Neo Tokyo Cyberpunk Pilot\n\n**Raised €320,000 of €150,000 goal (213% funded)** with 4,100 verified backers.\n\nCreator: Elena Rostova. Co-production with Studio Neon.",
-        },
-      ],
+    const extractSpy = vi.spyOn(parallelClient, "extract").mockImplementation(async (opts) => {
+      return {
+        extract_id: `ext_e2e_test_${Date.now()}`,
+        results: opts.urls.map((u) => ({
+          url: u,
+          title: u === nonVideoKickstarterUrl ? "Neo Tokyo Pilot Kickstarter Campaign" : "Animation Magazine Slate",
+          markdown: u === nonVideoKickstarterUrl
+            ? "# Neo Tokyo Cyberpunk Pilot\n\n**Raised €320,000 of €150,000 goal (213% funded)** with 4,100 verified backers.\n\nCreator: Elena Rostova. Co-production with Studio Neon."
+            : "Studio Neon and Elena Rostova secure European distribution rights.",
+        })),
+      };
     });
 
     const searchSpy = vi.spyOn(parallelClient, "search").mockResolvedValueOnce({
@@ -100,11 +103,83 @@ describe("Parallel End-to-End Autonomous Agent Workflow", () => {
       created_at: new Date().toISOString(),
     });
 
+    // Mock Gemini Synthesis with grounded proposal derived from Parallel Extract and Search sources
+    vi.spyOn(genaiClient, "getGoogleGenAIClient").mockReturnValue({
+      models: {
+        generateContent: vi.fn().mockResolvedValue({
+          text: JSON.stringify({
+            projectTitle: "Neo Tokyo Cyberpunk Pilot",
+            medium: "pilot",
+            stage: "crowdfunding",
+            creators: ["Elena Rostova", "Studio Neon"],
+            whatWeKnow: [
+              "Raised €320,000 of €150,000 goal with 4,100 verified fan backers on Kickstarter.",
+              "Studio Neon and Elena Rostova secured European distribution rights.",
+              "Prime Video and Adult Swim expressed interest in adult animation series development.",
+            ],
+            whatWereChecking: [
+              "Final co-production contract execution timeline.",
+              "Linear broadcast window exclusivity rights.",
+            ],
+            whyScouted: "Groundbreaking 2D animation with immense community backing and international trade accolades.",
+            sourceMedia: [],
+            evidenceLedger: [],
+            pathways: [
+              {
+                title: "European Co-Production Series Expansion",
+                mediumFitRationale: "The proof-of-concept pilot naturally supports an episodic adult animated series.",
+                targetAudience: "Fans of mature cyberpunk and indie anime.",
+                risksAndUncertainties: ["High per-episode production cost."],
+                nextBoundedExperiment: {
+                  name: "Script Table Read",
+                  description: "Host private industry reading for distributor feedback.",
+                  successMetric: "Secure broadcaster LOI.",
+                },
+              },
+              {
+                title: "Direct-to-Backer Digital Premiere",
+                mediumFitRationale: "Strong crowdfunding base provides guaranteed launch viewership.",
+                targetAudience: "Kickstarter backers and indie animation supporters.",
+                risksAndUncertainties: ["Digital piracy risk."],
+                nextBoundedExperiment: {
+                  name: "Backer Screening Test",
+                  description: "Stream private pilot screener to top-tier backers.",
+                  successMetric: "90% positive audience survey completion.",
+                },
+              },
+              {
+                title: "Curated International Festival Circuit",
+                mediumFitRationale: "Festival accolades will validate commercial acquisition appetite.",
+                targetAudience: "Festival programmers and acquisitions scouts.",
+                risksAndUncertainties: ["Long festival review cycles."],
+                nextBoundedExperiment: {
+                  name: "Festival Entry Round",
+                  description: "Submit completed pilot to official competitive selection.",
+                  successMetric: "Official festival selection.",
+                },
+              },
+            ],
+            decisionBrief: {
+              logline: "An investigative cyber-thriller anime series pilot set in a near-future metropolis.",
+              coreHook: "High-craft 2D animation with organic European and global co-production momentum.",
+              comparativeTitles: ["Akira", "Ghost in the Shell", "Cyberpunk: Edgerunners"],
+              primaryRisk: "Budget scaling and co-production timeline delays.",
+            },
+            industryLens: {
+              marketContext: "Surging buyer appetite for mature, creator-led anime outside traditional production committees.",
+              comparables: ["Castlevania", "Arcane"],
+              realisticConstraints: "Animation lead time requires robust cash-flow management.",
+            },
+          }),
+        }),
+      },
+    } as any);
+
     // 4. Execute the Autonomous Scout Research Agent Engine
     const completedRun = await executeScoutResearchRun(runId);
 
-    // 5. Verify Step 1: Parallel Extract was called for non-video URL
-    expect(extractSpy).toHaveBeenCalledTimes(1);
+    // 5. Verify Step 1 & 2: Parallel Extract was called for non-video URL and candidate sources
+    expect(extractSpy).toHaveBeenCalled();
     expect(extractSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         urls: [nonVideoKickstarterUrl],

@@ -214,6 +214,15 @@ function sanitizeRawProposal(raw: any): any {
         clone.decisionBrief.comparativeTitles = ["Independent Screen Breakthroughs"];
       }
     }
+    if (typeof clone.decisionBrief.triageSummary === "string") {
+      clone.decisionBrief.triageSummary = clone.decisionBrief.triageSummary.trim().slice(0, 600);
+    }
+    if (typeof clone.decisionBrief.materialUncertainty === "string") {
+      clone.decisionBrief.materialUncertainty = clone.decisionBrief.materialUncertainty.trim().slice(0, 400);
+    }
+    if (typeof clone.decisionBrief.nextDiligenceStep === "string") {
+      clone.decisionBrief.nextDiligenceStep = clone.decisionBrief.nextDiligenceStep.trim().slice(0, 400);
+    }
   }
 
   // Normalize industryLens
@@ -266,7 +275,10 @@ function sanitizeRawProposal(raw: any): any {
             name: "Audience Pulse Check",
             description: "Release a focused sample to evaluate engagement.",
             successMetric: "Achieve strong audience retention and positive feedback."
-          }
+          },
+          prerequisites: ["Audience discovery milestones"],
+          owner: "Creator / Producer",
+          blockers: ["Initial distribution commitments"]
         };
       }
       let risks = Array.isArray(p.risksAndUncertainties) ? p.risksAndUncertainties : [String(p.risksAndUncertainties || "Market competition")];
@@ -274,16 +286,46 @@ function sanitizeRawProposal(raw: any): any {
       if (risks.length === 0) risks = ["Navigating distribution competition and audience discovery."];
 
       const exp = p.nextBoundedExperiment && typeof p.nextBoundedExperiment === "object" ? p.nextBoundedExperiment : {};
+      
+      const prerequisites = Array.isArray(p.prerequisites)
+        ? p.prerequisites.map((pr: any) => String(pr).trim().slice(0, 200)).filter((pr: string) => pr.length > 0).slice(0, 5)
+        : undefined;
+      const owner = typeof p.owner === "string" && p.owner.trim() ? p.owner.trim().slice(0, 100) : undefined;
+      const blockers = Array.isArray(p.blockers)
+        ? p.blockers.map((b: any) => String(b).trim().slice(0, 200)).filter((b: string) => b.length > 0).slice(0, 5)
+        : undefined;
+
+      let title = p.title ? String(p.title).trim().slice(0, 150) : `Strategic Pathway ${idx + 1}`;
+      if (title.length < 5) title = `Strategic Pathway ${idx + 1}`;
+
+      let mediumFitRationale = p.mediumFitRationale ? String(p.mediumFitRationale).trim().slice(0, 600) : "Tailored strategic expansion rationale.";
+      if (mediumFitRationale.length < 10) mediumFitRationale = "Tailored strategic expansion rationale.";
+
+      let targetAudience = p.targetAudience ? String(p.targetAudience).trim().slice(0, 400) : "Independent cinema audience.";
+      if (targetAudience.length < 5) targetAudience = "Independent cinema audience.";
+
+      let expName = exp.name ? String(exp.name).trim().slice(0, 150) : "Next Milestone Test";
+      if (expName.length < 3) expName = "Next Milestone Test";
+
+      let expDesc = exp.description ? String(exp.description).trim().slice(0, 500) : "Execute a focused proof of concept milestone.";
+      if (expDesc.length < 10) expDesc = "Execute a focused proof of concept milestone.";
+
+      let expMetric = exp.successMetric ? String(exp.successMetric).trim().slice(0, 300) : "Achieve verified audience demand signals.";
+      if (expMetric.length < 5) expMetric = "Achieve verified audience demand signals.";
+
       return {
-        title: p.title ? String(p.title).trim().slice(0, 150) : `Strategic Pathway ${idx + 1}`,
-        mediumFitRationale: p.mediumFitRationale ? String(p.mediumFitRationale).trim().slice(0, 600) : "Tailored strategic expansion rationale.",
-        targetAudience: p.targetAudience ? String(p.targetAudience).trim().slice(0, 400) : "Independent cinema audience.",
+        title,
+        mediumFitRationale,
+        targetAudience,
         risksAndUncertainties: risks,
         nextBoundedExperiment: {
-          name: exp.name ? String(exp.name).trim().slice(0, 150) : "Next Milestone Test",
-          description: exp.description ? String(exp.description).trim().slice(0, 500) : "Execute a focused proof of concept milestone.",
-          successMetric: exp.successMetric ? String(exp.successMetric).trim().slice(0, 300) : "Achieve verified audience demand signals."
-        }
+          name: expName,
+          description: expDesc,
+          successMetric: expMetric,
+        },
+        prerequisites,
+        owner,
+        blockers,
       };
     });
   }

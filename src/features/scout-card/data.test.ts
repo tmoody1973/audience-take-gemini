@@ -5,6 +5,8 @@ import canonicalFallbackFixture from "./fixtures/junichiro-card-fallback.json";
 import canonicalPartialFixture from "./fixtures/junichiro-card-partial.json";
 import canonicalUnavailableFixture from "./fixtures/junichiro-card-unavailable-media.json";
 import {
+  canonicalizeUrl,
+  findSupportingSourceIds,
   getScoutCardFixture,
   JUNICHIO_LIVE_SLUG,
   LIVE_REFRESH_FALLBACK_LABEL,
@@ -168,3 +170,132 @@ describe("loadPublishedScoutCard", () => {
     }
   });
 });
+
+describe("Package B: Grounded citations and provenance preservation (EI-2)", () => {
+  it("canonicalizes URLs by removing tracking params, trailing slashes, and fragments", () => {
+    expect(canonicalizeUrl("https://example.com/article/?utm_source=twitter&utm_medium=social#heading"))
+      .toBe("https://example.com/article");
+    expect(canonicalizeUrl("https://kickstarter.com/projects/creator/title/"))
+      .toBe("https://kickstarter.com/projects/creator/title");
+  });
+
+  it("grounds claim citations deterministically regardless of source array order (order invariance)", () => {
+    const sources = [
+      {
+        id: "source-1",
+        title: "Kickstarter Campaign for Brooklyn Anime",
+        excerpt: "Junichiro Jackson is an anime inspired series created by Brooklyn artist Chaz Bottoms.",
+        url: "https://kickstarter.com/projects/chaz/junichiro",
+      },
+      {
+        id: "source-2",
+        title: "TeamTO Official Studio Co-Production",
+        excerpt: "Paris animation studio TeamTO announces partnership on independent screen proof of concept.",
+        url: "https://teamto.com/news/junichiro",
+      },
+    ];
+
+    const claimBrooklyn = "The animated series was created by Brooklyn-based director Chaz Bottoms.";
+    const claimTeamTO = "Production partner TeamTO provided studio co-production services.";
+    const claimUnrelated = "Features an orchestral symphony recorded in Vienna with 80 musicians.";
+
+    // Test forward order
+    const matchBrooklyn1 = findSupportingSourceIds(claimBrooklyn, sources);
+    const matchTeamTO1 = findSupportingSourceIds(claimTeamTO, sources);
+    const matchUnrelated1 = findSupportingSourceIds(claimUnrelated, sources);
+
+    expect(matchBrooklyn1).toEqual(["source-1"]);
+    expect(matchTeamTO1).toEqual(["source-2"]);
+    expect(matchUnrelated1).toEqual([]); // Truthful abstention: no false citations
+
+    // Test reverse order (verifying order invariance)
+    const reversedSources = [...sources].reverse();
+    const matchBrooklyn2 = findSupportingSourceIds(claimBrooklyn, reversedSources);
+    const matchTeamTO2 = findSupportingSourceIds(claimTeamTO, reversedSources);
+    const matchUnrelated2 = findSupportingSourceIds(claimUnrelated, reversedSources);
+
+    expect(matchBrooklyn2).toEqual(["source-1"]);
+    expect(matchTeamTO2).toEqual(["source-2"]);
+    expect(matchUnrelated2).toEqual([]);
+  });
+
+  it("truthfully abstains with status inference and no sourceIds when claim has no supporting source passages", async () => {
+    const database = fakeDatabase({
+      projects: [{
+        id: "proj-unsupported-claim",
+        value: {
+          slug: "proj-unsupported-claim",
+          publicationStatus: "published",
+          moderationState: "clear",
+          createdAt: "2026-08-20T10:00:00Z",
+          updatedAt: "2026-08-21T10:00:00Z",
+        },
+      }],
+      cards: [{
+        id: "card-proj-unsupported-claim-v1",
+        value: {
+          id: "card-proj-unsupported-claim-v1",
+          projectId: "proj-unsupported-claim",
+          slug: "proj-unsupported-claim",
+          whatWeKnow: [
+            "Features a 40-piece choir recorded at Abbey Road Studios in London.",
+          ],
+          whyScouted: "Innovative soundscape with classical crossover.",
+          evidenceLedger: [
+            {
+              id: "ev-1",
+              sourceUrl: "https://youtube.com/watch?v=12345",
+              title: "Short Animation Teaser",
+              publisher: "Indie Creator",
+              claimType: "observation",
+              excerpt: "A simple visual animatic showing character line art in black and white.",
+              verified: true,
+              publishedAt: "2026-08-15T12:00:00Z",
+              retrievedAt: "2026-08-20T10:00:00Z",
+            },
+          ],
+          pathways: [
+            {
+              title: "Independent Festival Showcase",
+              mediumFitRationale: "Strong candidate for animated short programming blocks.",
+              targetAudience: "Film festival attendees.",
+              risksAndUncertainties: ["Festival submission competition."],
+              nextBoundedExperiment: {
+                name: "Festival Submission",
+                description: "Submit to animation category.",
+                successMetric: "One festival acceptance.",
+              },
+            },
+          ],
+          decisionBrief: {
+            logline: "An animated proof of concept.",
+            coreHook: "Visual art style.",
+            comparativeTitles: ["Independent Short"],
+            primaryRisk: "Financing completion.",
+          },
+          industryLens: {
+            marketContext: "Short form animation.",
+            comparables: ["Independent Animation"],
+            realisticConstraints: "Budget limits.",
+          },
+        },
+      }],
+    });
+
+    const card = await loadPublishedScoutCard("proj-unsupported-claim", database);
+    expect(card).not.toBeNull();
+
+    // Verify claim about Abbey Road choir abstained truthfully
+    const abbeyRoadClaim = card?.evidenceClaims.find((c) => c.statement.includes("Abbey Road"));
+    expect(abbeyRoadClaim).toBeDefined();
+    expect(abbeyRoadClaim?.status).toBe("inference");
+    expect(abbeyRoadClaim?.sourceIds).toEqual([]); // No fake citations!
+    expect(abbeyRoadClaim?.qualification).toContain("Synthesized observation without direct passage match");
+
+    // Verify preserved real timestamps (NOT new Date())
+    expect(card?.sourceLedger[0].publishedAt).toBe("2026-08-15T12:00:00Z");
+    expect(card?.sourceLedger[0].retrievedAt).toBe("2026-08-20T10:00:00Z");
+    expect(card?.publishedAt).toBe("2026-08-21T10:00:00Z");
+  });
+});
+

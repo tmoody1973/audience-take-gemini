@@ -54,11 +54,11 @@ export function IndustryLens({ card }: { card: ScoutCard }) {
               </tr>
               <tr>
                 <th scope="row">Signal limits</th>
-                {card.pathways.map((pathway) => <td key={pathway.id}><List items={card.industryLens.signalLimitations} empty="No limitations supplied." /></td>)}
+                {card.pathways.map((pathway) => <td key={pathway.id}><List items={card.industryLens?.signalLimitations ?? []} empty="No limitations supplied." /></td>)}
               </tr>
               <tr>
                 <th scope="row">Creator claim</th>
-                {card.pathways.map((pathway) => <td key={pathway.id}><strong>{card.industryLens.creatorClaimStatus} by creator</strong></td>)}
+                {card.pathways.map((pathway) => <td key={pathway.id}><strong>{card.industryLens?.creatorClaimStatus ?? card.claimStatus} by creator</strong></td>)}
               </tr>
               <tr>
                 <th scope="row">Next experiment</th>
@@ -80,9 +80,9 @@ export function IndustryLens({ card }: { card: ScoutCard }) {
           </table>
         </div>
         <div className="lens-notes">
-          <div><h3>Cross-pathway risks</h3><List items={card.industryLens.risks} empty="No risks supplied." /></div>
-          <div><h3>Unresolved questions</h3><List items={card.industryLens.unresolvedQuestions} empty="No questions supplied." /></div>
-          <div><h3>Comparables</h3>{card.industryLens.comparables.length ? card.industryLens.comparables.map((item) => <div key={item.title}><strong>{item.title}</strong><p>{item.relevance}</p></div>) : <p className="lens-empty">No verified comparables were published for this card.</p>}</div>
+          <div><h3>Cross-pathway risks</h3><List items={card.industryLens?.risks ?? []} empty="No risks supplied." /></div>
+          <div><h3>Unresolved questions</h3><List items={card.industryLens?.unresolvedQuestions ?? []} empty="No questions supplied." /></div>
+          <div><h3>Comparables</h3>{card.industryLens?.comparables?.length ? card.industryLens.comparables.map((item) => <div key={item.title}><strong>{item.title}</strong><p>{item.relevance}</p></div>) : <p className="lens-empty">No verified comparables were published for this card.</p>}</div>
         </div>
       </details>
     </section>

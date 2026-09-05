@@ -88,16 +88,32 @@ export async function generateScoutBriefTranscript(
 }
 
 export function createFallbackTranscript(card: ScoutCard): ScoutBriefTranscript {
-  const title = card.title || "Junichiro Jackson";
-  const hook = card.hook || "A high-octane indie animation project exhibiting extraordinary grassroots fanaticism.";
-  const heat = card.marketViability?.audienceHeatScore ?? 98;
-  const viability = card.marketViability?.marketReadinessScore ?? 90;
+  const title = card.title || "Independent Screen Project";
+  const hook = card.hook || "An independent screen project in active development and audience scouting.";
+  const format = card.storyContext?.currentFormat || card.projectType || "screen work";
+  const creator = card.creatorContext?.displayName || "Independent Creative Team";
   const pathways = card.pathways || [];
 
-  const p1 = pathways[0]?.label || "Prestige limited anime series for streaming buyers like Adult Swim or Prime Video";
-  const p2 = pathways[1]?.label || "Direct-to-consumer crowdfunded OVA or theatrical special";
-  const p3 = pathways[2]?.label || "Transmedia expansion with an official graphic novel and webcomic franchise";
-  const nextExp = pathways[0]?.nextExperiment?.title || "Package an eight-page series production bible using the existing animation teaser as visual proof, and secure a qualifying European coproduction partner before commissioning a full writer's room.";
+  const p1 = pathways[0]?.label || "Standard episodic series development pathway";
+  const p2 = pathways[1]?.label || "Independent feature film or festival release pathway";
+  const p3 = pathways[2]?.label || "Direct-to-audience digital release or transmedia pathway";
+  const nextExp = pathways[0]?.nextExperiment?.title || "Collect structured audience feedback and proof of concept";
+
+  const supportedClaims = (card.evidenceClaims || []).filter((c) => c.status === "supported");
+  const availableSourceIds = (card.sourceLedger || []).map((s) => s.id);
+  const s1 = availableSourceIds[0] ? [availableSourceIds[0]] : [];
+  const s2 = availableSourceIds[1] ? [availableSourceIds[1]] : s1;
+
+  const c1 = supportedClaims[0]?.id ? [supportedClaims[0].id] : (card.evidenceClaims?.[0]?.id ? [card.evidenceClaims[0].id] : []);
+  const c2 = supportedClaims[1]?.id ? [supportedClaims[1].id] : c1;
+
+  const evidenceCopy = supportedClaims.length > 0
+    ? `Looking at the verified evidence record, our primary sources establish key milestones: ${supportedClaims.slice(0, 2).map((c) => c.statement).join(". ")}. These data points anchor the project's public trajectory.`
+    : "Looking at the current evidence record, verified commercial metrics and financing figures remain unconfirmed at this stage of scouting. The project relies primarily on creative proof of concept and emerging community interest.";
+
+  const uncertaintyCopy = card.pathways?.[0]?.risks?.[0]
+    || card.limitations?.[0]
+    || "Financing commitments, distribution partners, and production scale remain subject to primary diligence.";
 
   return {
     segments: [
@@ -105,54 +121,54 @@ export function createFallbackTranscript(card: ScoutCard): ScoutBriefTranscript 
         order: 1,
         section: "hook",
         speaker: "Scout",
-        text: `Welcome to Audience Take. Today we're breaking down ${title}, a high-octane indie animation project that has exploded across the internet. With over five hundred thousand organic views on its proof-of-concept teaser and an exceptional ${heat} out of 100 Audience Heat rating, this title is exhibiting the kind of grassroots fanaticism that buyers rarely encounter in early-stage development.`,
-        claimIds: ["claim-1"],
-        sourceIds: ["S1"],
+        text: `Welcome to Audience Take. Today we are breaking down ${title}, an independent screen project currently in public development. The creative hook centers on: ${hook} We are evaluating how audience interest and commercial viability align for this title.`,
+        claimIds: c1,
+        sourceIds: s1,
       },
       {
         order: 2,
         section: "project",
         speaker: "Analyst",
-        text: `Right, Scout. What makes ${title} compelling from an institutional perspective is its distinct creative identity: ${hook}. With a Market Viability index of ${viability} out of 100, the creators didn't wait for permission. They proved market appetite by raising over two hundred and twenty thousand euros directly from thousands of verified fan backers on Kickstarter.`,
-        claimIds: ["claim-1", "claim-2"],
-        sourceIds: ["S1", "S2"],
+        text: `That is right, Scout. From a development triage perspective, ${title} is framed as a ${format} originating from ${creator}. Rather than relying on speculative interest, our focus is on concrete creative vision and verified audience engagement.`,
+        claimIds: c1,
+        sourceIds: s1,
       },
       {
         order: 3,
         section: "evidence",
         speaker: "Scout",
-        text: `And the engagement depth is remarkable. When you look at our real-time YouTube comment discourse analysis, audiences aren't just leaving casual compliments. They are dissecting lore, demanding vinyl original soundtrack pressings, asking for physical artbooks, and campaigning for an episodic streaming pickup. The backer cohort demonstrates a high-intent commercial commitment with an average spend exceeding sixty euros per fan.`,
-        claimIds: ["claim-2"],
-        sourceIds: ["S2", "S3"],
+        text: evidenceCopy,
+        claimIds: c2,
+        sourceIds: s2,
       },
       {
         order: 4,
         section: "uncertainty",
         speaker: "Analyst",
-        text: `However, as institutional scouts, we have to evaluate the execution constraints. High-end, frame-by-frame 2D animation carries an estimated unit cost of eighteen to twenty-five thousand euros per screen minute. Scaling an eight-episode series requires roughly four to five million euros in budget. Without an established coproduction studio partner and structured European animation tax credits attached, a single creator studio faces significant operational bottlenecks.`,
-        claimIds: ["claim-3"],
-        sourceIds: ["S3"],
+        text: `As institutional scouts, we have to evaluate execution risks and unknowns honestly. Specifically: ${uncertaintyCopy} Clear rights confirmation and production partnership remain essential diligence checks before committing resources.`,
+        claimIds: c2,
+        sourceIds: s2,
       },
       {
         order: 5,
         section: "pathways",
         speaker: "Scout",
-        text: `That's exactly why the Gemini Agent synthesized three distinct, bounded development pathways: first, ${p1}; second, ${p2}; and third, ${p3}.`,
-        claimIds: ["claim-1", "claim-3"],
-        sourceIds: ["S1", "S3"],
+        text: `That is why the evidence ledger outlines three distinct development pathways: first, ${p1}; second, ${p2}; and third, ${p3}. Each pathway tests a different commercial and creative format.`,
+        claimIds: c1,
+        sourceIds: s1,
       },
       {
         order: 6,
         section: "next_move",
         speaker: "Analyst",
-        text: `The clear next move for studio executives and financiers is bounded: ${nextExp} That limits upfront risk while preserving the creator's signature cultural gravity.`,
-        claimIds: ["claim-3"],
-        sourceIds: ["S3"],
+        text: `The recommended next bounded experiment is clear: ${nextExp}. This provides a low-risk diligence step to validate audience traction before entering formal development commitments.`,
+        claimIds: c1,
+        sourceIds: s1,
       },
     ],
-    limitations: [
-      "Production timeline subject to studio co-financing agreements.",
-      "International rights distribution depends on animation tax credit approvals.",
+    limitations: card.limitations?.length ? card.limitations : [
+      "Production timeline and rights subject to primary diligence verification.",
+      "Evaluation based on public sources and submitted media.",
     ],
     disclosure: "AI-generated Scout Brief based on verified public evidence from the published Scout Card.",
   };

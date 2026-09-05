@@ -9,9 +9,11 @@ export interface FandomDnaAnalysis {
     critiques: string[];
   };
   demographicAndFandomComps: string[];
-  organicVsBrigadedFlag: "organic_broad_base" | "concentrated_cult" | "brigaded_fandom";
+  organicVsBrigadedFlag: "organic_broad_base" | "concentrated_cult" | "brigaded_fandom" | "insufficient_sample";
   audienceResonanceSummary: string;
   sentimentScore: number; // 0-100
+  sampleSize: number;
+  samplingLimitations?: string;
   analyzedAt: string;
 }
 
@@ -20,80 +22,29 @@ export async function analyzeAudienceComments(
   projectTitle: string = "Independent Screen Project",
   genre: string = "Independent Screen Narrative"
 ): Promise<FandomDnaAnalysis> {
-  const titleLower = projectTitle.toLowerCase();
-  const genreLower = genre.toLowerCase();
-  const isDoc = genreLower.includes("doc") || titleLower.includes("valdez") || titleLower.includes("pachuco");
-  const isComedy = genreLower.includes("comedy") || genreLower.includes("live-action") || titleLower.includes("fruity");
-  const isGoth = genreLower.includes("gothic") || titleLower.includes("vampair");
-
-  const fallbackAnalysis: FandomDnaAnalysis = {
-    characterAndLoreObsessions: isDoc
-      ? [
-          `Audience reverence for the historical subject and central themes of "${projectTitle}"`,
-          "Engagement with restored archival footage and historical community commentary",
-          "Praise for authentic cultural and educational significance",
-        ]
-      : isComedy
-      ? [
-          `Strong reaction to dynamic character chemistry and comedic timing in "${projectTitle}"`,
-          "High viral engagement with relatable situational humor and modern themes",
-          "Enthusiasm for the creative ensemble and lead performances",
-        ]
-      : isGoth
-      ? [
-          "Extreme focus on adversarial character chemistry and stylized dark fantasy lore",
-          "Widespread excitement over the original theatrical musical score",
-          "Praise for expressive animation and shadow lighting",
-        ]
-      : [
-          `Enthusiastic reception for the visual direction and worldbuilding of "${projectTitle}"`,
-          "Praise for pacing, soundtrack choices, and lead character dynamics",
-          "Anticipation for expanded episodic narrative or full-length release",
-        ],
-    merchandiseDemandSignals: isDoc
-      ? [
-          "High demand for educational and institutional screening licenses",
-          "Community screening requests from cultural and historical organizations",
-        ]
-      : isComedy
-      ? [
-          "Audience demand for live screening events and branded creator merchandise",
-          "Direct engagement with digital social updates and behind-the-scenes content",
-        ]
-      : [
-          "Audience demand for physical collector editions, OST pressings, and apparel",
-          "Crowdfunding community engagement with physical reward tiers",
-        ],
+  const honestAbstention: FandomDnaAnalysis = {
+    characterAndLoreObsessions: [],
+    merchandiseDemandSignals: [],
     toneAndWritingReception: {
-      praise: isDoc
-        ? ["Compelling historical depth and emotional resonance", "Authentic civil rights and cultural preservation"]
-        : isComedy
-        ? ["Brisk comedic pacing and modern dialogue", "Authentic humor without heavy-handed tropes"]
-        : ["Kinetic pacing and distinct visual identity", "High production craft relative to independent scope"],
-      critiques: [
-        "Audience eagerness for broader distribution and full release",
-      ],
+      praise: [],
+      critiques: [],
     },
-    demographicAndFandomComps: isDoc
-      ? ["DOCUMENTARY FILMGOERS", "HISTORICAL & CULTURAL AUDIENCES", "ACADEMIC & PUBLIC SCREENING COMMUNITIES"]
-      : isComedy
-      ? ["DIGITAL COMEDY AUDIENCE", "GEN-Z & MILLENNIAL STREAMERS", "INDIE COMEDY ENTHUSIASTS"]
-      : isGoth
-      ? ["Hazbin Hotel / SpindleHorse Productions", "Lackadaisy", "Castlevania"]
-      : ["INDEPENDENT SCREEN AUDIENCES", "CULT GENRE COMMUNITIES", "YA STREAMING VIEWERS"],
-    organicVsBrigadedFlag: "concentrated_cult",
-    audienceResonanceSummary: `High grassroots resonance for "${projectTitle}" driven by authentic audience connection to the creative vision and distinct tone.`,
-    sentimentScore: 92,
+    demographicAndFandomComps: [],
+    organicVsBrigadedFlag: "insufficient_sample",
+    audienceResonanceSummary: "Insufficient public audience comments available for grounded fandom analysis.",
+    sentimentScore: 0,
+    sampleSize: 0,
+    samplingLimitations: "No public comments available to sample.",
     analyzedAt: new Date().toISOString(),
   };
 
   if (!comments || comments.length === 0) {
-    return fallbackAnalysis;
+    return honestAbstention;
   }
 
   const ai = getGoogleGenAIClient();
   if (!ai) {
-    return fallbackAnalysis;
+    return honestAbstention;
   }
 
   const commentCorpus = comments
@@ -135,20 +86,30 @@ Provide a rigorous, unbiased Fandom DNA analysis in JSON format with this exact 
 
     if (response.text) {
       const parsed = JSON.parse(response.text);
+      const sampleSlice = comments.slice(0, 50);
       return {
-        characterAndLoreObsessions: parsed.characterAndLoreObsessions || fallbackAnalysis.characterAndLoreObsessions,
-        merchandiseDemandSignals: parsed.merchandiseDemandSignals || fallbackAnalysis.merchandiseDemandSignals,
-        toneAndWritingReception: parsed.toneAndWritingReception || fallbackAnalysis.toneAndWritingReception,
-        demographicAndFandomComps: parsed.demographicAndFandomComps || fallbackAnalysis.demographicAndFandomComps,
-        organicVsBrigadedFlag: parsed.organicVsBrigadedFlag || "concentrated_cult",
-        audienceResonanceSummary: parsed.audienceResonanceSummary || fallbackAnalysis.audienceResonanceSummary,
-        sentimentScore: typeof parsed.sentimentScore === "number" ? parsed.sentimentScore : 94,
+        characterAndLoreObsessions: Array.isArray(parsed.characterAndLoreObsessions) ? parsed.characterAndLoreObsessions : [],
+        merchandiseDemandSignals: Array.isArray(parsed.merchandiseDemandSignals) ? parsed.merchandiseDemandSignals : [],
+        toneAndWritingReception: {
+          praise: Array.isArray(parsed.toneAndWritingReception?.praise) ? parsed.toneAndWritingReception.praise : [],
+          critiques: Array.isArray(parsed.toneAndWritingReception?.critiques) ? parsed.toneAndWritingReception.critiques : [],
+        },
+        demographicAndFandomComps: Array.isArray(parsed.demographicAndFandomComps) ? parsed.demographicAndFandomComps : [],
+        organicVsBrigadedFlag: ["organic_broad_base", "concentrated_cult", "brigaded_fandom"].includes(parsed.organicVsBrigadedFlag)
+          ? parsed.organicVsBrigadedFlag
+          : "concentrated_cult",
+        audienceResonanceSummary: typeof parsed.audienceResonanceSummary === "string"
+          ? parsed.audienceResonanceSummary
+          : "Audience sentiment analyzed from public comment sample.",
+        sentimentScore: typeof parsed.sentimentScore === "number" ? Math.max(0, Math.min(100, Math.round(parsed.sentimentScore))) : 0,
+        sampleSize: sampleSlice.length,
+        samplingLimitations: `Analysis based on a sample of ${sampleSlice.length} public YouTube comments; does not represent total market demographics.`,
         analyzedAt: new Date().toISOString(),
       };
     }
   } catch (err) {
-    console.warn("Gemini audience comment analysis error, using verified synthesis:", err);
+    console.warn("Gemini audience comment analysis error, abstaining from ungrounded claims:", err);
   }
 
-  return fallbackAnalysis;
+  return honestAbstention;
 }

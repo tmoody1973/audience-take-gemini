@@ -157,14 +157,20 @@ export function TrailerCritic({
                     </dl>
                     <div className="trailer-beats-wrap">
                       <span className="trailer-beats-kicker">Timestamped narrative beats</span>
-                      <ol className="trailer-beats">
-                        {analysis.structuralNarrative.beats.map((beat) => (
-                          <li key={`${beat.start}-${beat.end}-${beat.label}`}>
-                            <span>{beat.start}–{beat.end}</span>
-                            <div><strong>{beat.label}</strong><p>{beat.observation}</p><small>{beat.modality}</small></div>
-                          </li>
-                        ))}
-                      </ol>
+                      {analysis.structuralNarrative.beats.length > 0 ? (
+                        <ol className="trailer-beats">
+                          {analysis.structuralNarrative.beats.map((beat) => (
+                            <li key={`${beat.start}-${beat.end}-${beat.label}`}>
+                              <span>{beat.start}–{beat.end}</span>
+                              <div><strong>{beat.label}</strong><p>{beat.observation}</p><small>{beat.modality}</small></div>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <p className="trailer-beats-empty" style={{ padding: "0.75rem 0", color: "var(--ink-subtle, #737373)", fontStyle: "italic", fontSize: "0.875rem" }}>
+                          No audiovisual timestamped beats available for this media source.
+                        </p>
+                      )}
                     </div>
                   </section>
 

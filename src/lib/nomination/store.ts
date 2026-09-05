@@ -76,18 +76,51 @@ export function createFirestoreNominationStore(database: Firestore): NominationS
           createdAt: now,
           updatedAt: now,
         });
+        const initialLinks = [
+          nomination.canonicalUrl,
+          ...(nomination.canonicalMediaUrl ? [nomination.canonicalMediaUrl] : []),
+          ...nomination.canonicalSupportingUrls,
+        ];
         transaction.create(projectRef, {
+          id: projectRef.id,
           slug,
           title: "Project under research",
           canonicalSourceUrl: nomination.canonicalUrl,
           sourceFingerprint: nomination.fingerprint,
           projectType: "unknown",
           submissionType: nomination.submissionType,
-          // A creator-mode nomination is provenance, not authorization. A real
-          // pending claim begins only when the signed-in user submits the
-          // separate post-publication Request to Claim workflow.
-          claimStatus: "unclaimed",
+          identity: {
+            title: "Project under research",
+            normalizedUrl: nomination.canonicalUrl,
+            originalUrl: nomination.canonicalUrl,
+            medium: "short",
+            currentStage: "concept",
+            logline: nomination.whyItShouldGrow.slice(0, 140),
+            creators: [],
+          },
+          nomination: {
+            submittedByUid: nomination.nominatorUid,
+            nominatorRole: nomination.submissionType,
+            reason: nomination.whyItShouldGrow,
+            initialLinks,
+            audienceNotes: nomination.audienceFit,
+            formatNotes: nomination.suggestedFormat,
+            createdAt: acceptedAt,
+          },
+          creatorClaim: {
+            status: nomination.submissionType === "creator" ? "pending" : "unclaimed",
+          },
+          metrics: {
+            watchCount: 0,
+            payCount: 0,
+            cityDemandCount: 0,
+            backCount: 0,
+            pathwayVotes: [0, 0, 0],
+            cities: {},
+          },
+          claimStatus: nomination.submissionType === "creator" ? "pending" : "unclaimed",
           publicationStatus: "pending",
+          publishedCardId: null,
           cardCompleteness: "pending",
           latestRunId: runRef.id,
           researchVersion: 1,
@@ -152,9 +185,30 @@ export function createFirestoreNominationStore(database: Firestore): NominationS
           });
         }
         transaction.create(runRef, {
+          id: runRef.id,
           projectId: projectRef.id,
           nominationId: nominationRef.id,
+          nominatorUid: nomination.nominatorUid,
           requestedByUid: nomination.nominatorUid,
+          sourceUrl: nomination.canonicalUrl,
+          currentStep: "fetching",
+          progressPercent: 10,
+          stepLogs: [
+            {
+              timestamp: acceptedAt,
+              step: "intake",
+              message: "Nomination accepted and queued for research.",
+              status: "done",
+            },
+            {
+              timestamp: acceptedAt,
+              step: "fetching",
+              message: `Fetching public webpage text from ${nomination.canonicalUrl}...`,
+              status: "in_progress",
+            },
+          ],
+          lease: null,
+          attempt: 1,
           status: "queued",
           currentStage: 1,
           completedStages: [],

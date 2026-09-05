@@ -59,7 +59,7 @@ export function AddMediaDialog({
         onClick={() => setIsOpen(true)}
         aria-haspopup="dialog"
       >
-        + Add Video / Devlog
+        + Suggest a source
       </button>
 
       {isOpen && (
@@ -72,7 +72,7 @@ export function AddMediaDialog({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="add-media-header">
-              <h3 id="add-media-title">Add Project Media / Devlog</h3>
+              <h3 id="add-media-title">Suggest a Project Source</h3>
               <button
                 type="button"
                 className="close-btn"
@@ -84,8 +84,8 @@ export function AddMediaDialog({
             </div>
 
             <p className="add-media-desc">
-              Submit a new video URL (YouTube) to expand this project&apos;s media arsenal. 
-              The Scout Agent will verify metadata and append it to the Living Dossier changelog.
+              Suggest a verified video or primary source URL to support this project&apos;s dossier. 
+              Community source submissions enter review and will not alter the published Scout Card until approved.
             </p>
 
             <form onSubmit={handleSubmit} className="add-media-form">

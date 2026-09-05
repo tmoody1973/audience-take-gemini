@@ -55,6 +55,9 @@ export interface EvidenceItem {
   excerpt: string;
   verified: boolean;
   timestamp?: string;
+  publishedAt?: string | null;
+  retrievedAt?: string;
+  supportingClaimIds?: string[];
 }
 
 export interface BoundedExperiment {
@@ -69,6 +72,9 @@ export interface PathwayHypothesis {
   targetAudience: string;
   risksAndUncertainties: string[];
   nextBoundedExperiment: BoundedExperiment;
+  prerequisites?: string[];
+  owner?: string;
+  blockers?: string[];
 }
 
 export interface DecisionBrief {
@@ -76,6 +82,9 @@ export interface DecisionBrief {
   coreHook: string;
   comparativeTitles: string[];
   primaryRisk: string;
+  triageSummary?: string;
+  materialUncertainty?: string;
+  nextDiligenceStep?: string;
 }
 
 export interface IndustryLens {
@@ -287,6 +296,13 @@ export interface Correction {
   publishedAt: string;
 }
 
+export interface ExecutionLease {
+  workerId: string;
+  acquiredAt: string;
+  expiresAt: string;
+  attempt: number;
+}
+
 export interface ResearchRunState {
   id: string;
   projectId: string;
@@ -304,4 +320,26 @@ export interface ResearchRunState {
   partialCard?: Partial<ScoutCard>;
   errorMessage?: string;
   completedAt?: string;
+  lease?: ExecutionLease | null;
+  attempt?: number;
+}
+
+export interface ProjectMonitor {
+  id: string; // monitor_id from Parallel
+  projectId: string;
+  queryScope: string;
+  providerState: "active" | "pending" | "disabled";
+  createdAt: string;
+  lastCheckedAt?: string;
+  lastEventAt?: string;
+  targetUrl?: string;
+}
+
+export interface WebhookReceipt {
+  webhookId: string;
+  receivedAt: string;
+  eventType: string;
+  monitorId?: string;
+  projectId?: string;
+  processed: boolean;
 }

@@ -10,7 +10,8 @@ import { nominationInputSchema } from "@/lib/nomination/contract";
 import { acceptNomination, type ResearchDispatcher } from "@/lib/nomination/service";
 import { createFirestoreNominationStore, type NominationStore } from "@/lib/nomination/store";
 import { UnsafeUrlError, type SafeUrlPolicy } from "@/lib/nomination/url-policy";
-import { createCloudTasksResearchDispatcher } from "@/lib/tasks/cloud-tasks";
+import { CloudTasksConfigurationError, createCloudTasksResearchDispatcher } from "@/lib/tasks/cloud-tasks";
+import { executeScoutResearchRun } from "@/agent/agent-runner";
 import { trustedVercelClientIp } from "@/lib/trust/client-ip";
 import { consumeRateLimits, RATE_LIMITS, RateLimitError } from "@/lib/trust/rate-limit";
 
@@ -70,13 +71,18 @@ export async function handleNominationPost(request: NextRequest, dependencies: R
       (!dependencies.store || dependencies.consumeLimits ? getAdminFirestore() : null);
     if (dependencies.consumeLimits || !dependencies.store) {
       const clientIp = (dependencies.resolveClientIp ?? trustedVercelClientIp)(request);
+      const isGuest = user.uid === "guest-scout-demo";
+      const principalUid = isGuest
+        ? (clientIp ? `guest:${clientIp}` : `guest:${request.headers.get("x-guest-id") || Math.random().toString(36).slice(2, 9)}`)
+        : user.uid;
+
       await (dependencies.consumeLimits ?? consumeRateLimits)(database!, [
         {
-          uid: user.uid,
-          policy: RATE_LIMITS.nomination,
+          uid: principalUid,
+          policy: isGuest ? RATE_LIMITS.nominationIp : RATE_LIMITS.nomination,
           idempotencyKey: parsed.data.submittedUrl,
         },
-        ...(clientIp
+        ...(clientIp && !isGuest
           ? [{
               uid: clientIp,
               policy: RATE_LIMITS.nominationIp,

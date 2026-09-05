@@ -46,27 +46,12 @@ export function computeMarketViability(
   videoMetrics?: { views: number; likes: number; comments: number },
   context?: { projectType?: string; title?: string; slug?: string }
 ): MarketViabilityReport {
-  // Determine genre / project context
-  const titleLower = (context?.title || "").toLowerCase();
-  const slugLower = (context?.slug || "").toLowerCase();
-  const typeLower = (context?.projectType || "").toLowerCase();
-
-  const isDocumentary =
-    typeLower.includes("doc") ||
-    titleLower.includes("valdez") ||
-    titleLower.includes("pachuco") ||
-    slugLower.includes("pachuco");
-
-  const isGothic =
-    titleLower.includes("vampair") ||
-    slugLower.includes("tfn0k") ||
-    titleLower.includes("dracula");
-
-  const isLiveActionComedy =
-    typeLower.includes("comedy") ||
-    typeLower.includes("live-action") ||
-    titleLower.includes("fruity") ||
-    slugLower.includes("25f9r");
+  // Determine genre / project context from explicit project metadata only — never title/slug keywords
+  const projectType = (context?.projectType || "").toLowerCase();
+  const isDocumentary = projectType.includes("doc");
+  const isAnimation = projectType.includes("anim");
+  const isComedy = projectType.includes("comedy");
+  const isSeries = projectType.includes("series");
 
   // 1. Cross-Platform Diffusion Calculation
   const domains = new Set<string>();
@@ -89,174 +74,114 @@ export function computeMarketViability(
     }
   });
 
-  const domainCount = Math.max(domains.size, sources.length > 0 ? Math.min(sources.length, 6) : 3);
-  let diffusionScore = Math.min(95, domainCount * 12 + (hasTradePress ? 28 : 0));
-  diffusionScore = Math.max(65, diffusionScore);
+  const domainCount = domains.size;
+  const diffusionScore = Math.min(95, domainCount * 15 + (hasTradePress ? 25 : 0));
 
-  // 2. Budget & Unit Economics
-  const pledged = crowdfunding?.pledged || (isDocumentary ? 85000 : isLiveActionComedy ? 45000 : 225460);
-  const goal = crowdfunding?.goal || (isDocumentary ? 75000 : isLiveActionComedy ? 35000 : 135000);
-  const backers = crowdfunding?.backers || (isDocumentary ? 1450 : isLiveActionComedy ? 980 : 3512);
-  const capRatio = Math.round((pledged / Math.max(1, goal)) * 100);
+  // 2. Budget & Unit Economics (Only when empirical crowdfunding data exists)
+  const hasCrowdfunding = Boolean(crowdfunding && (crowdfunding.pledged > 0 || crowdfunding.goal > 0));
+  const pledged = crowdfunding?.pledged ?? 0;
+  const goal = crowdfunding?.goal ?? 0;
+  const backers = crowdfunding?.backers ?? 0;
+  const capRatio = goal > 0 ? Math.round((pledged / goal) * 100) : 0;
 
-  const budgetScore = capRatio >= 150 ? 88 : capRatio >= 100 ? 82 : 68;
+  const budgetScore = hasCrowdfunding
+    ? capRatio >= 150
+      ? 88
+      : capRatio >= 100
+      ? 82
+      : capRatio > 0
+      ? 60
+      : 30
+    : 0;
 
-  // 3. Buyer Slate Alignment
-  const buyerScore = hasTradePress ? 94 : 86;
+  // 3. Buyer Slate Alignment (Based strictly on trade evidence)
+  const buyerScore = hasTradePress ? 85 : domainCount >= 3 ? 50 : 25;
 
-  let topBuyers: string[];
-  let genreFitRationale: string;
-  let buyerRiskFactors: string[];
-  let commercialCeilingVerdict: string;
-  let estCostPerMinute: string;
-  let studioAttachment: string;
-  let estTam: string;
-  let recommendedAction: "Acquire & Slate for Coproduction" | "Track Pilot Delivery" | "Pass / Too Early";
+  let topBuyers: string[] = [];
+  let genreFitRationale = "Commercial and buyer interest require dedicated trade discovery and verified co-production inquiries.";
+  let buyerRiskFactors: string[] = [
+    "Commercial financing and distribution terms unconfirmed",
+    "Independent rights chain requires legal diligence"
+  ];
+  let commercialCeilingVerdict = "Early-stage independent project; commercial ceiling contingent on verified festival premiere or co-production attachment.";
+  let estCostPerMinute: string | undefined = undefined;
+  let studioAttachment: string | undefined = undefined;
+  let estTam: string | undefined = undefined;
+  let recommendedAction: "Acquire & Slate for Coproduction" | "Track Pilot Delivery" | "Pass / Too Early" = "Track Pilot Delivery";
 
-  const isAnime =
-    typeLower.includes("anime") ||
-    titleLower.includes("junichiro") ||
-    slugLower.includes("junichiro");
+  if (hasTradePress && (isDocumentary || isAnimation || isComedy || isSeries)) {
+    genreFitRationale = isDocumentary
+      ? "Trade coverage indicates public broadcast and institutional interest for verified non-fiction subject matter."
+      : isAnimation
+      ? "Documented indie animation traction with dedicated cult audience followings."
+      : isComedy
+      ? "Documented digital comedy audience response across niche demographics."
+      : "Documented independent series proof-of-concept traction.";
 
-  const isAnimation = typeLower.includes("animat") || isGothic || isAnime;
-
-  if (isDocumentary) {
-    topBuyers = [
-      "PBS / POV / American Masters",
-      "HBO Documentary Films",
-      "Netflix Documentaries",
-      "Criterion Channel / Janus Films",
-      "Latino Public Broadcasting (LPB)"
-    ];
-    genreFitRationale =
-      "High institutional prestige and broadcast appetite for foundational American civil rights and cultural biography documentaries with multi-platform educational licensing.";
     buyerRiskFactors = [
-      "Educational and festival windowing dependencies",
-      "Broadcast clearance for archival materials"
+      "Production timeline contingent on partner pipeline throughput",
+      "Rights clearance and talent exclusivity require verification"
     ];
-    commercialCeilingVerdict =
-      "High-prestige cultural biography with strong festival award trajectory, institutional educational licensing, and dedicated multigenerational Latino viewership.";
-    estCostPerMinute = "$3,500–$6,000 / min (Archival & Oral History Feature Doc)";
-    studioAttachment = "El Teatro Campesino Archives / LPB / PBS CPB";
-    estTam = "$3.5M–$8M (Public Broadcast + Educational + Global SVOD Licensing)";
-    recommendedAction = "Acquire & Slate for Coproduction";
-  } else if (isGothic) {
-    topBuyers = [
-      "Adult Swim / Max",
-      "A24 / SpindleHorse Hybrid",
-      "Netflix YA Animation",
-      "Crunchyroll"
-    ];
-    genreFitRationale =
-      "High historical appetite for YA Gothic / Dark Fantasy musical animation following commercial breakouts like Hazbin Hotel and Castlevania.";
-    buyerRiskFactors = [
-      "Episodic schedule contingent on studio pipeline throughput",
-      "Musical rights clearance for extended distribution"
-    ];
-    commercialCeilingVerdict =
-      "High-yield transmedia breakout with immediate merchandise revenue and dedicated YA demographic anchor.";
-    estCostPerMinute = "€18,000–€25,000 / min (High-End 2D Hand-Drawn)";
-    studioAttachment = "The Hive Studio (Formal Co-Production Partner)";
-    estTam = "€4.5M–€12M (Streaming Licensing + High-Margin Physical Merch)";
-    recommendedAction = "Acquire & Slate for Coproduction";
-  } else if (isLiveActionComedy) {
-    topBuyers = [
-      "Channel 4 / BBC Three",
-      "RTÉ Storyland / Comedy Hub",
-      "Hulu / FX Comedy",
-      "CBC Gem / Digital Originals",
-      "Max Comedy"
-    ];
-    genreFitRationale =
-      "Surging demand across UK, Irish, and North American buyers for sharp, fast-paced queer digital comedy with proven web-to-series escalation precedent (Broad City, Insecure, Such Brave Girls).";
-    buyerRiskFactors = [
-      "Transitioning from micro-format social sketches to structured 22-minute narrative arcs",
-      "Broadcast commissioning cycle lead times"
-    ];
-    commercialCeilingVerdict =
-      "High-velocity digital comedy breakout with immediate social virality, dedicated young-adult LGBTQ+ audience loyalty, and clear linear/SVOD half-hour series progression.";
-    estCostPerMinute = "$2,500–$5,000 / min (Indie Live-Action Digital Series)";
-    studioAttachment = "Haly Sisters Productions / Independent Digital Collective";
-    estTam = "$2.5M–$6M (Broadcast Format Optioning + SVOD Streaming + Digital Advertising)";
-    recommendedAction = "Track Pilot Delivery";
-  } else if (isAnime) {
-    topBuyers = [
-      "Adult Swim / Toonami",
-      "Crunchyroll / Sony",
-      "Netflix Anime",
-      "Prime Video Animation"
-    ];
-    genreFitRationale =
-      "Surging global demand for hip-hop infused anime and urban fantasy following the legacy of Samurai Champloo and Boondocks.";
-    buyerRiskFactors = [
-      "Episodic production ramp constraints",
-      "Music licensing synchronization overhead"
-    ];
-    commercialCeilingVerdict =
-      "High-yield transmedia breakout with immediate manga/merchandise revenue and global youth demographic anchor.";
-    estCostPerMinute = "$18,000–$24,000 / min (2D Action Anime)";
-    studioAttachment = "Independent Animation Studio";
-    estTam = "$5M–$15M (Global SVOD Licensing + Manga Publishing + Merch)";
-    recommendedAction = "Acquire & Slate for Coproduction";
-  } else {
-    topBuyers = [
-      "A24",
-      "Neon",
-      "MUBI",
-      "Hulu / Searchlight",
-      "Netflix Independent"
-    ];
-    genreFitRationale =
-      "Growing specialty and SVOD buyer appetite for auteur-driven independent screen IP with proven grassroots digital and community backing.";
-    buyerRiskFactors = [
-      "Financing packaging timeline and distribution windowing negotiations",
-      "Festival competition and marketing discoverability"
-    ];
-    commercialCeilingVerdict =
-      "Independent screen breakout with strong festival potential, boutique theatrical distribution, and global SVOD acquisition pathways.";
-    estCostPerMinute = "$5,000–$12,000 / min (Independent Live-Action Screen Production)";
-    studioAttachment = "Independent Production Collective";
-    estTam = "$3M–$10M (Global SVOD Licensing + Specialty Theatrical / VOD)";
-    recommendedAction = "Track Pilot Delivery";
+
+    commercialCeilingVerdict = "Documented trade interest indicates viable specialty acquisition or streaming license pathway.";
+    recommendedAction = capRatio >= 100 ? "Acquire & Slate for Coproduction" : "Track Pilot Delivery";
+  } else if (!hasTradePress && !hasCrowdfunding && domainCount <= 1) {
+    recommendedAction = "Pass / Too Early";
+    commercialCeilingVerdict = "Insufficient public evidence or trade momentum to establish commercial buyer viability.";
   }
 
   // 4. Commercial Ceiling & ARPU
-  const arpu = (pledged / Math.max(1, backers)).toFixed(2);
-  const commercialScore = parseFloat(arpu) > 40 ? 90 : 76;
+  const arpu = backers > 0 ? (pledged / backers).toFixed(2) : "0.00";
+  const commercialScore = hasCrowdfunding && parseFloat(arpu) > 40
+    ? 80
+    : hasCrowdfunding && parseFloat(arpu) > 0
+    ? 60
+    : (videoMetrics?.views ?? 0) > 100000
+    ? 50
+    : 20;
 
-  // Blended Scores
+  // Blended Scores — No artificial floors
   const marketReadinessScore = Math.round(
-    diffusionScore * 0.3 + budgetScore * 0.25 + buyerScore * 0.25 + commercialScore * 0.2
+    diffusionScore * 0.35 + budgetScore * 0.25 + buyerScore * 0.25 + commercialScore * 0.15
   );
-  const audienceHeatScore = Math.min(98, Math.round(
-    (videoMetrics?.views ? Math.min(50, Math.log10(videoMetrics.views) * 10) : 40) +
-    (capRatio > 100 ? 35 : 20) +
-    (parseFloat(arpu) > 40 ? 15 : 5)
-  ));
+
+  const viewsCount = videoMetrics?.views ?? 0;
+  const audienceHeatScore = viewsCount > 0 || hasCrowdfunding
+    ? Math.min(98, Math.round(
+        (viewsCount > 0 ? Math.min(50, Math.log10(viewsCount) * 10) : 10) +
+        (capRatio > 100 ? 30 : capRatio > 0 ? 15 : 0) +
+        (parseFloat(arpu) > 40 ? 15 : 0)
+      ))
+    : 0;
+
   const overallScore = Math.round((marketReadinessScore * 0.55) + (audienceHeatScore * 0.45));
 
   return {
     overallScore,
     audienceHeatScore,
     marketReadinessScore,
-    tier: overallScore >= 80 ? "Category Breakout" : "Niche Cult IP",
+    tier: overallScore >= 75 ? "Category Breakout" : overallScore >= 40 ? "Niche Cult IP" : "Early Development",
     dimensions: {
       crossPlatformDiffusion: {
         score: diffusionScore,
         distinctDomainsCount: domainCount,
         hasTradePress,
         explanation: hasTradePress
-          ? "Independent coverage verified across institutional industry outlets and verified audience channels."
-          : "Traction currently concentrated within native social channels; growing cross-platform discovery.",
+          ? "Independent coverage verified across institutional industry outlets."
+          : domainCount > 0
+          ? `Discovered across ${domainCount} independent web domain${domainCount === 1 ? "" : "s"}.`
+          : "No external web domain coverage discovered yet.",
       },
       budgetToFormatRealism: {
         score: budgetScore,
-        estCostPerMinute,
-        capitalizationRatio: `${capRatio}% funded ($${pledged.toLocaleString()} of $${goal.toLocaleString()})`,
-        studioAttachment,
-        explanation: isDocumentary
-          ? "Core production funded through festival and institutional grants; finishing funds earmarked for festival launch."
-          : `Crowdfunding covers initial proof-of-concept; full episodic season requires studio co-production partner.`,
+        estCostPerMinute: estCostPerMinute || "Unverified from public sources",
+        capitalizationRatio: hasCrowdfunding
+          ? `${capRatio}% funded ($${pledged.toLocaleString()} of $${goal.toLocaleString()})`
+          : "No public crowdfunding financial data verified",
+        studioAttachment: studioAttachment || "None verified",
+        explanation: hasCrowdfunding
+          ? `Public campaign: $${pledged.toLocaleString()} raised from ${backers.toLocaleString()} backers.`
+          : "Financing and budget specifics are unverified from public sources.",
       },
       buyerSlateAlignment: {
         score: buyerScore,
@@ -265,11 +190,11 @@ export function computeMarketViability(
       },
       commercialCeilingTam: {
         score: commercialScore,
-        estTam,
-        averageSpendPerBacker: `$${arpu} / backer`,
-        explanation: isDocumentary
-          ? "High institutional lifetime value spanning educational distribution, academic syndication, and broadcast licensing."
-          : "Demonstrated audience willingness to monetize across digital licensing and physical companion releases.",
+        estTam: estTam || "Unverified / Subject to Distribution Deal",
+        averageSpendPerBacker: hasCrowdfunding ? `$${arpu} / backer` : "N/A",
+        explanation: hasCrowdfunding
+          ? `Demonstrated audience financial commitment: average pledge of $${arpu} across ${backers.toLocaleString()} backers.`
+          : "No transaction or pledge commitments available to calculate discretionary spend.",
       },
     },
     buyerDecisionMatrix: {
