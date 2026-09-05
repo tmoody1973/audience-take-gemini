@@ -2,6 +2,8 @@
 
 This guide provides a plain-English, step-by-step walkthrough to inspect and verify all audio improvements implemented in accordance with `AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF.md`.
 
+Live Cloud Run Service: [https://audience-take-web-866111144888.us-central1.run.app](https://audience-take-web-866111144888.us-central1.run.app)
+
 ---
 
 ## 1. What Was Fixed (Summary of Changes)
@@ -19,7 +21,9 @@ This guide provides a plain-English, step-by-step walkthrough to inspect and ver
 
 ## 2. Live Verification Test Cases
 
-### Test Case 1: Junichiro Jackson (`/scout/junichiro-jackson`)
+### Test Case 1: Junichiro Jackson (`/projects/junichiro-live-project`)
+
+Direct link: [https://audience-take-web-866111144888.us-central1.run.app/projects/junichiro-live-project](https://audience-take-web-866111144888.us-central1.run.app/projects/junichiro-live-project)
 
 **Objective**: Verify dual-audience script brevity, natural pacing, and absence of fake metrics.
 
