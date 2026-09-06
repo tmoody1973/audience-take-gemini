@@ -29,6 +29,7 @@ import { CitationDrawer } from "./citation-drawer";
 import { AudienceActionStrip } from "./audience-action-strip";
 import { PathwayVotingSection } from "./pathway-voting-section";
 import { ProfessionalBriefView } from "./professional-brief-view";
+import { CreatorResponseBanner } from "./creator-response-banner";
 
 function formatDate(value: string | undefined | null): string {
   if (!value) return "Recently published";
@@ -614,6 +615,9 @@ export function ScoutCard({
               cardStructureStatus={cardStructureStatus}
               cardEvidenceLabel={cardEvidenceLabel}
             />
+
+            {/* Creator Verification & Statement Banner */}
+            <CreatorResponseBanner card={card} />
 
             {/* 2. Primary Grid (Video + Scouting Status) */}
             <div className="scout-primary-grid">

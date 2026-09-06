@@ -212,5 +212,15 @@ export type ScoutCard = {
     activeRetentionRate: string;
     catalogLongevity: string;
   };
+  audiencePulse?: {
+    follows: number;
+    wouldWatch: number;
+    wouldPay?: number;
+  };
+  creatorStatement?: {
+    authorName: string;
+    statementText: string;
+    verifiedAt: string;
+  };
   publishedAt: string;
 };
