@@ -188,7 +188,7 @@ async function runHorizonautsE2ETest() {
   const tastemakerTakeData = {
     takeId: `take-${projectId}-fan-1`,
     whyItShouldGrow: "The hand-drawn 2D animation style and satirical sci-fi tone prove there is a major underserved audience for indie action-comedy animation.",
-    preferredPathwayId: publishedCard?.pathways[0]?.id || "pathway-01",
+    preferredPathwayId: (publishedCard?.pathways[0] as { id?: string; title?: string } | undefined)?.id || publishedCard?.pathways[0]?.title || "pathway-01",
     upvoteCount: 47,
   };
   console.log(`✓ Tastemaker Takes verified: 1 structured Take with ${tastemakerTakeData.upvoteCount} upvotes (Top Signal sort active).`);

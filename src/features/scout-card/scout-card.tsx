@@ -624,6 +624,17 @@ export function ScoutCard({
             {/* Creator Verification & Statement Banner */}
             <CreatorResponseBanner card={card} />
 
+            {/* Top Full-Width Audio Scout Briefing */}
+            {scoutBrief && (
+              <ScoutBriefPlayer
+                brief={scoutBrief}
+                unclaimed={card.claimStatus === "unclaimed"}
+                sources={card.sourceLedger}
+                onOpenCitation={handleOpenCitation}
+                audienceMode={view}
+              />
+            )}
+
             {/* 2. Primary Grid (Video + Scouting Status) */}
             <div className="scout-primary-grid">
               <div className="scout-video-column">
@@ -661,16 +672,6 @@ export function ScoutCard({
               </div>
               <span>Takes, creative notes, and evidence ledger</span>
             </div>
-
-            {scoutBrief && (
-              <ScoutBriefPlayer
-                brief={scoutBrief}
-                unclaimed={card.claimStatus === "unclaimed"}
-                sources={card.sourceLedger}
-                onOpenCitation={handleOpenCitation}
-                audienceMode={view}
-              />
-            )}
 
             <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
 

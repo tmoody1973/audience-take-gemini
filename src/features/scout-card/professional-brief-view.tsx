@@ -245,6 +245,17 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
         </dl>
       </header>
 
+      {/* Full-Width Executive Audio Brief Player */}
+      {scoutBrief && (
+        <ScoutBriefPlayer
+          brief={scoutBrief}
+          unclaimed={card.claimStatus === "unclaimed"}
+          sources={card.sourceLedger}
+          onOpenCitation={onOpenCitation}
+          audienceMode="professional"
+        />
+      )}
+
       {/* 2. Triage Summary */}
       <section className="pro-triage-section" aria-labelledby="pro-triage-heading">
         <div className="pro-section-title-wrap">
@@ -603,17 +614,6 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
           </div>
         </div>
       </section>
-
-      {/* 7. Changes, Audio Brief, & Methodology */}
-      {scoutBrief && (
-        <ScoutBriefPlayer
-          brief={scoutBrief}
-          unclaimed={card.claimStatus === "unclaimed"}
-          sources={card.sourceLedger}
-          onOpenCitation={onOpenCitation}
-          audienceMode="professional"
-        />
-      )}
 
       <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
       <FandomDnaSection

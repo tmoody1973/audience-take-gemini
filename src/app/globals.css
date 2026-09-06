@@ -1598,8 +1598,8 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 
 /* Scout Brief Player Styles */
 .scout-brief-player-container {
-  margin: 24px clamp(18px, 4vw, 48px);
-  padding: 22px;
+  margin: 0 0 24px 0;
+  padding: 20px 22px;
   background: #ffffff;
   border: 2px solid var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
@@ -1640,10 +1640,10 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
 .brief-heading {
   margin: 4px 0 0;
   font-family: var(--display);
-  font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
   font-weight: 400;
   text-transform: uppercase;
-  line-height: 0.95;
+  line-height: 1;
   color: var(--ink);
 }
 
