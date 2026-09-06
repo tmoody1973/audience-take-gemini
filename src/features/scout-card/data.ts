@@ -918,7 +918,7 @@ export async function getRelatedScoutProjects(currentCard: ScoutCard): Promise<R
           (currentMedium.includes("film") && candidateMedium.includes("short"));
 
         const slug = p.slug || (p.id === "proj-junichiro" ? "junichiro-jackson" : (p.identity?.title ? p.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : p.id));
-        const title = p.identity?.title || card?.title || "Untitled Project";
+        const title = p.identity?.title || (card as any)?.title || (card as any)?.identity?.title || "Untitled Project";
         const hook = p.identity?.logline || (card as any)?.decisionBrief?.logline || (card as any)?.hook || (card as any)?.whyScouted || "Independent Scout project on Audience Take.";
         const projectType = p.identity?.medium === "proof_of_concept" ? "series" : (p.identity?.medium || (card as any)?.projectType || "series");
 

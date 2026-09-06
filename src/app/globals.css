@@ -5284,5 +5284,233 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   }
 }
 
+/* ==========================================================================
+   Trading Card PNG Exporter (Discord & Social Share)
+   ========================================================================== */
+
+.scout-utility-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: -16px;
+  margin-bottom: 24px;
+}
+
+.trading-card-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #18191e;
+  color: #f4f4f5;
+  border: 2px solid var(--ink);
+  font-family: var(--meta);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all var(--dur-micro) var(--ease-out);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.trading-card-trigger:hover {
+  background: #272a33;
+  color: var(--yellow);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.trading-card-trigger:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.trading-card-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 14, 0.82);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 150ms ease-out;
+}
+
+.trading-card-modal {
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  background: #14151a;
+  border: 2px solid #282a30;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 4px 4px 0 #000000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #f4f4f5;
+}
+
+.trading-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #101114;
+  border-bottom: 2px solid #282a30;
+}
+
+.trading-card-header-titles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trading-card-header-badge {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  background: #272a33;
+  color: #e59500;
+  border-radius: 2px;
+}
+
+.trading-card-title {
+  margin: 0;
+  font-family: var(--meta);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.trading-card-close {
+  background: transparent;
+  border: 1px solid #383a45;
+  color: #a1a1aa;
+  font-family: var(--meta);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.trading-card-close:hover {
+  background: #22242c;
+  color: #ffffff;
+  border-color: #52525b;
+}
+
+.trading-card-preview-area {
+  padding: 20px;
+  background: #0d0e11;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.trading-card-canvas {
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1200 / 630;
+  display: block;
+  border: 1px solid #282a30;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.trading-card-footer {
+  padding: 16px 20px;
+  background: #101114;
+  border-top: 2px solid #282a30;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.trading-card-hint {
+  margin: 0;
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  color: #71717a;
+}
+
+.trading-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trading-card-status {
+  font-family: var(--meta);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.trading-card-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 16px;
+  font-family: var(--meta);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.trading-card-copy-btn {
+  background: #272a33;
+  color: #f4f4f5;
+  border: 1px solid #3f434d;
+}
+
+.trading-card-copy-btn:hover {
+  background: #323642;
+  color: #ffffff;
+}
+
+.trading-card-download-btn {
+  background: var(--yellow);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.trading-card-download-btn:hover {
+  background: #ffe330;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.trading-card-download-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .trading-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .trading-card-actions {
+    justify-content: flex-end;
+  }
+}
+
+
 
 

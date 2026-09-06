@@ -32,6 +32,7 @@ import { ProfessionalBriefView } from "./professional-brief-view";
 import { CreatorResponseBanner } from "./creator-response-banner";
 import type { RelatedScoutProject } from "./related-scout-rail";
 import { RelatedScoutRail } from "./related-scout-rail";
+import { TradingCardExporter } from "./trading-card-exporter";
 
 function formatDate(value: string | undefined | null): string {
   if (!value) return "Recently published";
@@ -639,6 +640,9 @@ export function ScoutCard({
 
             {/* 3. Compact Audience Action Strip (Question 4: How can I participate?) */}
             <AudienceActionStrip card={card} />
+            <div className="scout-utility-actions">
+              <TradingCardExporter card={card} />
+            </div>
 
             {/* 4. Latest Updates & What Happens Next (Question 5) */}
             {livingUpdates && livingUpdates.length > 0 ? (
