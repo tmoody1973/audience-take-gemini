@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import type { ScoutBrief } from "./types";
-import { Play, Pause, Volume2, VolumeX, Sparkles, FileText, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Sparkles, FileText, ChevronDown, ChevronUp, ExternalLink, Loader2 } from "lucide-react";
 
 interface SourceItem {
   id: string;
@@ -28,6 +28,7 @@ export function ScoutBriefPlayer({
 }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(brief.durationMs ? brief.durationMs / 1000 : 0);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -79,13 +80,23 @@ export function ScoutBriefPlayer({
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => syncDuration();
     const handleDurationChange = () => syncDuration();
-    const handleCanPlay = () => syncDuration();
+    const handleCanPlay = () => {
+      syncDuration();
+      setIsLoading(false);
+    };
+    const handleWaiting = () => setIsLoading(true);
+    const handlePlaying = () => {
+      setIsLoading(false);
+      setIsPlaying(true);
+    };
     const handleEnded = () => {
       setIsPlaying(false);
+      setIsLoading(false);
       setCurrentTime(audio.duration || currentTime);
       setSrAnnouncement("Audio briefing finished");
     };
     const handleError = () => {
+      setIsLoading(false);
       if (currentAudioSrc !== fallbackAudioSrc) {
         setCurrentAudioSrc(fallbackAudioSrc);
         if (audioRef.current) {
@@ -103,6 +114,8 @@ export function ScoutBriefPlayer({
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     audio.addEventListener("durationchange", handleDurationChange);
     audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("waiting", handleWaiting);
+    audio.addEventListener("playing", handlePlaying);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
 
@@ -111,6 +124,8 @@ export function ScoutBriefPlayer({
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("durationchange", handleDurationChange);
       audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("waiting", handleWaiting);
+      audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
@@ -123,10 +138,14 @@ export function ScoutBriefPlayer({
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
+      setIsLoading(false);
       setSrAnnouncement("Audio briefing paused");
     } else {
+      setIsLoading(true);
+      setErrorStatus(null);
       audio.play().then(() => {
         setIsPlaying(true);
+        setIsLoading(false);
         setErrorStatus(null);
         setSrAnnouncement("Playing audio briefing");
       }).catch((err) => {
@@ -137,13 +156,16 @@ export function ScoutBriefPlayer({
           audio.load();
           audio.play().then(() => {
             setIsPlaying(true);
+            setIsLoading(false);
             setErrorStatus(null);
             setSrAnnouncement("Playing audio briefing");
           }).catch(() => {
+            setIsLoading(false);
             setErrorStatus("Audio stream playback unavailable. You can read the full transcript below.");
             setSrAnnouncement("Audio stream unavailable");
           });
         } else {
+          setIsLoading(false);
           setErrorStatus("Playback error. You can read the full transcript below.");
           setSrAnnouncement("Playback error");
         }
@@ -247,9 +269,16 @@ export function ScoutBriefPlayer({
           type="button"
           onClick={togglePlayPause}
           className="brief-play-btn"
-          aria-label={isPlaying ? "Pause audio briefing" : "Play audio briefing"}
+          aria-label={isLoading ? "Buffering audio briefing" : isPlaying ? "Pause audio briefing" : "Play audio briefing"}
+          disabled={isLoading}
         >
-          {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-amber-300" />
+          ) : isPlaying ? (
+            <Pause className="w-5 h-5 fill-current" />
+          ) : (
+            <Play className="w-5 h-5 fill-current ml-0.5" />
+          )}
         </button>
 
         {/* Relative Seek Controls: -15s / +15s */}

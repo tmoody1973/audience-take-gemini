@@ -1,11 +1,41 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { youtubeVideoId } from "@/lib/media/youtube";
 import type { ScoutCard } from "./types";
 
 export type TradingCardExporterProps = {
   card: ScoutCard;
 };
+
+/**
+ * Extracts the best available visual asset for the Scout Card:
+ * 1. Direct media.imageUrl
+ * 2. YouTube thumbnail from media.sourceUrl or media.embedUrl
+ * 3. YouTube thumbnail from provenance.submittedSourceUrl
+ * 4. YouTube thumbnail from sourceLedger entries
+ */
+export function getCardThumbnailUrl(card: ScoutCard): string | null {
+  if (card.media?.imageUrl) {
+    return card.media.imageUrl;
+  }
+  const ytFromMedia = youtubeVideoId(card.media?.sourceUrl || "") ?? youtubeVideoId(card.media?.embedUrl || "");
+  if (ytFromMedia) {
+    return `https://img.youtube.com/vi/${ytFromMedia}/hqdefault.jpg`;
+  }
+  const submittedUrl = card.provenance?.submittedSourceUrl;
+  const ytFromSubmitted = submittedUrl ? youtubeVideoId(submittedUrl) : null;
+  if (ytFromSubmitted) {
+    return `https://img.youtube.com/vi/${ytFromSubmitted}/hqdefault.jpg`;
+  }
+  for (const source of card.sourceLedger || []) {
+    const ytFromSource = youtubeVideoId(source.url || "");
+    if (ytFromSource) {
+      return `https://img.youtube.com/vi/${ytFromSource}/hqdefault.jpg`;
+    }
+  }
+  return null;
+}
 
 function drawRoundedRect(
   ctx: CanvasRenderingContext2D,
@@ -71,8 +101,9 @@ export function TradingCardExporter({ card }: TradingCardExporterProps) {
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
-  const drawCard = useCallback(() => {
+  const drawCard = useCallback((thumbnailImg: HTMLImageElement | null = null) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -125,28 +156,82 @@ export function TradingCardExporter({ card }: TradingCardExporterProps) {
     const cardIdWidth = ctx.measureText(cardIdLabel).width;
     ctx.fillText(cardIdLabel, 1200 - 64 - cardIdWidth, 88);
 
+    const hasImage = Boolean(thumbnailImg);
+    const textMaxWidth = hasImage ? 590 : 1072;
+
     // 3. Title: bold crisp text
-    ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.font = hasImage
+      ? "bold 38px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      : "bold 44px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.fillStyle = "#f4f4f5";
     const titleMetrics = ctx.measureText(card.title);
-    let titleY = 160;
-    if (titleMetrics.width > 1072) {
-      ctx.font = "bold 36px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      titleY = wrapText(ctx, card.title, 64, 150, 1072, 44, 2);
+    let titleY = 155;
+    if (titleMetrics.width > textMaxWidth) {
+      ctx.font = hasImage
+        ? "bold 30px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        : "bold 36px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      titleY = wrapText(ctx, card.title, 64, 150, textMaxWidth, 38, 2);
     } else {
       ctx.fillText(card.title, 64, titleY);
       titleY += 12;
     }
 
     // 4. Hook: clean typography with line breaks / word wrap
-    ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Georgia, serif";
+    ctx.font = hasImage
+      ? "italic 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Georgia, serif"
+      : "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Georgia, serif";
     ctx.fillStyle = "#a1a1aa";
-    const afterHookY = wrapText(ctx, `"${card.hook}"`, 64, titleY + 40, 1072, 32, 3);
+    wrapText(ctx, `"${card.hook}"`, 64, titleY + 36, textMaxWidth, 30, hasImage ? 4 : 3);
 
-    // 5. Metrics / Signal summary: Heat signal (would watch / interest) and Primary Pathway name
-    const metricsY = Math.max(afterHookY + 24, 380);
-    const boxWidth = (1072 - 24) / 2;
-    const boxHeight = 110;
+    // 5. Draw Artwork Thumbnail if present
+    if (hasImage && thumbnailImg) {
+      const imgX = 696;
+      const imgY = 135;
+      const imgW = 440;
+      const imgH = 250;
+
+      // Draw rounded clipped thumbnail
+      ctx.save();
+      drawRoundedRect(ctx, imgX, imgY, imgW, imgH, 10);
+      ctx.clip();
+
+      const iw = thumbnailImg.naturalWidth || thumbnailImg.width || 480;
+      const ih = thumbnailImg.naturalHeight || thumbnailImg.height || 360;
+      const scale = Math.max(imgW / iw, imgH / ih);
+      const sw = imgW / scale;
+      const sh = imgH / scale;
+      const sx = (iw - sw) / 2;
+      const sy = (ih - sh) / 2;
+      ctx.drawImage(thumbnailImg, sx, sy, sw, sh, imgX, imgY, imgW, imgH);
+      ctx.restore();
+
+      // Artwork border frame
+      ctx.strokeStyle = "#383a45";
+      ctx.lineWidth = 2;
+      drawRoundedRect(ctx, imgX, imgY, imgW, imgH, 10);
+      ctx.stroke();
+
+      // Subtle badge pill in corner of artwork
+      const badgeText = "▶ SOURCE TEASER";
+      ctx.font = "bold 11px monospace";
+      const badgeW = ctx.measureText(badgeText).width + 16;
+      const badgeH = 22;
+      const badgeX = imgX + imgW - badgeW - 12;
+      const badgeY = imgY + imgH - badgeH - 12;
+      ctx.fillStyle = "rgba(16, 17, 20, 0.88)";
+      drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 4);
+      ctx.fill();
+      ctx.strokeStyle = "#e59500";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillText(badgeText, badgeX + 8, badgeY + 15);
+    }
+
+    // 6. Metrics / Signal summary: Heat signal (would watch / interest) and Primary Pathway name
+    const metricsY = 425;
+    const boxWidth = 524;
+    const boxHeight = 105;
 
     // Box 1: Heat signal / Audience pulse
     ctx.fillStyle = "#15171c";
@@ -158,7 +243,7 @@ export function TradingCardExporter({ card }: TradingCardExporterProps) {
 
     ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace";
     ctx.fillStyle = "#f59e0b";
-    ctx.fillText("AUDIENCE HEAT SIGNAL", 84, metricsY + 34);
+    ctx.fillText("AUDIENCE HEAT SIGNAL", 84, metricsY + 32);
 
     const wouldWatchCount = card.audiencePulse?.wouldWatch ?? 0;
     const followsCount = card.audiencePulse?.follows ?? 0;
@@ -168,7 +253,7 @@ export function TradingCardExporter({ card }: TradingCardExporterProps) {
 
     ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.fillStyle = "#fafafa";
-    ctx.fillText(heatText, 84, metricsY + 70);
+    ctx.fillText(heatText, 84, metricsY + 68);
 
     // Box 2: Primary Pathway
     const box2X = 64 + boxWidth + 24;
@@ -181,12 +266,12 @@ export function TradingCardExporter({ card }: TradingCardExporterProps) {
 
     ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace";
     ctx.fillStyle = "#38bdf8";
-    ctx.fillText("PRIMARY PATHWAY", box2X + 20, metricsY + 34);
+    ctx.fillText("PRIMARY PATHWAY", box2X + 20, metricsY + 32);
 
     const primaryPathway = card.pathways?.[0]?.label || "Independent Exploration";
     ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.fillStyle = "#fafafa";
-    
+
     // truncate if too long
     let pathwayText = primaryPathway;
     if (ctx.measureText(pathwayText).width > boxWidth - 40) {
@@ -195,30 +280,41 @@ export function TradingCardExporter({ card }: TradingCardExporterProps) {
       }
       pathwayText += "...";
     }
-    ctx.fillText(pathwayText, box2X + 20, metricsY + 70);
+    ctx.fillText(pathwayText, box2X + 20, metricsY + 68);
 
-    // 6. Footer: "Discover and back independent screen storytelling at audiencetake.com"
+    // 7. Footer: "Discover and back independent screen storytelling at audiencetake.com"
     ctx.font = "14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace";
     ctx.fillStyle = "#71717a";
-    ctx.fillText("Discover and back independent screen storytelling at audiencetake.com", 64, 575);
+    ctx.fillText("Discover and back independent screen storytelling at audiencetake.com", 64, 578);
 
     // Subtle creator attribution right footer
     if (card.creatorContext?.displayName) {
       const creatorAttribution = `Creator: ${card.creatorContext.displayName}`;
       const creatorWidth = ctx.measureText(creatorAttribution).width;
-      ctx.fillText(creatorAttribution, 1200 - 64 - creatorWidth, 575);
+      ctx.fillText(creatorAttribution, 1200 - 64 - creatorWidth, 578);
     }
   }, [card]);
 
   useEffect(() => {
     if (isOpen) {
-      // Draw card after modal renders
-      const timer = setTimeout(() => {
-        drawCard();
-      }, 50);
-      return () => clearTimeout(timer);
+      const thumbUrl = getCardThumbnailUrl(card);
+      if (thumbUrl && typeof window !== "undefined") {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = thumbUrl;
+        img.onload = () => {
+          imageRef.current = img;
+          drawCard(img);
+        };
+        img.onerror = () => {
+          imageRef.current = null;
+          drawCard(null);
+        };
+      } else {
+        drawCard(null);
+      }
     }
-  }, [isOpen, drawCard]);
+  }, [isOpen, card, drawCard]);
 
   // Handle Escape key and backdrop close
   useEffect(() => {

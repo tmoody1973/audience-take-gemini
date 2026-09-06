@@ -144,10 +144,12 @@ function ProjectHeader({
   card,
   cardStructureStatus,
   cardEvidenceLabel,
+  audioBriefNode,
 }: {
   card: ScoutCardModel;
   cardStructureStatus: string;
   cardEvidenceLabel: string;
+  audioBriefNode?: React.ReactNode;
 }) {
   const creatorName = card.creatorContext.displayName || "Independent creators";
   const claimStatusLabel =
@@ -166,6 +168,8 @@ function ProjectHeader({
           <div><dt>PUBLISHED</dt><dd>{formatDate(card.publishedAt)}</dd></div>
         </dl>
       </div>
+
+      {audioBriefNode}
 
       <p className="scout-header-hook">{card.hook}</p>
       {card.identity?.relationshipStatus === "unresolved" ? (
@@ -614,26 +618,26 @@ export function ScoutCard({
           aria-labelledby="tab-discover"
         >
           <article className="scout-dossier-redesign" aria-labelledby="scout-card-title">
-            {/* 1. Full-Width Project Header */}
+            {/* 1. Full-Width Project Header with Audio Brief directly below title & metadata */}
             <ProjectHeader
               card={card}
               cardStructureStatus={cardStructureStatus}
               cardEvidenceLabel={cardEvidenceLabel}
+              audioBriefNode={
+                scoutBrief ? (
+                  <ScoutBriefPlayer
+                    brief={scoutBrief}
+                    unclaimed={card.claimStatus === "unclaimed"}
+                    sources={card.sourceLedger}
+                    onOpenCitation={handleOpenCitation}
+                    audienceMode={view}
+                  />
+                ) : undefined
+              }
             />
 
             {/* Creator Verification & Statement Banner */}
             <CreatorResponseBanner card={card} />
-
-            {/* Top Full-Width Audio Scout Briefing */}
-            {scoutBrief && (
-              <ScoutBriefPlayer
-                brief={scoutBrief}
-                unclaimed={card.claimStatus === "unclaimed"}
-                sources={card.sourceLedger}
-                onOpenCitation={handleOpenCitation}
-                audienceMode={view}
-              />
-            )}
 
             {/* 2. Primary Grid (Video + Scouting Status) */}
             <div className="scout-primary-grid">
