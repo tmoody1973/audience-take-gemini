@@ -8,8 +8,10 @@ import { SiteHeader } from "../../../components/site-header";
 import {
   JUNICHIO_LIVE_SLUG,
   JUNICHIO_SLUG,
+  getRelatedScoutProjects,
   loadPublishedScoutCard,
 } from "../../../features/scout-card/data";
+import type { RelatedScoutProject } from "../../../features/scout-card/related-scout-rail";
 import { ScoutCard } from "../../../features/scout-card/scout-card";
 
 type ProjectPageProps = {
@@ -82,6 +84,13 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
     scoutBrief = null;
   }
 
+  let relatedProjects: RelatedScoutProject[] = [];
+  try {
+    relatedProjects = await getRelatedScoutProjects(card);
+  } catch {
+    relatedProjects = [];
+  }
+
   return (
     <>
       <SiteHeader />
@@ -89,6 +98,7 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
         card={card}
         livingUpdates={livingUpdates}
         scoutBrief={scoutBrief}
+        related={relatedProjects}
         initialView={initialView}
       />
     </>

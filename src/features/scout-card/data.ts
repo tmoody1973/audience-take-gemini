@@ -10,6 +10,7 @@ import { dataRepo } from "../../services/firestore-repo";
 import { cleanTextExcerpt } from "./evidence-display";
 import { computeMarketViability } from "../../critic/market-viability-engine";
 import type { ClaimStatus, EvidenceClaim, ScoutCard, ScoutPathway, SourceLedgerEntry } from "./types";
+import type { RelatedScoutProject } from "./related-scout-rail";
 
 export const JUNICHIO_SLUG = "junichiro-jackson";
 export const JUNICHIO_LIVE_SLUG = "junichiro-live-project";
@@ -250,6 +251,12 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
   const computedViability = cardData?.marketViability ?? undefined;
   const computedFandom = cardData?.fandomDna ?? undefined;
   const computedLivingDossier = cardData?.livingDossier ?? undefined;
+  const commitmentCounts = (projectData?.commitmentCounts ?? {}) as Record<string, unknown>;
+  const initialPulse = {
+    follows: typeof projectData.followerCount === "number" ? projectData.followerCount : 0,
+    wouldWatch: typeof commitmentCounts.would_watch === "number" ? (commitmentCounts.would_watch as number) : 0,
+    wouldPay: typeof commitmentCounts.would_pay === "number" ? (commitmentCounts.would_pay as number) : 0,
+  };
 
   return {
     ...card,
@@ -261,6 +268,7 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
     marketViability: computedViability,
     fandomDna: computedFandom,
     livingDossier: computedLivingDossier,
+    audiencePulse: initialPulse,
   };
 }
 
@@ -344,7 +352,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
     if (fromFirestore) return fromFirestore;
 
     // Check dataRepo and Firestore for dynamically scouted projects in live environment
-    let dynamicProject = await dataRepo.getProjectById(slug);
+    let dynamicProject = database ? null : await dataRepo.getProjectById(slug);
     if (!dynamicProject && db) {
       try {
         const doc = await db.collection("projects").doc(slug).get();
@@ -363,8 +371,9 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
 
     const dyn = dynamicProject as any;
     if (dyn) {
+      const pubStatus = dyn.publicationStatus || (dyn.publishedCardId ? "published" : "draft");
       if (
-        dyn.publicationStatus !== "published" ||
+        pubStatus !== "published" ||
         (dyn.moderationState !== undefined && dyn.moderationState !== "clear")
       ) {
         return null;
@@ -373,7 +382,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
 
     let dynamicCard: any = null;
     if (dyn?.publishedCardId) {
-      dynamicCard = await dataRepo.getScoutCardById(dyn.publishedCardId);
+      dynamicCard = database ? null : await dataRepo.getScoutCardById(dyn.publishedCardId);
       if (!dynamicCard && db) {
         try {
           const cardDoc = await db.collection("scoutCards").doc(dyn.publishedCardId).get();
@@ -382,16 +391,19 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
       }
     }
     if (!dynamicCard && dyn?.latestCardVersionId) {
-      dynamicCard = await dataRepo.getScoutCardById(dyn.latestCardVersionId);
+      dynamicCard = database ? null : await dataRepo.getScoutCardById(dyn.latestCardVersionId);
       if (!dynamicCard && db) {
         try {
           const cardDoc = await db.collection("scoutCards").doc(dyn.latestCardVersionId).get();
           if (cardDoc.exists) dynamicCard = { id: cardDoc.id, ...cardDoc.data() };
         } catch {}
       }
+      if (dynamicCard && (dynamicCard.cardVersionId || dynamicCard.id) && (dynamicCard.cardVersionId || dynamicCard.id) !== dyn.latestCardVersionId) {
+        return null;
+      }
     }
-    if (!dynamicCard) {
-      dynamicCard = await dataRepo.getScoutCardById(`card-${slug}-v1`);
+    if (!dynamicCard && !dyn?.latestCardVersionId && !dyn?.publishedCardId) {
+      dynamicCard = database ? null : await dataRepo.getScoutCardById(`card-${slug}-v1`);
       if (!dynamicCard && db) {
         try {
           const cardDoc = await db.collection("scoutCards").doc(`card-${slug}-v1`).get();
@@ -399,8 +411,8 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         } catch {}
       }
     }
-    if (!dynamicCard) {
-      dynamicCard = await dataRepo.getScoutCardById(slug);
+    if (!dynamicCard && !dyn?.latestCardVersionId && !dyn?.publishedCardId) {
+      dynamicCard = database ? null : await dataRepo.getScoutCardById(slug);
       if (!dynamicCard && db) {
         try {
           const cardDoc = await db.collection("scoutCards").doc(slug).get();
@@ -513,12 +525,16 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           const matchingSources = findSupportingSourceIds(stmt, sourceLedgerEntries);
 
           if (matchingSources.length > 0) {
+            const allVerified = matchingSources.every((sId) => {
+              const src = sourceLedgerEntries.find((s) => s.id === sId);
+              return src?.verificationStatus === "verified";
+            });
             evidenceClaims.push({
               id: claimId,
               statement: stmt,
-              status: "supported",
+              status: allVerified ? "supported" : "qualified",
               sourceIds: matchingSources,
-              qualification: null,
+              qualification: allVerified ? null : "Grounded in public reporting pending independent verification.",
             });
             for (const sId of matchingSources) {
               const src = sourceLedgerEntries.find((s) => s.id === sId);
@@ -551,13 +567,14 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
 
         const isConflict = ev.claimType === "conflict";
         const isInference = ev.claimType === "inference";
+        const isVerified = ev.verified === true;
 
         evidenceClaims.push({
           id: claimId,
           statement: stmt,
-          status: isConflict ? "conflicting" : isInference ? "inference" : "supported",
+          status: isConflict ? "conflicting" : isInference ? "inference" : isVerified ? "supported" : "qualified",
           sourceIds: [canonSourceId],
-          qualification: isConflict ? "Source reports conflicting information." : null,
+          qualification: isConflict ? "Source reports conflicting information." : !isVerified ? "Reported claim pending independent verification." : null,
         });
 
         const src = sourceLedgerEntries.find((s) => s.id === canonSourceId);
@@ -694,8 +711,12 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         marketViability: dynamicCard?.marketViability ?? undefined,
         livingDossier: dynamicCard?.livingDossier ?? undefined,
         fandomDna: dynamicCard?.fandomDna ?? undefined,
-        channelEcosystem: dynamicCard?.channelEcosystem ?? undefined,
         publishedAt: dynamicCard?.publishedAt || dynamicProject?.updatedAt || dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
+        audiencePulse: {
+          follows: typeof dynamicProject?.followerCount === "number" ? dynamicProject.followerCount : 0,
+          wouldWatch: typeof dynamicProject?.commitmentCounts?.would_watch === "number" ? dynamicProject.commitmentCounts.would_watch : 0,
+          wouldPay: typeof dynamicProject?.commitmentCounts?.would_pay === "number" ? dynamicProject.commitmentCounts.would_pay : 0,
+        },
         trailerCritiques: dynamicCritic ? [{
           artifactId: dynamicCritic.id,
           projectId: dynamicProject?.id || slug,
@@ -785,3 +806,156 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
 export function getScoutCardFixture(state: ScoutCardFixtureState): ScoutCard {
   return fixtures[state];
 }
+
+function extractProjectThemes(project: any, card?: any): string[] {
+  if (Array.isArray(project?.storyContext?.themes) && project.storyContext.themes.length > 0) {
+    return project.storyContext.themes;
+  }
+  if (Array.isArray(card?.storyContext?.themes) && card.storyContext.themes.length > 0) {
+    return card.storyContext.themes;
+  }
+  if (Array.isArray(project?.themes) && project.themes.length > 0) {
+    return project.themes;
+  }
+
+  const medium = project?.identity?.medium || project?.medium || "";
+  const text = `${project?.identity?.title || ""} ${project?.identity?.logline || ""} ${card?.whyScouted || ""} ${card?.genreAndForm || ""} ${card?.decisionBrief?.logline || ""}`.toLowerCase();
+  const derived: string[] = [];
+
+  if (text.includes("sci-fi") || text.includes("cyberpunk") || text.includes("analog") || text.includes("dread")) derived.push("sci-fi");
+  if (text.includes("anime") || text.includes("animation")) derived.push("animation");
+  if (text.includes("hip-hop") || text.includes("music") || text.includes("beats")) derived.push("music & culture");
+  if (text.includes("documentary") || text.includes("history") || text.includes("archival") || medium === "documentary") derived.push("cultural history");
+  if (text.includes("community") || text.includes("solidarity") || text.includes("activism") || text.includes("grassroots")) derived.push("community resilience");
+  if (text.includes("survival") || text.includes("danger") || text.includes("thriller") || text.includes("ranger")) derived.push("survival");
+  if (text.includes("urban") || text.includes("chicago") || text.includes("city")) derived.push("urban storyworld");
+
+  if (derived.length > 0) return derived;
+
+  if (medium === "proof_of_concept") return ["concept exploration", "independent vision"];
+  if (medium === "documentary") return ["community", "real-world impact"];
+  if (medium === "short_film" || medium === "short") return ["atmospheric", "contained thriller"];
+  if (medium === "series") return ["worldbuilding", "serialized narrative"];
+  return ["independent storytelling", "creator vision"];
+}
+
+const FALLBACK_RELATED_PROJECTS: RelatedScoutProject[] = [
+  {
+    slug: "signal-in-the-pines",
+    title: "Signal in the Pines",
+    hook: "A lone forest ranger intercepts an encoded radio transmission on an analog monitor that repeats her childhood memories.",
+    projectType: "short_film",
+    sharedThemes: ["analog sci-fi", "survival"],
+    thumbnailUrl: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+  },
+  {
+    slug: "american-pachuco",
+    title: "American Pachuco",
+    hook: "How a visionary dramatist and striking farmworkers used flatbed trucks as stages to ignite an indelible American cultural revolution.",
+    projectType: "documentary",
+    sharedThemes: ["cultural history", "activism"],
+    thumbnailUrl: "https://img.youtube.com/vi/MXESsS8Uskc/hqdefault.jpg",
+  },
+  {
+    slug: "cycle",
+    title: "CYCLE",
+    hook: "In Milwaukee, a dedicated network of youth mechanics and urban riders rebuild discarded bicycles to heal neighborhood divides.",
+    projectType: "documentary",
+    sharedThemes: ["community resilience", "urban culture"],
+    thumbnailUrl: "https://img.youtube.com/vi/k8bM9qaPXLU/hqdefault.jpg",
+  },
+];
+
+export async function getRelatedScoutProjects(currentCard: ScoutCard): Promise<RelatedScoutProject[]> {
+  try {
+    const projects = await dataRepo.getProjects().catch(() => []);
+    if (!projects || projects.length === 0) {
+      return FALLBACK_RELATED_PROJECTS.filter(
+        (p) => p.slug !== currentCard.slug && p.slug !== currentCard.projectId
+      ).slice(0, 3);
+    }
+
+    const currentThemes = (currentCard.storyContext?.themes || []).map((t) => t.toLowerCase());
+    const currentMedium = (currentCard.projectType || currentCard.storyContext?.currentFormat || "").toLowerCase();
+
+    // Filter out current project (p.id !== currentCard.projectId && p.slug !== currentCard.slug)
+    const candidates = projects.filter((p: any) => {
+      const pSlug = (p.slug || (p.id === "proj-junichiro" ? "junichiro-jackson" : (p.identity?.title ? p.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : p.id))).toLowerCase();
+      const pId = (p.id || "").toLowerCase();
+      const currentSlug = (currentCard.slug || "").toLowerCase();
+      const currentProjId = (currentCard.projectId || "").toLowerCase();
+
+      return pId !== currentProjId && pId !== currentSlug && pSlug !== currentSlug && pSlug !== currentProjId;
+    });
+
+    if (candidates.length === 0) {
+      return FALLBACK_RELATED_PROJECTS.filter(
+        (p) => p.slug !== currentCard.slug && p.slug !== currentCard.projectId
+      ).slice(0, 3);
+    }
+
+    // Process candidates with themes and cards
+    const scoredCandidates = await Promise.all(
+      candidates.map(async (p: any) => {
+        const card = p.publishedCardId ? await dataRepo.getScoutCardById(p.publishedCardId).catch(() => null) : null;
+        const candidateThemes = extractProjectThemes(p, card);
+        const candidateMedium = (p.identity?.medium || (card as any)?.projectType || "").toLowerCase();
+
+        // Calculate shared themes: compare p.storyContext?.themes with currentCard.storyContext?.themes
+        const sharedThemes = candidateThemes.filter((theme) =>
+          currentThemes.some(
+            (ct) =>
+              ct === theme.toLowerCase() ||
+              ct.includes(theme.toLowerCase()) ||
+              theme.toLowerCase().includes(ct)
+          )
+        );
+
+        // Calculate medium match / complementarity if no themes match
+        const mediumMatch =
+          candidateMedium === currentMedium ||
+          (currentMedium.includes("series") && candidateMedium.includes("concept")) ||
+          (currentMedium.includes("film") && candidateMedium.includes("short"));
+
+        const slug = p.slug || (p.id === "proj-junichiro" ? "junichiro-jackson" : (p.identity?.title ? p.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : p.id));
+        const title = p.identity?.title || card?.title || "Untitled Project";
+        const hook = p.identity?.logline || (card as any)?.decisionBrief?.logline || (card as any)?.hook || (card as any)?.whyScouted || "Independent Scout project on Audience Take.";
+        const projectType = p.identity?.medium === "proof_of_concept" ? "series" : (p.identity?.medium || (card as any)?.projectType || "series");
+
+        let thumbnailUrl: string | undefined = (card as any)?.media?.imageUrl || (p as any)?.thumbnailUrl;
+        if (!thumbnailUrl && (card as any)?.sourceMedia?.[0]?.url) {
+          const ytId = youtubeVideoId((card as any).sourceMedia[0].url);
+          if (ytId) thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        }
+
+        return {
+          slug,
+          title,
+          hook,
+          projectType,
+          sharedThemes: sharedThemes.length > 0 ? sharedThemes : candidateThemes.slice(0, 2),
+          thumbnailUrl,
+          score: (sharedThemes.length * 10) + (mediumMatch ? 3 : 0),
+        };
+      })
+    );
+
+    // Sort by score descending (most shared themes, then matching medium)
+    scoredCandidates.sort((a, b) => b.score - a.score);
+
+    return scoredCandidates.slice(0, 3).map(({ slug, title, hook, projectType, sharedThemes, thumbnailUrl }) => ({
+      slug,
+      title,
+      hook,
+      projectType,
+      sharedThemes,
+      thumbnailUrl,
+    }));
+  } catch (err) {
+    console.warn("[getRelatedScoutProjects] Fallback applied:", err);
+    return FALLBACK_RELATED_PROJECTS.filter(
+      (p) => p.slug !== currentCard.slug && p.slug !== currentCard.projectId
+    ).slice(0, 3);
+  }
+}
+

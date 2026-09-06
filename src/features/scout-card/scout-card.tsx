@@ -30,6 +30,8 @@ import { AudienceActionStrip } from "./audience-action-strip";
 import { PathwayVotingSection } from "./pathway-voting-section";
 import { ProfessionalBriefView } from "./professional-brief-view";
 import { CreatorResponseBanner } from "./creator-response-banner";
+import type { RelatedScoutProject } from "./related-scout-rail";
+import { RelatedScoutRail } from "./related-scout-rail";
 
 function formatDate(value: string | undefined | null): string {
   if (!value) return "Recently published";
@@ -449,11 +451,13 @@ export function ScoutCard({
   card,
   livingUpdates,
   scoutBrief,
+  related,
   initialView = "discover",
 }: {
   card: ScoutCardModel;
   livingUpdates?: ProjectLivingUpdate[];
   scoutBrief?: ScoutBrief | null;
+  related?: RelatedScoutProject[];
   initialView?: "discover" | "pro";
 }) {
   if (!card.pathways || card.pathways.length < 1 || card.pathways.length > 3) {
@@ -742,6 +746,9 @@ export function ScoutCard({
               {card.missingSections.length ? <div><strong>Missing sections</strong><p>{card.missingSections.map((item) => item.replaceAll("_", " ")).join(" / ")}</p></div> : null}
             </section>
           </section>
+
+          {/* Related Scout Projects by Storyworld DNA */}
+          <RelatedScoutRail related={related} />
         </div>
       ) : (
         /* VIEW 2: PROFESSIONAL BRIEF (INDUSTRY & DEVELOPMENT) */

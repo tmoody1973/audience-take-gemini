@@ -5129,5 +5129,160 @@ svg { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-wi
   margin: 4px 0 0;
 }
 
+/* ==========================================================================
+   HALLMARK CRAFT · Storyworld DNA & Related Scout Rail
+   ========================================================================== */
+
+.related-scout-rail {
+  margin: 40px 0 24px;
+  padding: 24px;
+  background: var(--paper);
+  border: var(--rule);
+  box-shadow: 4px 4px 0 var(--ink);
+  position: relative;
+}
+
+.related-scout-subtitle {
+  font-family: var(--meta);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(17, 16, 13, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.related-scout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.related-scout-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--field-paper);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  text-decoration: none;
+  color: var(--ink);
+  overflow: hidden;
+  transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+}
+
+.related-scout-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+  background: #ffffff;
+}
+
+.related-scout-card:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px var(--blue);
+}
+
+.related-scout-thumb-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+  border-bottom: 2px solid var(--ink);
+  overflow: hidden;
+}
+
+.related-scout-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-short) var(--ease-out);
+}
+
+.related-scout-card:hover .related-scout-thumb {
+  transform: scale(1.04);
+}
+
+.related-scout-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 10px;
+}
+
+.related-scout-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.related-scout-badge {
+  font-family: var(--meta);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--yellow);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  padding: 2px 8px;
+}
+
+.related-scout-card-title {
+  font-family: var(--display);
+  font-size: 1.65rem;
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink);
+}
+
+.related-scout-card-hook {
+  font-family: var(--body);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: rgba(17, 16, 13, 0.85);
+  margin: 0;
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.related-scout-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(17, 16, 13, 0.25);
+}
+
+.related-scout-theme-tag {
+  font-family: var(--meta);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(17, 16, 13, 0.06);
+  border: 1px solid rgba(17, 16, 13, 0.2);
+  padding: 2px 6px;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .related-scout-rail {
+    padding: 16px;
+    margin: 32px 0 16px;
+  }
+
+  .related-scout-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
 
 
