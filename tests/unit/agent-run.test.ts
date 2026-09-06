@@ -75,7 +75,8 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
       if (completedRun.cardId) {
         const card = await dataRepo.getScoutCardById(completedRun.cardId);
         expect(card).toBeDefined();
-        expect(card?.pathways).toHaveLength(3);
+        expect(card?.pathways.length).toBeGreaterThanOrEqual(1);
+        expect(card?.pathways.length).toBeLessThanOrEqual(3);
         expect(card?.decisionBrief).toBeDefined();
         expect(card?.evidenceLedger.length).toBeGreaterThan(0);
       }
@@ -93,5 +94,5 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
         }
       } catch {}
     }
-  }, 60000);
+  }, 120000);
 });

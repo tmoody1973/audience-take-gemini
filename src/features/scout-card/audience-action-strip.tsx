@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import type { ScoutCard } from "./types";
 import { hasFirebaseClientConfig } from "../../lib/firebase/config";
-import { getClientAuth } from "../../lib/firebase/client";
+import { getClientAuth, getClientFirestore } from "../../lib/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { socialCommand } from "../social/client";
 
 export type AudienceActionStripProps = {
@@ -15,9 +16,9 @@ export type AudienceActionStripProps = {
 export function AudienceActionStrip({ card, onWatchClick }: AudienceActionStripProps) {
   const [uid, setUid] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(card.audiencePulse?.follows ?? 0);
   const [wouldWatch, setWouldWatch] = useState(false);
-  const [wouldWatchCount, setWouldWatchCount] = useState(0);
+  const [wouldWatchCount, setWouldWatchCount] = useState(card.audiencePulse?.wouldWatch ?? 0);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [followFeedback, setFollowFeedback] = useState<string | null>(null);
 
@@ -31,6 +32,40 @@ export function AudienceActionStrip({ card, onWatchClick }: AudienceActionStripP
     }
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!hasFirebaseClientConfig()) return;
+    try {
+      const db = getClientFirestore();
+      return onSnapshot(doc(db, "projects", card.projectId), (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data() ?? {};
+        if (typeof data.followerCount === "number") {
+          setFollowerCount(data.followerCount);
+        }
+        const commitments = (data.commitmentCounts ?? {}) as Record<string, number>;
+        if (typeof commitments.would_watch === "number") {
+          setWouldWatchCount(commitments.would_watch);
+        }
+      }, () => undefined);
+    } catch {
+      return undefined;
+    }
+  }, [card.projectId]);
+
+  useEffect(() => {
+    if (!hasFirebaseClientConfig() || !uid) return;
+    try {
+      const db = getClientFirestore();
+      const stops = [
+        onSnapshot(doc(db, "follows", `${card.projectId}_${uid}`), (s) => setIsFollowing(s.data()?.active === true), () => undefined),
+        onSnapshot(doc(db, "commitments", `${card.projectId}_${uid}_would_watch`), (s) => setWouldWatch(s.data()?.active === true), () => undefined),
+      ];
+      return () => stops.forEach((stop) => stop());
+    } catch {
+      return undefined;
+    }
+  }, [card.projectId, uid]);
 
   const handleWatchClick = () => {
     if (onWatchClick) {
@@ -55,18 +90,16 @@ export function AudienceActionStrip({ card, onWatchClick }: AudienceActionStripP
     }
     setTimeout(() => setFollowFeedback(null), 4000);
 
-    if (uid) {
-      try {
-        await socialCommand(
-          `/api/projects/${card.projectId}/follow`,
-          nextState ? "PUT" : "DELETE"
-        );
-      } catch (err) {
-        // Revert on failure
-        setIsFollowing(!nextState);
-        setFollowerCount((prev) => Math.max(0, prev + (nextState ? -1 : 1)));
-        setFollowFeedback("Could not update follow status.");
-      }
+    try {
+      await socialCommand(
+        `/api/projects/${card.projectId}/follow`,
+        nextState ? "PUT" : "DELETE"
+      );
+    } catch (err) {
+      // Revert on failure
+      setIsFollowing(!nextState);
+      setFollowerCount((prev) => Math.max(0, prev + (nextState ? -1 : 1)));
+      setFollowFeedback("Could not update follow status.");
     }
   };
 
@@ -75,16 +108,14 @@ export function AudienceActionStrip({ card, onWatchClick }: AudienceActionStripP
     setWouldWatch(nextState);
     setWouldWatchCount((prev) => Math.max(0, prev + (nextState ? 1 : -1)));
 
-    if (uid) {
-      try {
-        await socialCommand(
-          `/api/projects/${card.projectId}/commitments/would_watch`,
-          nextState ? "PUT" : "DELETE"
-        );
-      } catch (err) {
-        setWouldWatch(!nextState);
-        setWouldWatchCount((prev) => Math.max(0, prev + (nextState ? -1 : 1)));
-      }
+    try {
+      await socialCommand(
+        `/api/projects/${card.projectId}/commitments/would_watch`,
+        nextState ? "PUT" : "DELETE"
+      );
+    } catch (err) {
+      setWouldWatch(!nextState);
+      setWouldWatchCount((prev) => Math.max(0, prev + (nextState ? -1 : 1)));
     }
   };
 

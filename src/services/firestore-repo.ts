@@ -21,6 +21,7 @@ import type {
   LifecycleStage,
   ProjectMonitor,
   WebhookReceipt,
+  ExecutionLease,
 } from "@/domain";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 
@@ -196,6 +197,8 @@ class InMemoryStore {
         creators: ["Chaz Bottoms", "CBC Studios", "TeamTO"]
       },
       publishedCardId: c1Id,
+      publicationStatus: "published",
+      latestCardVersionId: c1Id,
       nomination: {
         submittedByUid: "user-fan-101",
         nominatorRole: "fan",
@@ -360,6 +363,8 @@ class InMemoryStore {
         creators: ["Luis Valdez", "El Teatro Campesino Film Collective"]
       },
       publishedCardId: c2Id,
+      publicationStatus: "published",
+      latestCardVersionId: c2Id,
       nomination: {
         submittedByUid: "user-fan-102",
         nominatorRole: "fan",
@@ -488,6 +493,8 @@ class InMemoryStore {
         creators: ["Lion Art Media", "Milwaukee Bike Collective"]
       },
       publishedCardId: c3Id,
+      publicationStatus: "published",
+      latestCardVersionId: c3Id,
       nomination: {
         submittedByUid: "user-fan-103",
         nominatorRole: "fan",
@@ -652,6 +659,8 @@ class InMemoryStore {
         creators: ["Elena Vance", "Marcus Cruz"]
       },
       publishedCardId: c4Id,
+      publicationStatus: "published",
+      latestCardVersionId: c4Id,
       nomination: {
         submittedByUid: "user-fan-104",
         nominatorRole: "fan",
@@ -780,6 +789,8 @@ class InMemoryStore {
         creators: ["Hannah Morgan", "Caleb Hayes"]
       },
       publishedCardId: c5Id,
+      publicationStatus: "published",
+      latestCardVersionId: c5Id,
       nomination: {
         submittedByUid: "user-fan-202",
         nominatorRole: "fan",
@@ -885,6 +896,8 @@ export const dataRepo = {
             creators: raw.creators || [],
           },
           publishedCardId: raw.publishedCardId || raw.latestCardVersionId || null,
+          publicationStatus: raw.publicationStatus || (raw.publishedCardId ? "published" : "draft"),
+          latestCardVersionId: raw.latestCardVersionId || raw.publishedCardId || null,
           nomination: raw.nomination || {
             submittedByUid: raw.nominatorUid || "anonymous-scout",
             nominatorRole: raw.submissionType || "fan",
@@ -975,6 +988,8 @@ export const dataRepo = {
     const project = store.projects.get(card.projectId);
     if (project) {
       project.publishedCardId = card.id;
+      project.publicationStatus = "published";
+      project.latestCardVersionId = card.id;
       project.updatedAt = new Date().toISOString();
     }
     try {
@@ -1077,7 +1092,266 @@ export const dataRepo = {
       await db.collection("researchRuns").doc(run.id).set(cleanFirestoreObject(run), { merge: true });
     } catch (err) {
       console.warn("Could not persist research run to Firestore:", err);
+      if (process.env.NODE_ENV === "production" || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        throw new Error(`Database error: failed to persist research run: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
+  },
+
+  async acquireResearchRunLease(
+    runId: string,
+    workerId: string,
+    options: { leaseDurationMs?: number; forceRetry?: boolean } = {}
+  ): Promise<{
+    acquired: boolean;
+    reason?: "already_completed" | "already_running" | "not_found";
+    run?: ResearchRunState;
+    leaseToken?: string;
+  }> {
+    const leaseDurationMs = options.leaseDurationMs ?? 15 * 60 * 1000;
+    const now = Date.now();
+    const leaseToken = `tok_${now}_${Math.random().toString(36).slice(2, 9)}`;
+
+    try {
+      const db = getAdminFirestore();
+      if (db) {
+        return await db.runTransaction(async (transaction) => {
+          const runRef = db.collection("researchRuns").doc(runId);
+          const snap = await transaction.get(runRef);
+          if (!snap.exists) {
+            return { acquired: false, reason: "not_found" as const };
+          }
+          const data = snap.data() as any;
+          if (data.currentStep === "complete" && !options.forceRetry) {
+            const run = { ...data, id: snap.id };
+            store.researchRuns.set(runId, run);
+            return { acquired: false, reason: "already_completed" as const, run };
+          }
+          if (
+            !options.forceRetry &&
+            data.lease &&
+            new Date(data.lease.expiresAt).getTime() > now &&
+            data.currentStep !== "failed"
+          ) {
+            const run = { ...data, id: snap.id };
+            store.researchRuns.set(runId, run);
+            return { acquired: false, reason: "already_running" as const, run };
+          }
+
+          const nextAttempt = (data.attempt || 0) + 1;
+          const newLease: ExecutionLease = {
+            workerId,
+            acquiredAt: new Date(now).toISOString(),
+            expiresAt: new Date(now + leaseDurationMs).toISOString(),
+            attempt: nextAttempt,
+            leaseToken,
+            executionGeneration: nextAttempt,
+          };
+          const updatedRun: ResearchRunState = {
+            ...data,
+            id: snap.id,
+            lease: newLease,
+            attempt: nextAttempt,
+            currentStep: (data.currentStep === "failed" && options.forceRetry) ? "fetching" : (data.currentStep || "fetching"),
+            errorMessage: (data.currentStep === "failed" && options.forceRetry) ? undefined : data.errorMessage,
+          };
+
+          transaction.set(runRef, cleanFirestoreObject(updatedRun), { merge: true });
+          store.researchRuns.set(runId, updatedRun);
+          return { acquired: true, run: updatedRun, leaseToken };
+        });
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV === "production" || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        throw new Error(`Database error: failed to acquire research run lease: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // In-memory atomic lease acquisition for testing/offline
+    const memRun = store.researchRuns.get(runId);
+    if (!memRun) return { acquired: false, reason: "not_found" };
+
+    if (memRun.currentStep === "complete" && !options.forceRetry) {
+      return { acquired: false, reason: "already_completed", run: memRun };
+    }
+
+    if (
+      !options.forceRetry &&
+      memRun.lease &&
+      new Date(memRun.lease.expiresAt).getTime() > now &&
+      memRun.currentStep !== "failed"
+    ) {
+      return { acquired: false, reason: "already_running", run: memRun };
+    }
+
+    const nextAttempt = (memRun.attempt || 0) + 1;
+    const newLease: ExecutionLease = {
+      workerId,
+      acquiredAt: new Date(now).toISOString(),
+      expiresAt: new Date(now + leaseDurationMs).toISOString(),
+      attempt: nextAttempt,
+      leaseToken,
+      executionGeneration: nextAttempt,
+    };
+    memRun.lease = newLease;
+    memRun.attempt = nextAttempt;
+    if (memRun.currentStep === "failed" && options.forceRetry) {
+      memRun.currentStep = "fetching";
+      memRun.errorMessage = undefined;
+    }
+    store.researchRuns.set(runId, memRun);
+    return { acquired: true, run: memRun, leaseToken };
+  },
+
+  async verifyResearchRunLease(
+    runId: string,
+    leaseToken: string
+  ): Promise<{ valid: boolean; reason?: string }> {
+    const run = await this.getResearchRunById(runId);
+    if (!run) return { valid: false, reason: "run_not_found" };
+    if (!run.lease || run.lease.leaseToken !== leaseToken) {
+      return { valid: false, reason: "lease_token_mismatch_or_taken_over" };
+    }
+    if (new Date(run.lease.expiresAt).getTime() <= Date.now()) {
+      return { valid: false, reason: "lease_expired" };
+    }
+    return { valid: true };
+  },
+
+  async atomicPublishScoutCard(params: {
+    card: ScoutCard;
+    project: Project;
+    run: ResearchRunState;
+    leaseToken?: string;
+  }): Promise<{
+    publishedCard: ScoutCard;
+    project: Project;
+    run: ResearchRunState;
+  }> {
+    const { card, project, run, leaseToken } = params;
+
+    // Verify lease if token provided
+    if (leaseToken) {
+      const leaseStatus = await this.verifyResearchRunLease(run.id, leaseToken);
+      if (!leaseStatus.valid) {
+        throw new Error(`Execution lease invalid: ${leaseStatus.reason}`);
+      }
+    }
+
+    // Version resolution: dynamically determine the next version number
+    let currentVersion = 0;
+    if (project.publishedCardId) {
+      const match = project.publishedCardId.match(/-v(\d+)$/);
+      if (match) {
+        currentVersion = parseInt(match[1], 10);
+      }
+    }
+    const resolvedVersion = Math.max(currentVersion + 1, card.version || 1);
+    const resolvedCardId = `card-${project.id}-v${resolvedVersion}`;
+
+    card.id = resolvedCardId;
+    card.version = resolvedVersion;
+    card.status = card.status || "published";
+
+    project.publishedCardId = resolvedCardId;
+    project.publicationStatus = "published";
+    project.latestCardVersionId = resolvedCardId;
+    project.updatedAt = new Date().toISOString();
+
+    run.currentStep = "complete";
+    run.progressPercent = 100;
+    run.cardId = resolvedCardId;
+    run.completedAt = new Date().toISOString();
+
+    try {
+      const db = getAdminFirestore();
+      if (db) {
+        await db.runTransaction(async (transaction) => {
+          // Re-verify project in transaction for concurrent safety
+          const projRef = db.collection("projects").doc(project.id);
+          const projSnap = await transaction.get(projRef);
+          let txVersion = resolvedVersion;
+          let txCardId = resolvedCardId;
+
+          if (projSnap.exists) {
+            const currentProj = projSnap.data() as any;
+            if (currentProj.publishedCardId) {
+              const txMatch = currentProj.publishedCardId.match(/-v(\d+)$/);
+              if (txMatch) {
+                const latestNum = parseInt(txMatch[1], 10);
+                if (latestNum >= txVersion) {
+                  txVersion = latestNum + 1;
+                  txCardId = `card-${project.id}-v${txVersion}`;
+                  card.id = txCardId;
+                  card.version = txVersion;
+                  project.publishedCardId = txCardId;
+                  run.cardId = txCardId;
+                }
+              }
+            }
+          }
+
+          // Verify lease token inside transaction if provided
+          if (leaseToken) {
+            const runRef = db.collection("researchRuns").doc(run.id);
+            const runSnap = await transaction.get(runRef);
+            if (runSnap.exists) {
+              const runData = runSnap.data() as any;
+              if (runData.lease?.leaseToken && runData.lease.leaseToken !== leaseToken) {
+                throw new Error("Execution lease lost: another worker took over lease during run");
+              }
+            }
+          }
+
+          // Atomic batch writes in transaction
+          transaction.set(
+            db.collection("scoutCards").doc(card.id),
+            cleanFirestoreObject({ ...card, visibility: "public" })
+          );
+          transaction.set(
+            projRef,
+            cleanFirestoreObject({
+              ...project,
+              publishedCardId: card.id,
+              latestCardVersionId: card.id,
+              publicationStatus: "published",
+              updatedAt: project.updatedAt,
+            }),
+            { merge: true }
+          );
+          transaction.set(
+            db.collection("researchRuns").doc(run.id),
+            cleanFirestoreObject(run),
+            { merge: true }
+          );
+          transaction.set(
+            db.collection("publicResearchRuns").doc(run.id),
+            {
+              status: "complete",
+              cardUrl: `/projects/${project.id}`,
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true }
+          );
+        });
+      }
+    } catch (err) {
+      console.warn("Could not execute atomic card publication in Firestore:", err);
+      if (process.env.NODE_ENV === "production" || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        throw new Error(`Database error: atomic card publication failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // Update in-memory store
+    store.scoutCards.set(card.id, card);
+    store.projects.set(project.id, project);
+    store.researchRuns.set(run.id, run);
+
+    return {
+      publishedCard: card,
+      project,
+      run,
+    };
   },
 
   // Audience Pulse & Engagements

@@ -1,0 +1,126 @@
+{
+  "auditTimestamp": "2026-09-06T22:21:48.545Z",
+  "isDryRun": true,
+  "totalRecordsAudited": 27,
+  "totalCandidatesFlagged": 5,
+  "candidates": [
+    {
+      "recordId": "card-junichiro-v1",
+      "projectId": "junichiro-jackson",
+      "version": 1,
+      "sourceFile": "/Users/tarikmoody/Documents/Projects/audience-take-gemini/contracts/fixtures/junichiro-card-fallback.json",
+      "issues": [
+        {
+          "type": "synthetic_fallback",
+          "severity": "warning",
+          "description": "Record flagged with legacy live-refresh fallback marker.",
+          "field": "fallbackUsed / submissionLabel"
+        }
+      ],
+      "proposedState": "retain_historical",
+      "reversiblePointerChanges": [
+        {
+          "targetField": "projects.junichiro-jackson.publishedCardId",
+          "currentValue": "card-junichiro-v1",
+          "proposedValue": "card-junichiro-v1"
+        }
+      ],
+      "sourceEvidenceCount": 1
+    },
+    {
+      "recordId": "unknown-record",
+      "projectId": "junichiro-jackson",
+      "version": 2,
+      "sourceFile": "/Users/tarikmoody/Documents/Projects/audience-take-gemini/contracts/fixtures/junichiro-publication-fallback.json",
+      "issues": [
+        {
+          "type": "synthetic_fallback",
+          "severity": "warning",
+          "description": "Record flagged with legacy live-refresh fallback marker.",
+          "field": "fallbackUsed / submissionLabel"
+        }
+      ],
+      "proposedState": "retain_historical",
+      "reversiblePointerChanges": [
+        {
+          "targetField": "projects.junichiro-jackson.publishedCardId",
+          "currentValue": "unknown-record",
+          "proposedValue": "unknown-record"
+        }
+      ],
+      "sourceEvidenceCount": 0
+    },
+    {
+      "recordId": "unknown-record",
+      "projectId": "junichiro-jackson",
+      "version": 2,
+      "sourceFile": "/Users/tarikmoody/Documents/Projects/audience-take-gemini/contracts/fixtures/junichiro-run-fallback.json",
+      "issues": [
+        {
+          "type": "synthetic_fallback",
+          "severity": "warning",
+          "description": "Record flagged with legacy live-refresh fallback marker.",
+          "field": "fallbackUsed / submissionLabel"
+        }
+      ],
+      "proposedState": "retain_historical",
+      "reversiblePointerChanges": [
+        {
+          "targetField": "projects.junichiro-jackson.publishedCardId",
+          "currentValue": "unknown-record",
+          "proposedValue": "unknown-record"
+        }
+      ],
+      "sourceEvidenceCount": 0
+    },
+    {
+      "recordId": "card-proj-1788033835868-tfn0k-v1",
+      "projectId": "proj-1788033835868-tfn0k",
+      "version": 1,
+      "sourceFile": "/Users/tarikmoody/Documents/Projects/audience-take-gemini/contracts/fixtures/junichiro-scout-brief.json",
+      "issues": [
+        {
+          "type": "synthetic_fallback",
+          "severity": "critical",
+          "description": "Cross-project Junichiro fixture substitution detected in independent project.",
+          "field": "storyContext / creatorContext"
+        }
+      ],
+      "proposedState": "require_re_verification",
+      "reversiblePointerChanges": [
+        {
+          "targetField": "projects.proj-1788033835868-tfn0k.publishedCardId",
+          "currentValue": "card-proj-1788033835868-tfn0k-v1",
+          "proposedValue": null
+        }
+      ],
+      "sourceEvidenceCount": 0
+    },
+    {
+      "recordId": "card-junichiro-v1",
+      "projectId": "junichiro-jackson",
+      "version": 1,
+      "sourceFile": "/Users/tarikmoody/Documents/Projects/audience-take-gemini/src/features/scout-card/fixtures/junichiro-card-fallback.json",
+      "issues": [
+        {
+          "type": "synthetic_fallback",
+          "severity": "warning",
+          "description": "Record flagged with legacy live-refresh fallback marker.",
+          "field": "fallbackUsed / submissionLabel"
+        }
+      ],
+      "proposedState": "retain_historical",
+      "reversiblePointerChanges": [
+        {
+          "targetField": "projects.junichiro-jackson.publishedCardId",
+          "currentValue": "card-junichiro-v1",
+          "proposedValue": "card-junichiro-v1"
+        }
+      ],
+      "sourceEvidenceCount": 1
+    }
+  ],
+  "summaryByIssueType": {
+    "synthetic_fallback": 5
+  }
+}

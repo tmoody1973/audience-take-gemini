@@ -98,6 +98,14 @@ export interface VersionProvenance {
   model: string;
   changeReason: string;
   verifiedByUid?: string;
+  gateReceipt?: {
+    passed: boolean;
+    approvedClaimsCount: number;
+    withheldClaimsCount: number;
+    contradictions: string[];
+    policyVersion: string;
+    verifiedAt: string;
+  };
 }
 
 export interface ScoutCard {
@@ -199,6 +207,11 @@ export interface Project {
   id: string;
   identity: ProjectIdentity;
   publishedCardId: string | null;
+  publicationStatus?: "draft" | "published" | "withdrawn";
+  latestCardVersionId?: string | null;
+  followerCount?: number;
+  commitmentCounts?: Record<string, number>;
+  audioStale?: boolean;
   nomination: NominationData;
   creatorClaim: CreatorClaimInfo;
   metrics: PulseMetrics;
@@ -301,6 +314,8 @@ export interface ExecutionLease {
   acquiredAt: string;
   expiresAt: string;
   attempt: number;
+  leaseToken?: string;
+  executionGeneration?: number;
 }
 
 export interface ResearchRunState {
@@ -332,6 +347,7 @@ export interface ProjectMonitor {
   createdAt: string;
   lastCheckedAt?: string;
   lastEventAt?: string;
+  lastSuccessfulResearchAt?: string;
   targetUrl?: string;
 }
 

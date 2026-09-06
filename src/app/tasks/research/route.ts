@@ -7,12 +7,32 @@ export async function POST(request: NextRequest) {
     const taskHeader = request.headers.get("x-cloudtasks-taskname");
     const authHeader = request.headers.get("authorization");
 
-    // Check Cloud Tasks authorization when configured
+    // Check Cloud Tasks authorization when configured or in production
     const expectedAudience = process.env.AGENT_SERVICE_AUDIENCE?.trim();
-    if (process.env.NODE_ENV === "production" && expectedAudience) {
-      if (!authHeader?.startsWith("Bearer ") && !queueHeader) {
+    if (process.env.NODE_ENV === "production") {
+      if (!expectedAudience) {
         return NextResponse.json(
-          { ok: false, error: "Unauthorized worker invocation: missing Cloud Tasks credentials" },
+          { ok: false, error: "Server configuration error: AGENT_SERVICE_AUDIENCE missing" },
+          { status: 500 }
+        );
+      }
+      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+      if (!token) {
+        return NextResponse.json(
+          { ok: false, error: "Unauthorized worker invocation: missing Bearer token" },
+          { status: 401 }
+        );
+      }
+      try {
+        const { OAuth2Client } = await import("google-auth-library");
+        const client = new OAuth2Client();
+        await client.verifyIdToken({
+          idToken: token,
+          audience: expectedAudience,
+        });
+      } catch (authErr: any) {
+        return NextResponse.json(
+          { ok: false, error: `Invalid worker token: ${authErr?.message || "unauthorized"}` },
           { status: 401 }
         );
       }
@@ -25,10 +45,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Invalid JSON payload" }, { status: 400 });
     }
 
-    const { runId, projectId, attempt, taskName } = body || {};
+    const { runId, attempt, taskName } = body || {};
 
     if (!runId || typeof runId !== "string") {
       return NextResponse.json({ ok: false, error: "Missing or invalid runId" }, { status: 400 });
+    }
+
+    // Anchor strictly to stored database run state - reject payload project hijacking
+    const { dataRepo } = await import("@/services/firestore-repo");
+    const existingRun = await dataRepo.getResearchRunById(runId);
+    if (!existingRun) {
+      return NextResponse.json({ ok: false, error: "Research run not found in storage" }, { status: 404 });
     }
 
     const workerId = taskName || taskHeader || `cloud-tasks-${runId}-attempt-${attempt || 1}`;
@@ -36,6 +63,36 @@ export async function POST(request: NextRequest) {
     const run = await executeScoutResearchRun(runId, {
       workerId,
     });
+
+    if (run.currentStep === "failed") {
+      // Differentiate terminal domain failures from retryable errors (R5.7)
+      const isTerminal =
+        run.errorMessage?.includes("Deterministic validation failed") ||
+        run.errorMessage?.includes("quarantined") ||
+        run.errorMessage?.includes("No relevant content") ||
+        run.errorMessage?.includes("invalid") ||
+        run.errorMessage?.includes("Project not found");
+
+      if (isTerminal) {
+        return NextResponse.json({
+          ok: true,
+          status: "failed",
+          terminal: true,
+          runId: run.id,
+          error: run.errorMessage,
+        });
+      }
+
+      return NextResponse.json(
+        {
+          ok: false,
+          status: "retryable_failure",
+          runId: run.id,
+          error: run.errorMessage,
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       ok: true,

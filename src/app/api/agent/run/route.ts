@@ -38,11 +38,42 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const json = await request.json();
-    const { runId, forceRetry } = json;
+    const { verifyAuthenticatedRequest } = await import("@/lib/auth/verify-request");
+    let authUser: { uid: string } | null = null;
 
+    try {
+      const auth = await verifyAuthenticatedRequest(request as any);
+      if (auth && auth.user) {
+        authUser = auth.user;
+      }
+    } catch {
+      authUser = null;
+    }
+
+    if (!authUser && process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Authentication required to retry research" }, { status: 401 });
+    }
+
+    let json: any;
+    try {
+      json = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const { runId, forceRetry } = json || {};
     if (!runId || typeof runId !== "string") {
       return NextResponse.json({ error: "Missing or invalid runId" }, { status: 400 });
+    }
+
+    const existingRun = await dataRepo.getResearchRunById(runId);
+    if (!existingRun) {
+      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+    }
+
+    // Only original nominator or authenticated user may retry
+    if (authUser && existingRun.nominatorUid && existingRun.nominatorUid !== authUser.uid) {
+      return NextResponse.json({ error: "Unauthorized: You may only retry your own runs" }, { status: 403 });
     }
 
     const updatedRun = await executeScoutResearchRun(runId, {
@@ -51,6 +82,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, run: updatedRun });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Sanitize error message so internal provider secrets are not exposed
+    const safeMessage = message.includes("API key") ? "Research provider error" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }

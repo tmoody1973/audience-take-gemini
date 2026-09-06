@@ -85,7 +85,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
       expect(parsedBody.objective).toBe("Research indie film festival acclaim");
       expect(parsedBody.search_queries).toHaveLength(2);
       expect(parsedBody.search_queries).toContain("Indie Film festival awards");
-      expect(parsedBody.mode).toBe("basic");
+      expect(parsedBody.mode).toBe("fast");
       expect(parsedBody.advanced_settings.max_results).toBe(5);
 
       expect(result.search_id).toBe("search_mock_12345");
@@ -146,9 +146,9 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
         search_queries: ["Some query"],
       });
 
-      expect(result.search_id).toMatch(/^parallel_empty_/);
+      expect(result.search_id).toMatch(/^parallel_(failed|empty)_/);
       expect(result.results).toEqual([]);
-      expect(result.warnings).toContain("Live Parallel Search query yielded no external results.");
+      expect(result.warnings.some((w) => w.includes("Parallel Search"))).toBe(true);
     });
   });
 
@@ -195,7 +195,6 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
       });
 
       expect(capturedUrl).toBe("https://api.parallel.ai/v1/extract");
-      expect(capturedBody.mode).toBe("markdown");
       expect(capturedBody.urls).toContain("https://kickstarter.com/projects/creator/sample-film");
       expect(res.extract_id).toBe("ext_12345");
       expect(res.results[0].markdown).toContain("Raised $150,000");

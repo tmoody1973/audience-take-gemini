@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname),
   serverExternalPackages: ["@google/genai", "@google-cloud/aiplatform", "@google/adk", "firebase-admin", "@google-cloud/tasks"],
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/@google-cloud/tasks/**/*"],
+  },
   images: {
     remotePatterns: [
       {

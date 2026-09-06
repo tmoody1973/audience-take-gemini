@@ -134,10 +134,13 @@ export async function fetchSafeWebContent(
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  const signal = typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+    ? AbortSignal.timeout(10000)
+    : controller.signal;
 
   try {
     const response = await fetch(check.normalizedUrl, {
-      signal: controller.signal,
+      signal,
       headers: {
         "User-Agent": "AudienceTake-ScoutBot/1.0 (+https://audiencetake.org/bot)",
         Accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",

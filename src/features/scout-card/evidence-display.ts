@@ -111,7 +111,7 @@ export function sourcePresentation(source: SourceLedgerEntry): { role: string; t
   return { role, tier };
 }
 
-export function cleanTextExcerpt(raw: string, fallbackTitle?: string): string {
+export function cleanTextExcerpt(raw: string, fallbackTitle?: string, maxLength: number = 250, maxSentences: number = 2): string {
   if (!raw && !fallbackTitle) return "";
   let text = raw || "";
   // Remove markdown image syntax ![alt](url)
@@ -139,6 +139,13 @@ export function cleanTextExcerpt(raw: string, fallbackTitle?: string): string {
   text = text.replace(/^[a-z0-9_.-]*\.(com|ie|org|net|co|io|uk|ai|tv)\/[^\s\)]*\)?\s*/gi, "");
   text = text.replace(/^[^\s\(\[]*\)\s*/g, "");
 
+  // Strip website navigation headers and skip links
+  text = text.replace(/^(skip\s+(to\s+main\s+content|navigation)[^.!?\n]*[.!?\n]?\s*)+/gi, "");
+  text = text.replace(/^(open\s+menu\s+open\s+navigation|open\s+navigation|main\s+navigation)[^.!?\n]*[.!?\n]?\s*/gi, "");
+  text = text.replace(/^(\d{1,2}:\d{2}\s+){1,4}[^\n.]*(movies|portal|feed)[^\n.]*\s*/gi, "");
+  text = text.replace(/^reddit\s*-\s*the\s*heart\s*of\s*the\s*internet\s*/gi, "");
+  text = text.replace(/^(\*?\s*(log\s*in|search\s*log\s*in|sign\s*up)\s*\*?)+\s*/gi, "");
+
   // Remove Markdown headers (#, ##, etc.)
   text = text.replace(/#+\s+/g, "");
   // Remove Markdown bold/italics
@@ -161,13 +168,18 @@ export function cleanTextExcerpt(raw: string, fallbackTitle?: string): string {
         !s.toLowerCase().includes("subscribe") &&
         !s.toLowerCase().includes("password") &&
         !s.toLowerCase().includes("cookie policy") &&
+        !s.toLowerCase().includes("skip navigation") &&
+        !s.toLowerCase().includes("skip to main content") &&
+        !s.toLowerCase().includes("open menu") &&
+        !s.toLowerCase().includes("search log in") &&
+        !s.toLowerCase().includes("portal community your feed") &&
         !/\d+\+\s+(best|top|of)/i.test(s) &&
         !/best\s+.*\s+of\s+all\s+time/i.test(s) &&
         !/woman holding/i.test(s)
     );
 
   if (sentences.length > 0) {
-    text = sentences.slice(0, 2).join(" ");
+    text = sentences.slice(0, maxSentences).join(" ");
   } else if (fallbackTitle) {
     text = fallbackTitle.replace(/#+\s+/g, "").replace(/[*_]/g, "").trim();
   }
@@ -177,10 +189,10 @@ export function cleanTextExcerpt(raw: string, fallbackTitle?: string): string {
     text = fallbackTitle.replace(/#+\s+/g, "").replace(/[*_]/g, "").trim();
   }
 
-  if (text.length > 250) {
-    const truncated = text.slice(0, 250);
+  if (text.length > maxLength) {
+    const truncated = text.slice(0, maxLength);
     const lastPeriod = truncated.lastIndexOf(".");
-    if (lastPeriod > 120) {
+    if (lastPeriod > Math.min(120, Math.floor(maxLength / 2))) {
       text = truncated.slice(0, lastPeriod + 1);
     } else {
       const lastSpace = truncated.lastIndexOf(" ");

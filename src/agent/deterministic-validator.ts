@@ -12,16 +12,96 @@ export interface ValidationResult {
   isPartial: boolean;
   errors: string[];
   warnings: string[];
+  quarantinedEvidence?: Array<{ rawItem: unknown; reason: string }>;
   sanitizedCard?: Omit<ScoutCard, "id" | "projectId" | "version" | "publishedAt" | "trailerCriticId">;
 }
 
-const FORBIDDEN_HYPE_PATTERNS = [
+const STRICT_HYPE_PATTERNS = [
   /\bgreenlight\s*score\b/i,
   /\bguaranteed\s*(hit|commercial|box\s*office|return|success)\b/i,
-  /\b(netflix|a24|hbo|disney|apple\s*tv|amazon\s*studios|paramount|warner)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i,
   /\bcertain\s*commercial\s*success\b/i,
   /\bpredicted\s*roi\b/i,
 ];
+
+const BUYER_ACQUISITION_PATTERNS = [
+  { regex: /\b(netflix)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "netflix" },
+  { regex: /\b(a24)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "a24" },
+  { regex: /\b(hbo)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "hbo" },
+  { regex: /\b(disney)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "disney" },
+  { regex: /\b(apple\s*tv)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "apple" },
+  { regex: /\b(amazon\s*studios)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "amazon" },
+  { regex: /\b(paramount)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "paramount" },
+  { regex: /\b(warner)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "warner" },
+];
+
+const COMMON_STOPWORDS = new Set([
+  "this", "that", "with", "from", "have", "been", "were", "what", "which",
+  "will", "would", "about", "there", "their", "where", "into", "over", "more",
+  "most", "some", "such", "than", "them", "then", "when", "also", "both",
+  "each", "other", "after", "before", "while", "during", "project", "independent"
+]);
+
+export function checkCrossSectionContradictions(proposal: any): {
+  hasContradiction: boolean;
+  contradictions: string[];
+  qualifications: Array<{ field: string; from: string; to: string }>;
+} {
+  const contradictions: string[] = [];
+  const qualifications: Array<{ field: string; from: string; to: string }> = [];
+
+  const triageSummary = String(proposal.decisionBrief?.triageSummary || "");
+  const materialUncertainty = String(proposal.decisionBrief?.materialUncertainty || "");
+  const whatWereChecking = Array.isArray(proposal.whatWereChecking) ? proposal.whatWereChecking.join(" ") : "";
+  const whatWeKnow = Array.isArray(proposal.whatWeKnow) ? proposal.whatWeKnow.join(" ") : "";
+
+  // 1. Rights Contradiction: Unencumbered vs Unconfirmed Chain of Title
+  const rightsFreePattern = /\b((?:feature\s+|commercial\s+)?rights\s+(?:is|are\s+)?unencumbered|commercial\s+rights\s+free|rights\s+(?:is|are\s+)?available|unencumbered\s+rights)\b/i;
+  const rightsUnconfirmedPattern = /\b(chain[\s-]*of[\s-]*title[^\w]*(?:is|are\s+)?unconfirmed|rights\s+(?:is|are\s+)?unconfirmed|rights\s+(?:is|are\s+)?unknown|underlying\s+rights[^\w]*(?:is|are\s+)?unconfirmed|chain[\s-]*of[\s-]*title\s+unknown)\b/i;
+
+  const claimsRightsFree = rightsFreePattern.test(triageSummary) || rightsFreePattern.test(whatWeKnow);
+  const claimsRightsUnconfirmed = rightsUnconfirmedPattern.test(materialUncertainty) || rightsUnconfirmedPattern.test(whatWereChecking) || rightsUnconfirmedPattern.test(triageSummary);
+
+  if (claimsRightsFree && claimsRightsUnconfirmed) {
+    if (rightsFreePattern.test(triageSummary)) {
+      qualifications.push({
+        field: "decisionBrief.triageSummary",
+        from: "rights unencumbered",
+        to: "rights pending chain-of-title confirmation",
+      });
+      contradictions.push(
+        "Rights contradiction: Commercial rights claimed unencumbered while chain-of-title is unconfirmed. Qualified triageSummary."
+      );
+    } else {
+      contradictions.push(
+        "Rights contradiction: Commercial rights claimed unencumbered in factual sections while chain-of-title is unconfirmed."
+      );
+    }
+  }
+
+  // 2. Format Contradiction: Short claimed as completed feature
+  if (proposal.medium === "short" || proposal.medium === "proof_of_concept") {
+    const featureCompletePattern = /\b(completed\s+feature\s+film|released\s+feature\s+film|feature-length\s+release)\b/i;
+    if (featureCompletePattern.test(whatWeKnow)) {
+      contradictions.push(
+        "Format contradiction: Project medium is short/proof_of_concept but whatWeKnow claims an already completed feature film."
+      );
+    }
+  }
+
+  // 3. Ownership Contradiction: Unclaimed status conflated with unowned
+  const unownedPattern = /\b(project\s+is\s+unowned|work\s+is\s+unowned|public\s+domain\s+work)\b/i;
+  if (unownedPattern.test(whatWeKnow)) {
+    contradictions.push(
+      "Ownership contradiction: Unclaimed platform status conflated with unowned or public domain rights."
+    );
+  }
+
+  return {
+    hasContradiction: contradictions.length > 0,
+    contradictions,
+    qualifications,
+  };
+}
 
 export function checkMediumConcordance(
   medium: MediumType,
@@ -72,48 +152,107 @@ export function checkMediumConcordance(
   return { concordant: true };
 }
 
-export function checkHypeAndHallucinations(text: string): { clean: boolean; matches: string[] } {
+export function checkHypeAndHallucinations(
+  text: string,
+  evidenceLedger?: EvidenceItem[]
+): { clean: boolean; matches: string[] } {
   const matches: string[] = [];
-  for (const pattern of FORBIDDEN_HYPE_PATTERNS) {
+
+  for (const pattern of STRICT_HYPE_PATTERNS) {
     const match = text.match(pattern);
     if (match) {
       matches.push(match[0]);
     }
   }
+
+  for (const item of BUYER_ACQUISITION_PATTERNS) {
+    const match = text.match(item.regex);
+    if (match) {
+      // Check if evidenceLedger has cited trade coverage supporting this buyer report
+      const isSourcedInEvidence = Boolean(
+        evidenceLedger?.some((ev) => {
+          const passage = `${ev.title} ${ev.excerpt} ${ev.publisher}`.toLowerCase();
+          return (
+            passage.includes(item.buyer) &&
+            (passage.includes("acquire") ||
+              passage.includes("buying") ||
+              passage.includes("bought") ||
+              passage.includes("talks") ||
+              passage.includes("deal") ||
+              passage.includes("bid"))
+          );
+        })
+      );
+      if (!isSourcedInEvidence) {
+        matches.push(match[0]);
+      }
+    }
+  }
+
   return { clean: matches.length === 0, matches };
 }
 
 export function checkCitationCoverage(
   evidenceLedger: EvidenceItem[],
   whatWeKnow: string[]
-): { sufficientCoverage: boolean; ungroundedClaims: string[] } {
+): { sufficientCoverage: boolean; ungroundedClaims: string[]; groundedClaims: string[] } {
   if (evidenceLedger.length === 0) {
-    return { sufficientCoverage: false, ungroundedClaims: whatWeKnow };
+    return { sufficientCoverage: false, ungroundedClaims: whatWeKnow, groundedClaims: [] };
   }
 
   const ungrounded: string[] = [];
-  const sourceTexts = evidenceLedger.map((e) => `${e.title} ${e.excerpt} ${e.publisher}`.toLowerCase()).join(" ");
+  const grounded: string[] = [];
 
-  // Simple token overlap / semantic grounding check
   for (const claim of whatWeKnow) {
-    const words = claim
-      .toLowerCase()
-      .replace(/[^\w\s]/g, "")
+    const cleanClaim = claim.toLowerCase().replace(/[^\w\s-]/g, " ");
+    const words = cleanClaim
       .split(/\s+/)
-      .filter((w) => w.length > 3);
+      .filter((w) => w.length > 3 && !COMMON_STOPWORDS.has(w));
 
-    const matchingWords = words.filter((w) => sourceTexts.includes(w));
-    const overlapRatio = words.length > 0 ? matchingWords.length / words.length : 0;
+    // Check if at least ONE individual source passage supports this claim
+    let hasPassageSupport = false;
 
-    // Must have at least 25% lexical grounding in cited source excerpts
-    if (overlapRatio < 0.25 && words.length > 4) {
+    for (const ev of evidenceLedger) {
+      const passage = `${ev.title} ${ev.excerpt} ${ev.publisher}`.toLowerCase().replace(/[^\w\s-]/g, " ");
+
+      // 1. Exact phrase / substring match
+      if (cleanClaim.length >= 20 && passage.includes(cleanClaim.slice(0, 30))) {
+        hasPassageSupport = true;
+        break;
+      }
+      if (ev.excerpt && ev.excerpt.length >= 20 && cleanClaim.includes(ev.excerpt.slice(0, 30).toLowerCase())) {
+        hasPassageSupport = true;
+        break;
+      }
+
+      // 2. Significant token overlap in this single passage
+      if (words.length > 0) {
+        let matchCount = 0;
+        for (const w of words) {
+          const stem = w.length > 5 ? w.replace(/(ing|ed|es|s)$/, "") : w;
+          if (passage.includes(w) || (stem.length >= 4 && passage.includes(stem))) {
+            matchCount++;
+          }
+        }
+        const ratio = matchCount / words.length;
+        if ((matchCount >= 2 && ratio >= 0.35) || matchCount >= 3) {
+          hasPassageSupport = true;
+          break;
+        }
+      }
+    }
+
+    if (hasPassageSupport) {
+      grounded.push(claim);
+    } else {
       ungrounded.push(claim);
     }
   }
 
   return {
-    sufficientCoverage: ungrounded.length <= 1,
+    sufficientCoverage: ungrounded.length === 0,
     ungroundedClaims: ungrounded,
+    groundedClaims: grounded,
   };
 }
 
@@ -129,7 +268,6 @@ function sanitizeRawProposal(raw: any): any {
   // Normalize whyScouted
   if (typeof clone.whyScouted === "string") {
     clone.whyScouted = clone.whyScouted.trim().slice(0, 800);
-    if (clone.whyScouted.length < 10) clone.whyScouted = "A distinct independent screen project demonstrating clear vision and audience potential.";
   }
 
   // Normalize creators
@@ -148,39 +286,53 @@ function sanitizeRawProposal(raw: any): any {
     clone.whatWereChecking = clone.whatWereChecking.map((s: any) => String(s).trim().slice(0, 500)).filter((s: string) => s.length >= 5);
   }
 
-  // Normalize evidenceLedger
+  // Normalize evidenceLedger: quarantine malformed items, preserve provenance, reject future retrieval dates
+  const quarantinedEvidence: Array<{ rawItem: unknown; reason: string }> = [];
   if (Array.isArray(clone.evidenceLedger)) {
     const validClaimTypes = new Set(["observation", "reported", "inference", "conflict", "unresolved"]);
-    clone.evidenceLedger = clone.evidenceLedger.map((item: any, idx: number) => {
+    const validItems: any[] = [];
+    const nowMs = Date.now() + 60_000; // 60s tolerance for clock skew
+
+    for (let idx = 0; idx < clone.evidenceLedger.length; idx++) {
+      const item = clone.evidenceLedger[idx];
       if (!item || typeof item !== "object") {
-        return {
-          id: `ev-${idx + 1}`,
-          sourceUrl: "https://audiencetake.com/evidence",
-          title: "Supporting Context",
-          publisher: "Public Record",
-          claimType: "reported",
-          excerpt: "Verified project documentation and reporting.",
-          verified: true,
-        };
+        quarantinedEvidence.push({ rawItem: item, reason: "Evidence item is null or not an object." });
+        continue;
       }
-      let sourceUrl = typeof item.sourceUrl === "string" ? item.sourceUrl.trim() : "";
+      const sourceUrl = typeof item.sourceUrl === "string" ? item.sourceUrl.trim() : "";
       if (!sourceUrl.startsWith("http://") && !sourceUrl.startsWith("https://")) {
-        sourceUrl = "https://audiencetake.com/evidence";
+        quarantinedEvidence.push({ rawItem: item, reason: `Invalid or missing URL scheme in sourceUrl: "${sourceUrl}".` });
+        continue;
+      }
+      if (item.retrievedAt) {
+        const retrievedDate = new Date(item.retrievedAt);
+        if (!isNaN(retrievedDate.getTime()) && retrievedDate.getTime() > nowMs) {
+          quarantinedEvidence.push({ rawItem: item, reason: `Invalid future retrieval timestamp: ${item.retrievedAt}.` });
+          continue;
+        }
       }
       let claimType = typeof item.claimType === "string" ? item.claimType.toLowerCase().trim() : "reported";
       if (!validClaimTypes.has(claimType)) {
         claimType = "reported";
       }
-      return {
+      validItems.push({
         id: item.id ? String(item.id).slice(0, 50) : `ev-${idx + 1}`,
         sourceUrl,
         title: item.title ? String(item.title).trim().slice(0, 300) : "Project Evidence",
         publisher: item.publisher ? String(item.publisher).trim().slice(0, 100) : "Public Source",
         claimType,
-        excerpt: item.excerpt ? String(item.excerpt).trim().slice(0, 1000) : "Verified source observation.",
-        verified: item.verified !== false,
-      };
-    });
+        excerpt: item.excerpt ? String(item.excerpt).trim().slice(0, 1000) : "Source observation.",
+        verified: item.verified === true,
+        timestamp: item.timestamp ? String(item.timestamp) : undefined,
+        publishedAt: item.publishedAt !== undefined ? item.publishedAt : null,
+        retrievedAt: item.retrievedAt ? String(item.retrievedAt) : undefined,
+        supportingClaimIds: Array.isArray(item.supportingClaimIds)
+          ? item.supportingClaimIds.map((c: any) => String(c)).slice(0, 20)
+          : undefined,
+      });
+    }
+    clone.evidenceLedger = validItems;
+    clone._quarantinedEvidence = quarantinedEvidence;
   }
 
   // Normalize sourceMedia
@@ -195,15 +347,12 @@ function sanitizeRawProposal(raw: any): any {
     clone.decisionBrief = { ...clone.decisionBrief };
     if (typeof clone.decisionBrief.logline === "string") {
       clone.decisionBrief.logline = clone.decisionBrief.logline.trim().slice(0, 400);
-      if (clone.decisionBrief.logline.length < 10) clone.decisionBrief.logline = "An independent screen project exploring compelling themes.";
     }
     if (typeof clone.decisionBrief.coreHook === "string") {
       clone.decisionBrief.coreHook = clone.decisionBrief.coreHook.trim().slice(0, 300);
-      if (clone.decisionBrief.coreHook.length < 5) clone.decisionBrief.coreHook = "Authentic storytelling and fresh voice.";
     }
     if (typeof clone.decisionBrief.primaryRisk === "string") {
       clone.decisionBrief.primaryRisk = clone.decisionBrief.primaryRisk.trim().slice(0, 300);
-      if (clone.decisionBrief.primaryRisk.length < 5) clone.decisionBrief.primaryRisk = "Securing production financing and audience reach.";
     }
     if (typeof clone.decisionBrief.comparativeTitles === "string") {
       clone.decisionBrief.comparativeTitles = clone.decisionBrief.comparativeTitles
@@ -214,10 +363,8 @@ function sanitizeRawProposal(raw: any): any {
     if (Array.isArray(clone.decisionBrief.comparativeTitles)) {
       clone.decisionBrief.comparativeTitles = clone.decisionBrief.comparativeTitles
         .map((s: any) => String(s).slice(0, 100))
+        .filter(Boolean)
         .slice(0, 5);
-      if (clone.decisionBrief.comparativeTitles.length === 0) {
-        clone.decisionBrief.comparativeTitles = ["Independent Screen Breakthroughs"];
-      }
     }
     if (typeof clone.decisionBrief.triageSummary === "string") {
       clone.decisionBrief.triageSummary = clone.decisionBrief.triageSummary.trim().slice(0, 600);
@@ -238,18 +385,12 @@ function sanitizeRawProposal(raw: any): any {
     }
     if (typeof clone.industryLens.marketContext === "string") {
       clone.industryLens.marketContext = clone.industryLens.marketContext.trim().slice(0, 800);
-      if (clone.industryLens.marketContext.length < 10) {
-        clone.industryLens.marketContext = "Growing independent market demand for authentic audience-driven stories.";
-      }
     }
     if (Array.isArray(clone.industryLens.realisticConstraints)) {
       clone.industryLens.realisticConstraints = clone.industryLens.realisticConstraints.join(" ");
     }
     if (typeof clone.industryLens.realisticConstraints === "string") {
       clone.industryLens.realisticConstraints = clone.industryLens.realisticConstraints.trim().slice(0, 600);
-      if (clone.industryLens.realisticConstraints.length < 10) {
-        clone.industryLens.realisticConstraints = "Independent production requires disciplined budget allocation and community momentum.";
-      }
     }
     if (typeof clone.industryLens.comparables === "string") {
       clone.industryLens.comparables = clone.industryLens.comparables
@@ -260,10 +401,8 @@ function sanitizeRawProposal(raw: any): any {
     if (Array.isArray(clone.industryLens.comparables)) {
       clone.industryLens.comparables = clone.industryLens.comparables
         .map((s: any) => String(s).slice(0, 100))
+        .filter(Boolean)
         .slice(0, 6);
-      if (clone.industryLens.comparables.length === 0) {
-        clone.industryLens.comparables = ["Independent Media Comparables"];
-      }
     }
   }
 
@@ -347,6 +486,14 @@ export function validateScoutProposal(
 
   // Step 1: Pre-sanitize and Zod Schema Validation
   const sanitized = sanitizeRawProposal(rawProposal);
+  const quarantinedEvidence: Array<{ rawItem: unknown; reason: string }> = sanitized?._quarantinedEvidence || [];
+  if (sanitized && typeof sanitized === "object") {
+    delete sanitized._quarantinedEvidence;
+  }
+  if (quarantinedEvidence.length > 0) {
+    warnings.push(`Quarantined ${quarantinedEvidence.length} invalid evidence item(s): ${quarantinedEvidence.map((q) => q.reason).join("; ")}`);
+  }
+
   const parseResult = LLMScoutProposalSchema.safeParse(sanitized);
   if (!parseResult.success) {
     return {
@@ -354,42 +501,90 @@ export function validateScoutProposal(
       isPartial: false,
       errors: parseResult.error.issues.map((e: any) => `${e.path.join(".")}: ${e.message}`),
       warnings,
+      quarantinedEvidence: quarantinedEvidence.length > 0 ? quarantinedEvidence : undefined,
     };
   }
 
   const proposal = parseResult.data;
 
-  // Step 2: Hype & Hallucination Inspection
-  const fullText = JSON.stringify(proposal);
-  const hypeCheck = checkHypeAndHallucinations(fullText);
-  if (!hypeCheck.clean) {
-    errors.push(`Disallowed commercial hype or greenlight score detected: ${hypeCheck.matches.join(", ")}`);
+  // Step 2: Cross-Section Contradiction Inspection & Rights Qualification
+  const contradictionCheck = checkCrossSectionContradictions(proposal);
+  if (contradictionCheck.qualifications.length > 0) {
+    if (proposal.decisionBrief?.triageSummary) {
+      proposal.decisionBrief.triageSummary = proposal.decisionBrief.triageSummary
+        .replace(/feature rights unencumbered/gi, "feature rights pending chain-of-title confirmation")
+        .replace(/rights unencumbered/gi, "rights pending chain-of-title confirmation")
+        .replace(/commercial rights free/gi, "commercial rights pending confirmation");
+    }
+    warnings.push(...contradictionCheck.contradictions);
+  }
+  // Check for any unhandled format or ownership contradictions
+  const criticalContradictions = contradictionCheck.contradictions.filter(
+    (c) => c.includes("Format contradiction") || c.includes("Ownership contradiction")
+  );
+  if (criticalContradictions.length > 0) {
+    errors.push(...criticalContradictions);
   }
 
-  // Step 3: Medium Concordance Check
+  // Step 3: Hype & Hallucination Inspection (distinguishing sourced trade reporting)
+  const fullText = JSON.stringify(proposal);
+  const hypeCheck = checkHypeAndHallucinations(fullText, proposal.evidenceLedger);
+  if (!hypeCheck.clean) {
+    errors.push(`Disallowed commercial hype or ungrounded buyer claim detected: ${hypeCheck.matches.join(", ")}`);
+  }
+
+  // Step 4: Medium Concordance Check
   const mediumCheck = checkMediumConcordance(proposal.medium, proposal.pathways);
   if (!mediumCheck.concordant) {
     errors.push(mediumCheck.error || "Medium concordance check failed");
   }
 
-  // Step 4: Citation Grounding Check
+  // Step 5: Passage-Specific Citation Grounding Check
   const citationCheck = checkCitationCoverage(proposal.evidenceLedger, proposal.whatWeKnow);
+  let withheldClaims: string[] = [];
   if (!citationCheck.sufficientCoverage) {
-    warnings.push(`Some claims have weak source grounding: ${citationCheck.ungroundedClaims.join("; ")}`);
+    // Filter ungrounded claims out of factual section whatWeKnow
+    const supportedWhatWeKnow = proposal.whatWeKnow.filter(
+      (c) => !citationCheck.ungroundedClaims.includes(c)
+    );
+    withheldClaims = citationCheck.ungroundedClaims;
+    proposal.whatWereChecking = [
+      ...proposal.whatWereChecking,
+      ...citationCheck.ungroundedClaims.map((c) => `Pending verification: ${c}`),
+    ];
+    if (supportedWhatWeKnow.length < 2) {
+      errors.push(
+        `Insufficient passage grounding: whatWeKnow contains ungrounded factual claims with fewer than 2 supported facts remaining (${citationCheck.ungroundedClaims.join("; ")}).`
+      );
+    } else {
+      proposal.whatWeKnow = supportedWhatWeKnow;
+      warnings.push(
+        `Filtered ${citationCheck.ungroundedClaims.length} ungrounded claim(s) from whatWeKnow into whatWereChecking: ${citationCheck.ungroundedClaims.join("; ")}`
+      );
+    }
   }
 
-  // Determine if valid or partial
+  // Determine if valid or failed
   if (errors.length > 0) {
-    // If we have critical errors, we fail validation
     return {
       valid: false,
       isPartial: false,
       errors,
       warnings,
+      quarantinedEvidence: quarantinedEvidence.length > 0 ? quarantinedEvidence : undefined,
     };
   }
 
-  const isPartial = warnings.length > 0 || proposal.whatWeKnow.length < 3;
+  const isPartial = warnings.length > 0 || proposal.whatWeKnow.length < 3 || withheldClaims.length > 0;
+
+  const gateReceipt = {
+    passed: true,
+    approvedClaimsCount: proposal.whatWeKnow.length,
+    withheldClaimsCount: withheldClaims.length,
+    contradictions: contradictionCheck.contradictions,
+    policyVersion: "2026.1",
+    verifiedAt: new Date().toISOString(),
+  };
 
   const sanitizedCard = {
     status: isPartial ? ("partial" as const) : ("published" as const),
@@ -405,6 +600,7 @@ export function validateScoutProposal(
       generatedAt: new Date().toISOString(),
       model: modelName,
       changeReason: "Initial agent research run and deterministic validation pass",
+      gateReceipt,
     },
   };
 
@@ -413,6 +609,45 @@ export function validateScoutProposal(
     isPartial,
     errors,
     warnings,
+    quarantinedEvidence: quarantinedEvidence.length > 0 ? quarantinedEvidence : undefined,
     sanitizedCard,
+  };
+}
+
+export function verifyPublicationGate(candidate: unknown): {
+  passed: boolean;
+  errors: string[];
+  warnings: string[];
+  sanitizedCard?: ScoutCard;
+} {
+  const cand = (candidate && typeof candidate === "object" ? { ...candidate } : {}) as any;
+  // If candidate is a ScoutCard without top-level project identity fields, fill defaults
+  if (!cand.projectTitle) cand.projectTitle = cand.title || "Project";
+  if (!cand.medium) cand.medium = "feature";
+  if (!cand.stage) cand.stage = "production";
+  if (!cand.creators) cand.creators = [];
+  if (!cand.whyScouted) cand.whyScouted = "Monitored screen project update verified by Audience Take.";
+  if (!cand.whatWereChecking || cand.whatWereChecking.length === 0) cand.whatWereChecking = ["Monitoring ongoing production milestones"];
+
+  const result = validateScoutProposal(cand);
+  if (!result.valid || !result.sanitizedCard) {
+    return {
+      passed: false,
+      errors: result.errors,
+      warnings: result.warnings,
+    };
+  }
+  const card: ScoutCard = {
+    id: cand.id || `card-${cand.projectId || "project"}-v${cand.version || 1}`,
+    projectId: cand.projectId || "project",
+    version: cand.version || 1,
+    ...result.sanitizedCard,
+    trailerCriticId: cand.trailerCriticId || null,
+  };
+  return {
+    passed: true,
+    errors: [],
+    warnings: result.warnings,
+    sanitizedCard: card,
   };
 }

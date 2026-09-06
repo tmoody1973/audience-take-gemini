@@ -12,7 +12,13 @@ import { validateScoutProposal } from "./deterministic-validator";
 import { dataRepo } from "@/services/firestore-repo";
 import { analyzeTrailerVideo } from "@/critic/trailer-critic-engine";
 import { cleanTextExcerpt } from "@/features/scout-card/evidence-display";
-import type { ResearchRunState, ScoutCard, ExecutionLease } from "@/domain";
+import {
+  createInitialQuestionLedger,
+  assessQuestionLedger,
+  planNextResearchStep,
+  type ResearchBudget,
+} from "./question-ledger";
+import type { ResearchRunState, ScoutCard, ExecutionLease, EvidenceItem } from "@/domain";
 
 export interface ExecutionOptions {
   workerId?: string;
@@ -28,38 +34,9 @@ export async function acquireExecutionLease(
   acquired: boolean;
   reason?: "already_completed" | "already_running" | "not_found";
   run?: ResearchRunState;
+  leaseToken?: string;
 }> {
-  const run = await dataRepo.getResearchRunById(runId);
-  if (!run) return { acquired: false, reason: "not_found" };
-
-  if (run.currentStep === "complete" && !options.forceRetry) {
-    return { acquired: false, reason: "already_completed", run };
-  }
-
-  const now = Date.now();
-  if (
-    !options.forceRetry &&
-    run.lease &&
-    new Date(run.lease.expiresAt).getTime() > now &&
-    run.currentStep !== "failed"
-  ) {
-    return { acquired: false, reason: "already_running", run };
-  }
-
-  const leaseDurationMs = options.leaseDurationMs ?? 15 * 60 * 1000;
-  run.lease = {
-    workerId,
-    acquiredAt: new Date(now).toISOString(),
-    expiresAt: new Date(now + leaseDurationMs).toISOString(),
-    attempt: (run.attempt || 0) + 1,
-  };
-  run.attempt = run.lease.attempt;
-  if (run.currentStep === "failed" && options.forceRetry) {
-    run.currentStep = "fetching";
-    run.errorMessage = undefined;
-  }
-  await dataRepo.saveResearchRun(run);
-  return { acquired: true, run };
+  return await dataRepo.acquireResearchRunLease(runId, workerId, options);
 }
 
 export async function executeScoutResearchRun(
@@ -80,19 +57,26 @@ export async function executeScoutResearchRun(
   }
 
   const run = leaseResult.run!;
+  const leaseToken = leaseResult.leaseToken;
 
   const project = await dataRepo.getProjectById(run.projectId);
   if (!project) throw new Error("Project not found");
 
   const researchModel = process.env.AUDIENCE_TAKE_GEMINI_MODEL || "gemini-3.5-flash";
 
-  // Helper to log progress
+  // Helper to log progress with lease token verification
   const logStep = async (
     step: ResearchRunState["currentStep"],
     message: string,
     percent: number,
     status: "in_progress" | "done" | "warning" | "error" = "done"
   ) => {
+    if (leaseToken) {
+      const leaseCheck = await dataRepo.verifyResearchRunLease(run.id, leaseToken);
+      if (!leaseCheck.valid) {
+        throw new Error(`Execution lease invalid: ${leaseCheck.reason}`);
+      }
+    }
     run.currentStep = step;
     run.progressPercent = percent;
     run.stepLogs.push({
@@ -172,11 +156,13 @@ export async function executeScoutResearchRun(
 
     await logStep("fetching", `Invoking Parallel Search API for real-time web discovery and trade citations...`, 40, "in_progress");
 
-    const dynamicProjectTitle = ytMeta?.title
-      ? ytMeta.title.replace(/[\(\)\[\]]/g, " ").trim()
-      : (!project.identity.title.includes("Investigating")
-        ? project.identity.title
-        : project.nomination.reason.slice(0, 60));
+    const cleanNominatedTitle = project.identity.title && !project.identity.title.toLowerCase().startsWith("investigating")
+      ? project.identity.title.trim()
+      : null;
+    const cleanYtTitle = ytMeta?.title
+      ? ytMeta.title.replace(/\s*[-:|]\s*(official\s*)?(trailer|teaser|pilot|clip|promo|video).*$/i, "").replace(/\s+in:\s+.*$/i, "").replace(/[\(\)\[\]]/g, " ").trim()
+      : null;
+    const dynamicProjectTitle = cleanNominatedTitle || cleanYtTitle || project.nomination.reason.slice(0, 60);
 
     // Round 1: Targeted queries on development stage, financing, production partners, rights & reception
     searchRequestsCount += 1;
@@ -198,17 +184,32 @@ export async function executeScoutResearchRun(
 
     let allSearchResults = [...parallelResults.results];
 
-    // Source Extraction: Extract markdown for top candidate URLs (excluding primary source)
-    const candidateUrls = parallelResults.results
-      .map((r) => r.url)
+    // Extract submitted supporting links from nomination if available (R7.3)
+    const initialLinks = project.nomination?.initialLinks || [];
+    const submittedSupportingUrls = Array.from(new Set([...initialLinks]))
+      .filter((u) => u && typeof u === "string" && u !== run.sourceUrl && (u.startsWith("http://") || u.startsWith("https://")));
+
+    // Source Extraction: Extract markdown for candidate URLs (excluding primary source, video hosts, and distractor franchises)
+    const titleStem = dynamicProjectTitle.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8);
+    const isDistractorUrl = (u: string, title?: string): boolean => {
+      const lower = `${u} ${title || ""}`.toLowerCase();
+      if (titleStem.includes("horizon") && !dynamicProjectTitle.toLowerCase().includes("zero dawn")) {
+        if (lower.includes("zero dawn") || lower.includes("zero-dawn") || lower.includes("zero_dawn") || lower.includes("/r/horizon/") || lower.includes("forbidden west") || lower.includes("forbidden-west")) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const candidateUrls = Array.from(new Set([...submittedSupportingUrls, ...parallelResults.results.map((r) => r.url)]))
       .filter((u) => {
         if (!u || u === run.sourceUrl) return false;
+        if (isDistractorUrl(u)) return false;
         try {
           const parsed = new URL(u);
           const h = parsed.hostname.toLowerCase();
-          // Exclude generic roots and aggregators
-          if (h.includes("youtube.com") || h.includes("youtu.be") || h.includes("vimeo.com")) return false;
-          if (parsed.pathname === "/" || parsed.pathname === "") return false;
+          // Exclude video aggregators and social hosts, but preserve official project root sites (R7.7)
+          if (h.includes("youtube.com") || h.includes("youtu.be") || h.includes("vimeo.com") || h.includes("tiktok.com") || h.includes("x.com") || h.includes("twitter.com")) return false;
           return true;
         } catch {
           return false;
@@ -241,40 +242,41 @@ export async function executeScoutResearchRun(
       }
     }
 
-    // Gap Analysis & Round 2 Follow-Up: Check if rights or distribution remain completely unaddressed
-    const combinedRound1Text = [
-      fetchedText,
-      ...allSearchResults.map((r) => `${r.title} ${r.excerpts?.join(" ")}`),
-      ...extractedArticlePassages.map((p) => `${p.title} ${p.markdown}`),
-    ].join(" ").toLowerCase();
+    // Structured Question Ledger & Budget Planning (R7)
+    const questionLedger = createInitialQuestionLedger(dynamicProjectTitle, run.sourceUrl);
+    assessQuestionLedger(questionLedger, [
+      { url: run.sourceUrl, title: dynamicProjectTitle, text: fetchedText },
+      ...allSearchResults.map((r) => ({ url: r.url, title: r.title, text: (r.excerpts || []).join(" ") })),
+      ...extractedArticlePassages.map((p) => ({ url: p.url, title: p.title, text: p.markdown })),
+    ]);
 
-    const mentionsRightsOrSales =
-      combinedRound1Text.includes("distribution") ||
-      combinedRound1Text.includes("acquired") ||
-      combinedRound1Text.includes("sales agent") ||
-      combinedRound1Text.includes("worldwide rights") ||
-      combinedRound1Text.includes("premiere") ||
-      combinedRound1Text.includes("official selection");
+    const budget: ResearchBudget = {
+      maxSearches: MAX_SEARCH_REQUESTS,
+      maxExtractions: MAX_PAGES_EXTRACTED,
+      searchesUsed: searchRequestsCount,
+      extractionsUsed: pagesExtractedCount,
+      attemptedUrls: candidateUrls,
+    };
 
-    if (!mentionsRightsOrSales && searchRequestsCount < MAX_SEARCH_REQUESTS) {
+    const nextStep = planNextResearchStep(questionLedger, budget, dynamicProjectTitle);
+
+    if (nextStep.shouldSearch && nextStep.queries && nextStep.queries.length > 0 && searchRequestsCount < MAX_SEARCH_REQUESTS) {
       await logStep(
         "fetching",
-        `Material gap detected: distribution/festival rights unknown. Running Round 2 targeted follow-up...`,
+        `Question Ledger gap: ${nextStep.targetQuestion} unresolved. Running targeted follow-up...`,
         50,
         "in_progress"
       );
       searchRequestsCount += 1;
+      budget.searchesUsed = searchRequestsCount;
       const round2Search = await parallelClient.search({
-        objective: `Investigate distribution rights, festival premiere, or sales agent attachments for "${dynamicProjectTitle}"`,
-        search_queries: [
-          `${dynamicProjectTitle} distribution rights sales agent acquisition`,
-          `${dynamicProjectTitle} festival premiere official selection`,
-        ],
+        objective: nextStep.objective || `Investigate ${nextStep.targetQuestion} for "${dynamicProjectTitle}"`,
+        search_queries: nextStep.queries,
         mode: "fast",
       });
       searchReceipts.push({
         id: round2Search.search_id,
-        queryCount: 2,
+        queryCount: nextStep.queries.length,
         resultsCount: round2Search.results.length,
       });
       allSearchResults.push(...round2Search.results);
@@ -347,7 +349,7 @@ STRICT INVARIANTS & INJECTION DEFENSE:
 5. Funding raised does not establish budget sufficiency; record what the campaign actually funds.
 6. Views from one observation do not establish velocity. Without two comparable observations, show a dated count only.
 7. Concordant medium: If medium is 'webseries', 'series', 'short', 'feature', 'documentary', shape pathways accordingly.
-8. Exactly 3 realistic growth pathways with a concrete next experiment, prerequisites, owner, and blockers. If evidence is insufficient to assess a pathway slot, mark it with title "Not enough evidence to assess".
+8. Up to 3 realistic growth pathways (1 to 3 distinct paths only when supported). Do not invent an ungrounded third pathway if only 1 or 2 are supported by evidence.
 9. Decision Brief must include:
    - logline: 10-400 chars factual logline.
    - coreHook: 5-300 chars distinct creative angle.
@@ -445,7 +447,8 @@ Output MUST strictly adhere to the following JSON structure:
               else if (sLower.includes("complete") || sLower.includes("release")) proposalData.stage = "unreleased_complete";
               else if (sLower.includes("script")) proposalData.stage = "script";
               else if (sLower.includes("concept")) proposalData.stage = "concept";
-              else proposalData.stage = "production";
+              else if (sLower.includes("prod")) proposalData.stage = "production";
+              else proposalData.stage = project.identity.currentStage || "concept";
             }
 
             const allowedMediums = new Set(["feature", "short", "documentary", "series", "pilot", "proof_of_concept", "creator_page"]);
@@ -456,103 +459,35 @@ Output MUST strictly adhere to the following JSON structure:
               else if (mLower.includes("short")) proposalData.medium = "short";
               else if (mLower.includes("pilot")) proposalData.medium = "pilot";
               else if (mLower.includes("proof")) proposalData.medium = "proof_of_concept";
-              else proposalData.medium = "feature";
+              else if (mLower.includes("feature")) proposalData.medium = "feature";
+              else proposalData.medium = project.identity.medium || "proof_of_concept";
+            }
+
+            // R7.4: Ensure creator-controlled diligence step is explicitly named if rights are unresolved
+            if (
+              questionLedger.rights.status === "unknown" &&
+              questionLedger.rights.creatorControlledDiligenceStep &&
+              (!proposalData.decisionBrief?.nextDiligenceStep ||
+                !proposalData.decisionBrief.nextDiligenceStep.toLowerCase().includes("chain") ||
+                !proposalData.decisionBrief.nextDiligenceStep.toLowerCase().includes("rights"))
+            ) {
+              if (proposalData.decisionBrief) {
+                proposalData.decisionBrief.nextDiligenceStep = questionLedger.rights.creatorControlledDiligenceStep;
+              }
             }
           }
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        await logStep("classifying", `Live Gemini call notice (${msg}). Synthesizing grounded proposal from source metadata.`, 65, "warning");
+        await logStep("classifying", `Live Gemini call failed (${msg}). Halting without fabricated research.`, 65, "error");
       }
     }
 
-    // Dynamic Grounded Candidate if in offline/testing mode or Gemini key not set
+    // Never fabricate synthetic proposals if Gemini was unavailable or failed
     if (!proposalData) {
-      const resolvedTitle = ytMeta?.title || dynamicProjectTitle || "Independent Screen Project";
-      const resolvedCreator = ytMeta?.authorName || "Independent Filmmaker";
-      proposalData = {
-        projectTitle: resolvedTitle,
-        medium: (resolvedTitle.toLowerCase().includes("series") || resolvedTitle.toLowerCase().includes("show")) ? "series" : "short",
-        stage: "production" as const,
-        creators: [resolvedCreator],
-        whatWeKnow: [
-          `Public project source located at ${run.sourceUrl}.`,
-          ytMeta ? `Released by channel/creator ${ytMeta.authorName}.` : "Public screen proof of concept submitted for scouting.",
-          `Nominated by audience member with contextual hook: "${project.nomination.reason}".`
-        ],
-        whatWereChecking: [
-          "Current production financing and rights availability.",
-          "Confirmed distribution partners or planned festival premiere roadmap."
-        ],
-        whyScouted: project.nomination.reason || `A distinct independent screen project demonstrating clear vision and audience potential.`,
-        sourceMedia: [
-          {
-            type: "youtube_embed" as const,
-            url: youtubeUrl || run.sourceUrl,
-            verified: true,
-            caption: ytMeta?.title || "Official Public Video Source"
-          }
-        ],
-        evidenceLedger: [],
-        pathways: [
-          {
-            title: "Direct-to-Audience Digital Premiere & Community Scaling",
-            mediumFitRationale: "Leveraging organic engagement across digital platforms to build dedicated viewership and prove market demand.",
-            targetAudience: "Digital-native cinephiles and niche genre communities.",
-            risksAndUncertainties: ["Platform algorithm volatility and discoverability."],
-            nextBoundedExperiment: {
-              name: "Targeted Community Teaser Drop",
-              description: "Publish a high-impact character or tonal excerpt to measure organic retention.",
-              successMetric: "Achieve strong audience retention (>60% average watch time) and community re-shares."
-            },
-            prerequisites: ["Audience discovery milestones", "Direct creator outreach"],
-            owner: "Creator / Producer",
-            blockers: ["Initial distribution commitments", "Platform discoverability"]
-          },
-          {
-            title: "Curated Festival Circuit & Specialty Acquisition",
-            mediumFitRationale: "Positioning the project for premiere in specialized festival programming tracks to attract boutique distributors.",
-            targetAudience: "Festival programmers, boutique acquisitions executives, and cinephiles.",
-            risksAndUncertainties: ["Festival programming slots are highly competitive with long submission lead times."],
-            nextBoundedExperiment: {
-              name: "Programmer Screener Submission Round",
-              description: "Submit rough cut or completed proof to 3 targeted category-specific festivals.",
-              successMetric: "Secure at least one festival screening invitation or industry programmer consultation."
-            },
-            prerequisites: ["Locked cut and DCP preparation"],
-            owner: "Festival Strategist / Lead Producer",
-            blockers: ["Submission window deadlines", "Premiere status exclusivity"]
-          },
-          {
-            title: "Expanded Episodic or Multi-Part Co-Production",
-            mediumFitRationale: "Developing the premise into an expanded episodic series through independent co-production partners.",
-            targetAudience: "Streaming audiences looking for fresh, diverse voices and authentic serialized narratives.",
-            risksAndUncertainties: ["Requires pitch bible packaging and financing commitments."],
-            nextBoundedExperiment: {
-              name: "Series Bible & Proof Table Read",
-              description: "Assemble a concise 5-page pitch document and host a community table read.",
-              successMetric: "Complete pitch packaging with verified audience feedback and partner outreach."
-            },
-            prerequisites: ["Comprehensive series pitch bible", "Creator attachment agreement"],
-            owner: "Development Executive / Co-Producer",
-            blockers: ["Financing gap", "Unattached distributor"]
-          }
-        ],
-        decisionBrief: {
-          logline: project.nomination.reason.slice(0, 140) || `An innovative independent screen project exploring compelling narrative themes.`,
-          coreHook: `Authentic indie filmmaking driven by distinct voice and grassroots audience demand.`,
-          comparativeTitles: ["Independent Screen Breakthroughs", "Broad City", "Atlanta"],
-          primaryRisk: "Securing finishing funding and maintaining creative momentum without studio dilution.",
-          triageSummary: "Independent proof of concept with strong creative voice; commercial rights unencumbered, financing not yet verified in public trades.",
-          materialUncertainty: "Underlying IP chain of title and long-term financing structure remain unconfirmed in public records.",
-          nextDiligenceStep: "Request lookbook/deck directly from creator team and verify format rights availability before proposing co-production terms."
-        },
-        industryLens: {
-          marketContext: "Modern buyers increasingly source original IP from grassroots creators who demonstrate organic community resonance before pitching.",
-          comparables: ["Broad City (web to series)", "Insecure (independent digital to premium network)"],
-          realisticConstraints: "Independent production requires disciplined budget allocation and creative autonomy."
-        }
-      };
+      const errorMsg = "Research synthesis failed: Google Gemini AI client unavailable or did not produce a valid candidate proposal.";
+      await logStep("classifying", errorMsg, 65, "error");
+      throw new Error(errorMsg);
     }
 
     // Build verified Evidence Ledger from primary source + real Parallel Search discoveries
@@ -561,20 +496,23 @@ Output MUST strictly adhere to the following JSON structure:
       primaryHost = new URL(run.sourceUrl).hostname.replace(/^www\./, "");
     } catch {}
 
+    const hasVerifiedPrimary = Boolean(ytMeta || (fetchedText && fetchedText.length > 50 && !fetchedText.startsWith("Nominated Project:")));
+    const ytDesc = ytMeta?.description ? cleanTextExcerpt(ytMeta.description.slice(0, 2000), ytMeta.title, 2000, 10) : "";
+    const nominatorReason = project.nomination?.reason ? ` Nominator context: "${project.nomination.reason}".` : "";
     const primaryExcerpt = ytMeta
-      ? `Primary verified video asset: "${ytMeta.title}" available at ${run.sourceUrl}.`
-      : fetchedText
-        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 400), proposalData.projectTitle)}`
-        : `Primary verified project asset available at ${run.sourceUrl}.`;
+      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}${nominatorReason}`
+      : fetchedText && !fetchedText.startsWith("Nominated Project:")
+        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}${nominatorReason}`
+        : `Nominated project URL: ${run.sourceUrl}.${nominatorReason}`;
 
     const primaryEvidence = {
       id: "ev-source-primary",
       sourceUrl: run.sourceUrl,
       title: ytMeta?.title || proposalData.projectTitle || "Primary Submitted Source",
       publisher: ytMeta?.authorName || primaryHost,
-      claimType: "observation" as const,
+      claimType: (hasVerifiedPrimary ? "observation" : "reported") as "observation" | "reported",
       excerpt: primaryExcerpt,
-      verified: true,
+      verified: hasVerifiedPrimary,
       publishedAt: null,
       retrievedAt: new Date().toISOString(),
     };
@@ -587,18 +525,18 @@ Output MUST strictly adhere to the following JSON structure:
     const parallelEvidence = allSearchResults
       .filter((r) => {
         if (!r.url || r.url === run.sourceUrl) return false;
+        if (isDistractorUrl(r.url, r.title)) return false;
         try {
           const parsed = new URL(r.url);
           const h = parsed.hostname.toLowerCase();
-          if (h.includes("youtube.com") || h.includes("youtu.be")) return false;
-          if (parsed.pathname === "/" || parsed.pathname === "") return false;
+          // Exclude video aggregators and social hosts, but preserve official project root sites (R7.7)
+          if (h.includes("youtube.com") || h.includes("youtu.be") || h.includes("vimeo.com") || h.includes("tiktok.com") || h.includes("x.com") || h.includes("twitter.com")) return false;
         } catch {
           return false;
         }
         const fullText = `${r.title} ${r.url} ${r.excerpts?.join(" ") || ""}`.toLowerCase();
         return titleTokens.length === 0 || titleTokens.some((tok: string) => fullText.includes(tok));
       })
-      .slice(0, 4)
       .map((r, i) => {
         let host = "Web Citation";
         try {
@@ -608,8 +546,14 @@ Output MUST strictly adhere to the following JSON structure:
         const geminiMatched = (proposalData.evidenceLedger || []).find(
           (e: any) => e.sourceUrl === r.url || e.title?.toLowerCase() === r.title?.toLowerCase()
         );
-        const rawExcerpt = extracted?.markdown?.slice(0, 300) || geminiMatched?.excerpt || r.excerpts?.[0] || r.title;
-        const cleaned = cleanTextExcerpt(rawExcerpt, r.title);
+        const combinedExcerpts = (r.excerpts || []).join(" ");
+        const rawExcerpt =
+          extracted?.markdown?.slice(0, 3000) ||
+          (combinedExcerpts.length > 50 ? combinedExcerpts : null) ||
+          geminiMatched?.excerpt ||
+          r.excerpts?.[0] ||
+          r.title;
+        const cleaned = cleanTextExcerpt(rawExcerpt, r.title, 2000, 10);
         return {
           id: `ev-parallel-${i + 1}`,
           sourceUrl: r.url,
@@ -623,7 +567,34 @@ Output MUST strictly adhere to the following JSON structure:
         };
       });
 
-    proposalData.evidenceLedger = [primaryEvidence, ...parallelEvidence];
+    // Include extracted documents from submitted supporting URLs (e.g. Patreon, official project site)
+    const extractedEvidence: EvidenceItem[] = extractedArticlePassages
+      .filter((p) => {
+        if (!p.url || p.url === run.sourceUrl) return false;
+        if (isDistractorUrl(p.url, p.title)) return false;
+        if (parallelEvidence.some((pe) => pe.sourceUrl === p.url)) return false;
+        return true;
+      })
+      .map((p, i) => {
+        let host = "Web Citation";
+        try {
+          host = new URL(p.url).hostname.replace(/^www\./, "");
+        } catch {}
+        const cleaned = cleanTextExcerpt(p.markdown.slice(0, 3000), p.title, 2000, 10);
+        return {
+          id: `ev-extracted-${i + 1}`,
+          sourceUrl: p.url,
+          title: p.title || `Extracted Documentation (${host})`,
+          publisher: host,
+          claimType: "reported" as const,
+          excerpt: cleaned || p.markdown.slice(0, 1000),
+          verified: true,
+          publishedAt: null,
+          retrievedAt: new Date().toISOString(),
+        };
+      });
+
+    proposalData.evidenceLedger = [primaryEvidence, ...extractedEvidence, ...parallelEvidence];
 
     await logStep("extracting_evidence", `Synthesized evidence ledger with ${proposalData.evidenceLedger.length} verified primary citations (including Parallel Search results).`, 75, "done");
 
@@ -669,11 +640,10 @@ Output MUST strictly adhere to the following JSON structure:
     }
 
     // ----------------------------------------------------
-    // STEP 6: Publishing Scout Card
+    // STEP 6: Atomic Publication of Scout Card & Project
     // ----------------------------------------------------
-    const cardId = `card-${project.id}-v1`;
-    const finalCard: ScoutCard = {
-      id: cardId,
+    const candidateCard: ScoutCard = {
+      id: `card-${project.id}-v1`,
       projectId: project.id,
       version: 1,
       ...validationResult.sanitizedCard,
@@ -681,36 +651,10 @@ Output MUST strictly adhere to the following JSON structure:
       versionProvenance: {
         generatedAt: new Date().toISOString(),
         model: researchModel,
-        changeReason: "Autonomous Gemini 3.5 Flash clean-room research run"
-      }
+        changeReason: "Autonomous Gemini 3.5 Flash clean-room research run",
+        gateReceipt: validationResult.sanitizedCard.versionProvenance?.gateReceipt,
+      },
     };
-
-    await dataRepo.publishScoutCard(finalCard);
-
-    // Register Living Dossier monitor sensor via Parallel Monitor API
-    const monitorQuery = `${proposalData.projectTitle || project.identity.title} financing production partners festival distribution rights`;
-    try {
-      const monRes = await parallelClient.createMonitor({
-        name: `Scout Monitor: ${proposalData.projectTitle || project.identity.title}`,
-        targetUrl: run.sourceUrl,
-        query: monitorQuery,
-        frequency: "1d",
-        webhookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_BASE_URL || "https://audience-take-web-866111144888.us-central1.run.app"}/api/webhooks/parallel`,
-        metadata: { projectId: project.id },
-      });
-      if (monRes && monRes.monitor_id) {
-        await dataRepo.saveProjectMonitor({
-          id: monRes.monitor_id,
-          projectId: project.id,
-          queryScope: monitorQuery,
-          providerState: monRes.status || "active",
-          createdAt: monRes.created_at || new Date().toISOString(),
-          targetUrl: run.sourceUrl,
-        });
-      }
-    } catch (monErr) {
-      console.warn("Parallel Monitor registration notice:", monErr);
-    }
 
     // Update project identity with discovered facts
     project.identity.title = proposalData.projectTitle;
@@ -718,25 +662,50 @@ Output MUST strictly adhere to the following JSON structure:
     project.identity.currentStage = proposalData.stage;
     project.identity.logline = proposalData.decisionBrief.logline;
     project.identity.creators = proposalData.creators;
-    project.publishedCardId = cardId;
-    project.updatedAt = new Date().toISOString();
-    await dataRepo.createProject(project);
 
-    // Mark Run Complete
-    run.currentStep = "complete";
-    run.progressPercent = 100;
-    run.cardId = cardId;
-    run.completedAt = new Date().toISOString();
-    run.lease = null;
     run.stepLogs.push({
       timestamp: new Date().toISOString(),
       step: "complete",
-      message: `Scout Card successfully published (Version 1) via ${researchModel} with status '${finalCard.status}'.`,
+      message: `Scout Card successfully verified and atomically published with status '${candidateCard.status}'.`,
       status: "done",
     });
-    await dataRepo.saveResearchRun(run);
 
-    return run;
+    const publishResult = await dataRepo.atomicPublishScoutCard({
+      card: candidateCard,
+      project,
+      run,
+      leaseToken,
+    });
+
+    // Register Living Dossier monitor sensor via Parallel Monitor API (decoupled follow-up per R5.12)
+    try {
+      const existingMonitor = await dataRepo.getProjectMonitorById(project.id);
+      if (!existingMonitor) {
+        const monitorQuery = `${proposalData.projectTitle || project.identity.title} financing production partners festival distribution rights`;
+        const monRes = await parallelClient.createMonitor({
+          name: `Scout Monitor: ${proposalData.projectTitle || project.identity.title}`,
+          targetUrl: run.sourceUrl,
+          query: monitorQuery,
+          frequency: "1d",
+          webhookUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_BASE_URL || "https://audience-take-web-866111144888.us-central1.run.app"}/api/webhooks/parallel`,
+          metadata: { projectId: project.id },
+        });
+        if (monRes && monRes.monitor_id) {
+          await dataRepo.saveProjectMonitor({
+            id: monRes.monitor_id,
+            projectId: project.id,
+            queryScope: monitorQuery,
+            providerState: monRes.status || "active",
+            createdAt: monRes.created_at || new Date().toISOString(),
+            targetUrl: run.sourceUrl,
+          });
+        }
+      }
+    } catch (monErr) {
+      console.warn("Parallel Monitor registration notice (decoupled):", monErr);
+    }
+
+    return publishResult.run;
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     run.currentStep = "failed";

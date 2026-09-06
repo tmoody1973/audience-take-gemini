@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dataRepo } from "@/services/firestore-repo";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { verifyParallelWebhookSignature } from "@/lib/webhooks/parallel-signature";
+import { verifyPublicationGate, checkCitationCoverage } from "@/agent/deterministic-validator";
 import type { ScoutCard, EvidenceItem } from "@/domain";
 
 export interface ParallelWebhookPayload {
@@ -38,10 +39,14 @@ export async function POST(req: NextRequest) {
     const rawSecret = process.env.PARALLEL_WEBHOOK_SECRET;
     const secret = rawSecret && rawSecret !== "undefined" && rawSecret.trim() !== "" ? rawSecret.trim() : undefined;
 
-    // Verify HMAC-SHA256 signature if secret is configured or signature headers are provided
-    if (secret || webhookSignature) {
+    // In production, signature verification is strictly required and fails closed if secret is missing
+    const isProd = process.env.NODE_ENV === "production";
+    if (isProd || secret || webhookSignature) {
       if (!secret) {
         return NextResponse.json({ error: "PARALLEL_WEBHOOK_SECRET not configured on server" }, { status: 500 });
+      }
+      if (!webhookSignature) {
+        return NextResponse.json({ error: "Missing webhook signature header" }, { status: 401 });
       }
       const verification = verifyParallelWebhookSignature(
         webhookSignature,
@@ -102,13 +107,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing monitor_id in webhook payload" }, { status: 400 });
     }
 
-    // Server-side monitor-to-project mapping (never trust client-selected projectId blindly)
+    // Strict server-side monitor-to-project mapping (never trust client-selected projectId fallback)
     const monitor = await dataRepo.getProjectMonitorById(payload.monitor_id);
-    let projectId = monitor ? monitor.projectId : payload.projectId;
-
-    if (!projectId) {
+    if (!monitor) {
       return NextResponse.json({ error: "Unknown monitor ID. Server-side project mapping required." }, { status: 404 });
     }
+    const projectId = monitor.projectId;
 
     if (monitor && monitor.providerState === "disabled") {
       return NextResponse.json({ ok: true, message: "Monitor is disabled, event ignored" }, { status: 200 });
@@ -119,6 +123,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Project not found for monitor event" }, { status: 404 });
     }
 
+    const changeSummary =
+      payload.summary ||
+      payload.milestone_text ||
+      payload.diff_summary ||
+      payload.event_details?.summary ||
+      "";
+
+    // Detect no-op health checks or events without material changes (R6.6)
+    const hasCitations = Array.isArray(payload.citations) && payload.citations.length > 0;
+    if (!changeSummary || changeSummary.trim() === "" || (!hasCitations && payload.event === "monitor.diff_detected")) {
+      if (monitor) {
+        monitor.lastCheckedAt = new Date().toISOString();
+        await dataRepo.saveProjectMonitor(monitor);
+      }
+      if (webhookId) {
+        await dataRepo.recordWebhookReceipt({
+          webhookId,
+          receivedAt: new Date().toISOString(),
+          eventType: payload.event,
+          monitorId: payload.monitor_id,
+          projectId,
+          processed: true,
+        });
+      }
+      return NextResponse.json({ ok: true, status: "noop", message: "Health check recorded without card mutation" });
+    }
+
     // Targeted reassessment: Material facts create a candidate update and a new card version
     let newVersion = 1;
     if (project.publishedCardId) {
@@ -127,32 +158,40 @@ export async function POST(req: NextRequest) {
         newVersion = (currentCard.version || 1) + 1;
         const newCardId = `card-${projectId}-v${newVersion}`;
 
-        const changeSummary =
-          payload.summary ||
-          payload.milestone_text ||
-          payload.diff_summary ||
-          payload.event_details?.summary ||
-          `Live web change detected at ${payload.target_url || "monitored source"}`;
-
-        const newCitations: EvidenceItem[] = (payload.citations || []).map((cite, i) => ({
-          id: `ev-mon-${Date.now()}-${i + 1}`,
-          sourceUrl: cite.url,
-          title: cite.title || "Parallel Monitor Citation",
-          publisher: "Monitored Source",
-          claimType: "reported" as const,
-          excerpt: cite.excerpt || changeSummary,
+        const newCitations: EvidenceItem[] = (payload.citations || []).map((c: any, idx: number) => ({
+          id: `ev-mon-${Date.now()}-${idx}`,
+          sourceUrl: c.url || c.sourceUrl || "https://parallel.ai",
+          title: c.title || "Live Monitor Observation",
+          publisher: c.publisher || "Parallel Monitor",
+          claimType: "observation",
+          excerpt: c.excerpt || c.title || "Monitor observation passage.",
           verified: true,
-          publishedAt: cite.published_at || null,
           retrievedAt: new Date().toISOString(),
         }));
+
+        // Verify that the candidate change summary is genuinely grounded by the new citations (R6.5 & R6.6)
+        const coverage = checkCitationCoverage(newCitations, [changeSummary]);
+        if (!coverage.sufficientCoverage) {
+          console.warn("[Parallel Webhook] Monitor update withheld: changeSummary lacks citation passage support:", changeSummary);
+          return NextResponse.json({
+            ok: true,
+            status: "withheld",
+            message: "Event processed but card update withheld due to unverified claims or contradictions.",
+            errors: [`changeSummary lacks passage grounding in provided citations: ${changeSummary}`],
+          });
+        }
 
         const updatedWhatWeKnow = [
           ...currentCard.whatWeKnow,
           `Live Monitor Update (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}): ${changeSummary}`,
         ];
 
-        const newCard: ScoutCard = {
+        const candidateCard: any = {
           ...currentCard,
+          projectTitle: project.identity.title,
+          medium: project.identity.medium,
+          stage: project.identity.currentStage,
+          creators: project.identity.creators,
           id: newCardId,
           version: newVersion,
           whatWeKnow: updatedWhatWeKnow,
@@ -164,13 +203,22 @@ export async function POST(req: NextRequest) {
           },
         };
 
-        await dataRepo.publishScoutCard(newCard);
-        // Also update existing card for backwards compatibility with direct card-id lookups in older tests
-        currentCard.whatWeKnow = updatedWhatWeKnow;
-        currentCard.evidenceLedger = [...currentCard.evidenceLedger, ...newCitations];
-        await dataRepo.publishScoutCard(currentCard);
+        const gateResult = verifyPublicationGate(candidateCard);
+        if (!gateResult.passed || !gateResult.sanitizedCard) {
+          console.warn("[Parallel Webhook] Monitor update failed publication gate:", gateResult.errors);
+          return NextResponse.json({
+            ok: true,
+            status: "withheld",
+            message: "Event processed but card update withheld due to unverified claims or contradictions.",
+            errors: gateResult.errors,
+          });
+        }
+
+        // Publish ONLY the new version; keep historical versions immutable (R6.7)
+        await dataRepo.publishScoutCard(gateResult.sanitizedCard);
 
         project.publishedCardId = newCardId;
+        project.audioStale = true;
       }
     }
 
@@ -181,6 +229,7 @@ export async function POST(req: NextRequest) {
     if (monitor) {
       monitor.lastCheckedAt = new Date().toISOString();
       monitor.lastEventAt = new Date().toISOString();
+      monitor.lastSuccessfulResearchAt = new Date().toISOString();
       await dataRepo.saveProjectMonitor(monitor);
     }
 

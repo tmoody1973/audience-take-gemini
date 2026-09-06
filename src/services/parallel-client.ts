@@ -10,7 +10,10 @@ export interface ParallelSearchResultItem {
 export interface ParallelSearchResponse {
   search_id: string;
   results: ParallelSearchResultItem[];
+  providerStatus: "succeeded" | "failed" | "skipped_no_key";
+  errorDetails?: string;
   warnings?: string[] | null;
+  session_id?: string;
 }
 
 export interface ParallelSearchOptions {
@@ -18,23 +21,32 @@ export interface ParallelSearchOptions {
   search_queries: string[];
   mode?: "basic" | "fast" | "turbo" | "advanced";
   maxResults?: number;
+  sessionId?: string;
 }
 
 export interface ParallelExtractItem {
   url: string;
   title?: string;
-  markdown: string;
+  markdown?: string;
+  excerpts?: string[];
+  full_content?: string | null;
   publish_date?: string | null;
 }
 
 export interface ParallelExtractResponse {
   extract_id: string;
   results: ParallelExtractItem[];
+  providerStatus: "succeeded" | "failed" | "skipped_no_key";
+  errorDetails?: string;
   warnings?: string[] | null;
+  session_id?: string;
+  errors?: { url: string; error: string }[];
 }
 
 export interface ParallelExtractOptions {
   urls: string[];
+  objective?: string;
+  sessionId?: string;
   mode?: "basic" | "markdown" | "full";
   maxCharsPerResult?: number;
 }
@@ -72,7 +84,12 @@ export class ParallelSearchClient {
     const key = this.apiKey || process.env.PARALLEL_API_KEY || null;
     if (!key) {
       console.warn("ParallelSearchClient: No PARALLEL_API_KEY configured.");
-      return { search_id: `no_key_${Date.now()}`, results: [], warnings: ["PARALLEL_API_KEY not configured"] };
+      return {
+        search_id: `no_key_${Date.now()}`,
+        results: [],
+        providerStatus: "skipped_no_key",
+        warnings: ["PARALLEL_API_KEY not configured"],
+      };
     }
 
     const cleanObjective = (options.objective || "Research screen project").slice(0, 800);
@@ -84,10 +101,10 @@ export class ParallelSearchClient {
     }
     const search_queries = uniqueQueries.slice(0, 3);
 
-    const body = {
+    const body: Record<string, any> = {
       objective: cleanObjective,
       search_queries,
-      mode: "basic",
+      mode: options.mode || "basic",
       max_chars_total: 12000,
       advanced_settings: {
         max_results: options.maxResults || 8,
@@ -96,6 +113,10 @@ export class ParallelSearchClient {
         },
       },
     };
+
+    if (options.sessionId) {
+      body.session_id = options.sessionId;
+    }
 
     try {
       const response = await fetch(`${this.baseUrl}/search`, {
@@ -109,30 +130,45 @@ export class ParallelSearchClient {
 
       if (response.ok) {
         const data = (await response.json()) as ParallelSearchResponse;
+        data.providerStatus = "succeeded";
         return await this.sanitizeSearchResults(data);
       } else {
         const errText = await response.text();
         console.warn(`Parallel Search API responded with status ${response.status}:`, errText);
+        return {
+          search_id: `parallel_failed_${Date.now()}`,
+          results: [],
+          providerStatus: "failed",
+          errorDetails: `HTTP ${response.status}: ${errText}`,
+          warnings: [`Parallel Search API HTTP ${response.status}: ${errText}`],
+        };
       }
-    } catch (err) {
-      console.warn("Parallel Search API fetch error:", err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("Parallel Search API fetch error:", msg);
+      return {
+        search_id: `parallel_error_${Date.now()}`,
+        results: [],
+        providerStatus: "failed",
+        errorDetails: msg,
+        warnings: [`Parallel Search API network error: ${msg}`],
+      };
     }
-
-    return {
-      search_id: `parallel_empty_${Date.now()}`,
-      results: [],
-      warnings: ["Live Parallel Search query yielded no external results."],
-    };
   }
 
   /**
-   * Performs deep structured markdown extraction using Parallel Extract API v1 (/v1/extract)
+   * Performs deep structured document extraction using Parallel Extract API v1 (/v1/extract)
    */
   async extract(options: ParallelExtractOptions): Promise<ParallelExtractResponse> {
     const key = this.apiKey || process.env.PARALLEL_API_KEY || null;
     if (!key) {
       console.warn("ParallelSearchClient.extract: No PARALLEL_API_KEY configured.");
-      return { extract_id: `no_key_${Date.now()}`, results: [], warnings: ["PARALLEL_API_KEY not configured"] };
+      return {
+        extract_id: `no_key_${Date.now()}`,
+        results: [],
+        providerStatus: "skipped_no_key",
+        warnings: ["PARALLEL_API_KEY not configured"],
+      };
     }
 
     const validUrls: string[] = [];
@@ -144,14 +180,31 @@ export class ParallelSearchClient {
     }
 
     if (validUrls.length === 0) {
-      return { extract_id: `empty_urls_${Date.now()}`, results: [], warnings: ["No safe URLs provided for extraction"] };
+      return {
+        extract_id: `empty_urls_${Date.now()}`,
+        results: [],
+        providerStatus: "succeeded",
+        warnings: ["No safe URLs provided for extraction"],
+      };
     }
 
-    const body = {
+    const maxPerResult = options.maxCharsPerResult || 8000;
+    const body: Record<string, any> = {
       urls: validUrls,
-      mode: options.mode || "markdown",
-      max_chars_per_result: options.maxCharsPerResult || 15000,
+      max_chars_total: maxPerResult * validUrls.length,
+      advanced_settings: {
+        excerpt_settings: {
+          max_chars_per_result: maxPerResult,
+        },
+      },
     };
+
+    if (options.objective) {
+      body.objective = options.objective.slice(0, 1000);
+    }
+    if (options.sessionId) {
+      body.session_id = options.sessionId;
+    }
 
     try {
       const response = await fetch(`${this.baseUrl}/extract`, {
@@ -165,20 +218,38 @@ export class ParallelSearchClient {
 
       if (response.ok) {
         const data = (await response.json()) as ParallelExtractResponse;
+        data.providerStatus = "succeeded";
+        // Map excerpts into markdown field for compatibility with downstream consumers
+        for (const item of data.results || []) {
+          if (!item.markdown && Array.isArray(item.excerpts) && item.excerpts.length > 0) {
+            item.markdown = item.excerpts.join("\n\n");
+          } else if (!item.markdown && item.full_content) {
+            item.markdown = item.full_content;
+          }
+        }
         return data;
       } else {
         const errText = await response.text();
         console.warn(`Parallel Extract API responded with status ${response.status}:`, errText);
+        return {
+          extract_id: `extract_failed_${Date.now()}`,
+          results: [],
+          providerStatus: "failed",
+          errorDetails: `HTTP ${response.status}: ${errText}`,
+          warnings: [`Parallel Extract API HTTP ${response.status}: ${errText}`],
+        };
       }
-    } catch (err) {
-      console.warn("Parallel Extract API fetch error:", err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("Parallel Extract API fetch error:", msg);
+      return {
+        extract_id: `extract_error_${Date.now()}`,
+        results: [],
+        providerStatus: "failed",
+        errorDetails: msg,
+        warnings: [`Parallel Extract API network error: ${msg}`],
+      };
     }
-
-    return {
-      extract_id: `extract_empty_${Date.now()}`,
-      results: [],
-      warnings: ["Live Parallel Extract query yielded no results."],
-    };
   }
 
   /**
@@ -229,7 +300,7 @@ export class ParallelSearchClient {
       },
       webhook: {
         url: options.webhookUrl,
-        event_types: ["monitor.event.detected", "monitor.milestone_reached", "monitor.diff_detected"],
+        event_types: ["monitor.event.detected", "monitor.execution.completed", "monitor.execution.failed"],
       },
       webhook_url: options.webhookUrl,
       metadata: options.metadata || {},

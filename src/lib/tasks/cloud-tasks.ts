@@ -1,10 +1,19 @@
-import { CloudTasksClient } from "@google-cloud/tasks";
+import type { CloudTasksClient } from "@google-cloud/tasks";
 
 import type { ResearchDispatcher } from "../nomination/service";
 import {
   googleAuthClientFromEnv,
   googleServiceAccountFromEnv,
 } from "../google/credentials";
+
+let CloudTasksClientClass: (new (...args: any[]) => any) | undefined;
+function getCloudTasksClientClass() {
+  if (!CloudTasksClientClass) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    CloudTasksClientClass = require("@google-cloud/tasks").CloudTasksClient;
+  }
+  return CloudTasksClientClass!;
+}
 
 const MAX_TASK_BODY_BYTES = 4_096;
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -133,10 +142,13 @@ function isAlreadyExists(error: unknown): boolean {
 
 export function createCloudTasksResearchDispatcher(
   config: CloudTaskDispatcherConfig = cloudTaskConfigFromEnv(),
-  client: CloudTasksClientLike = new CloudTasksClient(
-    cloudTasksClientOptionsFromEnv(config.project) as any,
-  ) as CloudTasksClientLike,
+  client?: CloudTasksClientLike,
 ): ResearchDispatcher {
+  const taskClient =
+    client ??
+    (new (getCloudTasksClientClass())(
+      cloudTasksClientOptionsFromEnv(config.project) as any,
+    ) as CloudTasksClientLike);
   const endpoint = researchEndpoint(config.serviceUrl);
   return async ({ runId, projectId, attempt }) => {
     if (!SAFE_ID.test(projectId)) throw new Error("Invalid research project identity.");
@@ -152,12 +164,12 @@ export function createCloudTasksResearchDispatcher(
       throw new Error("Research task payload exceeds the safe size limit.");
     }
 
-    const parent = client.queuePath(config.project, config.location, config.queue);
+    const parent = taskClient.queuePath(config.project, config.location, config.queue);
     try {
-      await client.createTask({
+      await taskClient.createTask({
         parent,
         task: {
-          name: client.taskPath(config.project, config.location, config.queue, taskId),
+          name: taskClient.taskPath(config.project, config.location, config.queue, taskId),
           httpRequest: {
             httpMethod: "POST",
             url: endpoint,
@@ -197,10 +209,13 @@ export function deterministicTrailerCriticTaskId(
 
 export function createCloudTasksTrailerCriticDispatcher(
   config: CloudTaskDispatcherConfig = cloudTaskConfigFromEnv(),
-  client: CloudTasksClientLike = new CloudTasksClient(
-    cloudTasksClientOptionsFromEnv(config.project) as any,
-  ) as CloudTasksClientLike,
+  client?: CloudTasksClientLike,
 ): TrailerCriticDispatcher {
+  const taskClient =
+    client ??
+    (new (getCloudTasksClientClass())(
+      cloudTasksClientOptionsFromEnv(config.project) as any,
+    ) as CloudTasksClientLike);
   const endpoint = trailerCriticEndpoint(config.serviceUrl);
   return async ({ projectId, sourceId, youtubeVideoId, analysisVersion = 1 }) => {
     if (!SAFE_SOURCE_ID.test(sourceId)) throw new Error("Invalid Trailer Critic source identity.");
@@ -216,12 +231,12 @@ export function createCloudTasksTrailerCriticDispatcher(
     if (Buffer.byteLength(payload, "utf8") > MAX_TASK_BODY_BYTES) {
       throw new Error("Trailer Critic task payload exceeds the safe size limit.");
     }
-    const parent = client.queuePath(config.project, config.location, config.queue);
+    const parent = taskClient.queuePath(config.project, config.location, config.queue);
     try {
-      await client.createTask({
+      await taskClient.createTask({
         parent,
         task: {
-          name: client.taskPath(config.project, config.location, config.queue, taskId),
+          name: taskClient.taskPath(config.project, config.location, config.queue, taskId),
           httpRequest: {
             httpMethod: "POST",
             url: endpoint,

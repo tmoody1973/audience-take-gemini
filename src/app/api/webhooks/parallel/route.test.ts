@@ -26,16 +26,56 @@ const mockCard: ScoutCard = {
   projectId: "proj-parallel-hook",
   version: 1,
   status: "published",
-  whatWeKnow: ["Original knowledge."],
-  whatWereChecking: [],
-  whyScouted: "Reason",
+  whatWeKnow: [
+    "Original knowledge verified from public trade records.",
+    "Independent series project currently in active pre-production.",
+  ],
+  whatWereChecking: ["Verifying current financing partners."],
+  whyScouted: "High-potential indie series project with verified festival traction.",
   sourceMedia: [],
-  evidenceLedger: [],
-  pathways: [] as any,
-  decisionBrief: {} as any,
-  industryLens: {} as any,
+  evidenceLedger: [
+    {
+      id: "ev-1",
+      sourceUrl: "https://variety.com/news/monitored-indie-series",
+      title: "Monitored Indie Series Trade Announcement",
+      publisher: "Variety",
+      claimType: "reported",
+      excerpt: "Original knowledge verified from public trade records. Independent series project currently in active pre-production.",
+      verified: true,
+      retrievedAt: "2026-08-01T00:00:00Z",
+    },
+  ],
+  pathways: [
+    {
+      title: "Series Expansion Strategy",
+      mediumFitRationale: "Conceived as an episodic series with strong hook.",
+      targetAudience: "Indie drama streaming audience.",
+      risksAndUncertainties: ["Platform discoverability and festival competition."],
+      nextBoundedExperiment: {
+        name: "Pilot Screening",
+        description: "Screen pilot chapter for targeted audience feedback.",
+        successMetric: "High retention and positive response.",
+      },
+    },
+  ],
+  decisionBrief: {
+    logline: "A live monitored project navigating independent production.",
+    coreHook: "Unique episodic narrative with compelling creator vision.",
+    comparativeTitles: ["The Bear", "Atlanta"],
+    primaryRisk: "Securing downstream licensing and co-production commitments.",
+    triageSummary: "Promising episodic project in active production.",
+  },
+  industryLens: {
+    marketContext: "Growing buyer demand for distinctive character-driven series.",
+    comparables: ["The Bear", "Reservation Dogs"],
+    realisticConstraints: "Budget discipline required for independent episodic production.",
+  },
   trailerCriticId: null,
-  versionProvenance: {} as any,
+  versionProvenance: {
+    generatedAt: "2026-08-01T00:00:00Z",
+    model: "parallel-monitor",
+    changeReason: "Initial card generation",
+  },
 };
 
 const mockMonitor: ProjectMonitor = {
@@ -100,7 +140,7 @@ describe("Parallel Webhook Handler (POST /api/webhooks/parallel)", () => {
           {
             url: "https://variety.com/news/monitored-indie-series",
             title: "Variety Exclusive",
-            excerpt: "Neon boards North American rights.",
+            excerpt: "Variety announced co-production attachment with Neon for North American rights.",
             published_at: "2026-08-15",
           },
         ],

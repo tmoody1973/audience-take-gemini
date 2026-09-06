@@ -42,7 +42,7 @@ export const EvidenceItemSchema = z.object({
   publisher: z.string().min(1).max(100),
   claimType: ClaimTypeSchema,
   excerpt: z.string().min(5).max(1000),
-  verified: z.boolean().default(true),
+  verified: z.boolean().default(false),
   timestamp: z.string().optional(),
   publishedAt: z.string().nullable().optional(),
   retrievedAt: z.string().optional(),

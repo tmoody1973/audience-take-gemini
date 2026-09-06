@@ -4,6 +4,7 @@ import path from "path";
 import { scoutBriefStore } from "@/services/scout-brief/store";
 import { generateMultiSpeakerAudio } from "@/services/scout-brief/gemini-tts-client";
 import { wrapPcmToWav } from "@/services/scout-brief/audio-processor";
+import { dataRepo } from "@/services/firestore-repo";
 import type { ScoutBrief } from "@/features/scout-brief/types";
 
 export async function GET(
@@ -38,9 +39,11 @@ export async function GET(
     }
   }
 
+  let brief: ScoutBrief | null = null;
+
   if (!audioBuffer) {
     // 2. Fetch brief from store (by direct ID or by cardVersionId) or canonical fixture
-    let brief: ScoutBrief | null = await scoutBriefStore.getScoutBrief(artifactId);
+    brief = await scoutBriefStore.getScoutBrief(artifactId);
     if (!brief) {
       brief = await scoutBriefStore.getScoutBriefByCardVersion(artifactId);
     }
@@ -66,6 +69,35 @@ export async function GET(
     );
   }
 
+  // Check if brief belongs to an updated/stale project or historical card (R8.4 / R6.9)
+  if (!brief) {
+    brief = await scoutBriefStore.getScoutBrief(artifactId);
+  }
+  if (!brief) {
+    brief = await scoutBriefStore.getScoutBriefByCardVersion(artifactId);
+  }
+
+  let isStale = false;
+  if (brief?.projectId) {
+    try {
+      const project = await dataRepo.getProjectById(brief.projectId);
+      if (project) {
+        if (project.audioStale === true) {
+          isStale = true;
+        }
+        if (project.publishedCardId && brief.cardVersionId && project.publishedCardId !== brief.cardVersionId) {
+          isStale = true;
+        }
+      }
+    } catch {}
+  }
+
+  const cacheControlHeader = isStale
+    ? "no-cache, no-store, must-revalidate"
+    : "public, max-age=86400, stale-while-revalidate=604800";
+  const staleHeader = isStale ? "true" : "false";
+  const cardVersionHeader = brief?.cardVersionId || "v1";
+
   const range = request.headers.get("range");
   const totalLength = audioBuffer.length;
 
@@ -89,7 +121,9 @@ export async function GET(
         "Content-Range": `bytes ${start}-${end}/${totalLength}`,
         "Content-Length": String(chunk.length),
         "Accept-Ranges": "bytes",
-        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+        "Cache-Control": cacheControlHeader,
+        "X-Audio-Stale": staleHeader,
+        "X-Audio-Card-Version": cardVersionHeader,
       },
     });
   }
@@ -100,7 +134,9 @@ export async function GET(
       "Content-Type": "audio/wav",
       "Content-Length": String(audioBuffer.length),
       "Accept-Ranges": "bytes",
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Cache-Control": cacheControlHeader,
+      "X-Audio-Stale": staleHeader,
+      "X-Audio-Card-Version": cardVersionHeader,
     },
   });
 }

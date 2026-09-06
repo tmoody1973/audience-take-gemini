@@ -109,16 +109,29 @@ export const scoutBriefStore = {
   },
 
   async saveScoutBrief(brief: ScoutBrief): Promise<void> {
-    memoryBriefs.set(brief.artifactId, brief);
+    const key = brief.artifactId || (brief as any).id;
+    if (key) {
+      memoryBriefs.set(key, brief);
+    }
+
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+      return;
+    }
 
     try {
       const db = getAdminFirestore();
-      await db.collection("scoutBriefs").doc(brief.artifactId).set(brief);
+      if (key) {
+        await db.collection("scoutBriefs").doc(key).set(brief);
+      }
     } catch {}
   },
 
   async saveJob(job: ScoutBriefJob): Promise<void> {
     memoryJobs.set(job.artifactId, job);
+
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+      return;
+    }
 
     try {
       const db = getAdminFirestore();

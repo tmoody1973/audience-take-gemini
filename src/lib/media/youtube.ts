@@ -30,6 +30,7 @@ export type YouTubeMetadata = {
   authorUrl: string;
   thumbnailUrl?: string;
   videoId: string;
+  description?: string;
 };
 
 export async function fetchYouTubeMetadata(value: string): Promise<YouTubeMetadata | null> {

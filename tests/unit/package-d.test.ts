@@ -105,9 +105,9 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
     expect(result.valid).toBe(true);
     expect(result.sanitizedCard).toBeDefined();
 
-    // Verify Decision Brief additions
+    // Verify Decision Brief additions (contradictory unencumbered rights qualified due to unconfirmed chain-of-title)
     expect(result.sanitizedCard?.decisionBrief.triageSummary).toBe(
-      "High-craft proof of concept with strong visual execution; festival premiere unannounced and feature rights unencumbered."
+      "High-craft proof of concept with strong visual execution; festival premiere unannounced and feature rights pending chain-of-title confirmation."
     );
     expect(result.sanitizedCard?.decisionBrief.materialUncertainty).toBe(
       "Underlying feature screenplay status and chain-of-title are unconfirmed in public records."
