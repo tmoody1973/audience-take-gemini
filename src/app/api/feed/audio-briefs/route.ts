@@ -68,7 +68,7 @@ function renderItemXml(item: FeedItemData): string {
     </item>`;
 }
 
-export async function GET(_request?: Request): Promise<Response> {
+export async function GET(_request: Request): Promise<Response> {
   let projects: Project[] = [];
   try {
     projects = await dataRepo.getProjects();

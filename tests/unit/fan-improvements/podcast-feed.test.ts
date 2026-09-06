@@ -4,7 +4,7 @@ import { dataRepo } from "@/services/firestore-repo";
 
 describe("Podcast RSS Feed Route", () => {
   it("generates valid RSS 2.0 with audio enclosure tags", async () => {
-    const res = await GET();
+    const res = await GET(new Request("https://audiencetake.com/api/feed/audio-briefs"));
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("xml");
     expect(res.headers.get("cache-control")).toBe("public, max-age=300, s-maxage=600");
@@ -25,7 +25,7 @@ describe("Podcast RSS Feed Route", () => {
 
   it("falls back to canonical items if dataRepo has no projects or throws", async () => {
     const spy = vi.spyOn(dataRepo, "getProjects").mockRejectedValueOnce(new Error("DB offline"));
-    const res = await GET();
+    const res = await GET(new Request("https://audiencetake.com/api/feed/audio-briefs"));
     expect(res.status).toBe(200);
     const xml = await res.text();
     expect(xml).toContain("Junichiro Jackson");
