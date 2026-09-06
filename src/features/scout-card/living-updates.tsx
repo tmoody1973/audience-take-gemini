@@ -11,6 +11,7 @@ export type ProjectLivingUpdate = {
   citations: ProjectLivingUpdateCitation[];
   confidence: string | null;
   detectedAt: string;
+  category?: "funding" | "festival" | "production" | "press" | "community";
 };
 
 export type LivingUpdatesProps = {
@@ -40,6 +41,11 @@ export function LivingUpdates({ updates }: LivingUpdatesProps) {
           <li key={update.id} className="living-update-item">
             <div className="update-meta">
               <span className="update-date">{update.eventDate || "Recent update"}</span>
+              {update.category && (
+                <span className="update-category-pill" data-category={update.category}>
+                  {update.category}
+                </span>
+              )}
               {update.confidence && (
                 <span className="update-confidence" data-confidence={update.confidence}>
                   {update.confidence} confidence
