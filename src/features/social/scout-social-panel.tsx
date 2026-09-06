@@ -19,7 +19,7 @@ const commitments: Array<[Commitment, string, string]> = [
   ["back_next_chapter", "Back the next chapter", "Signal support for another chapter."],
 ];
 
-type Take = { id: string; uid?: string; whyItShouldGrow?: string; preferredPathwayId?: string; audienceNote?: string; active?: boolean; replyCount?: number; demoReplyCount?: number; displayName?: string; demoOnly?: boolean; demoLabel?: string };
+type Take = { id: string; uid?: string; whyItShouldGrow?: string; preferredPathwayId?: string; audienceNote?: string; active?: boolean; replyCount?: number; demoReplyCount?: number; displayName?: string; demoOnly?: boolean; demoLabel?: string; upvoteCount?: number };
 type Reply = { id: string; uid?: string; body?: string; active?: boolean; displayName?: string; demoOnly?: boolean; demoLabel?: string };
 type Counts = { followerCount?: number; demoFollowerCount?: number; takeCount?: number; demoTakeCount?: number; replyCount?: number; demoReplyCount?: number; commitmentCounts?: Record<string, number>; demoCommitmentCounts?: Record<string, number>; pathwayVoteCounts?: Record<string, number>; demoPathwayVoteCounts?: Record<string, number> };
 type CommitmentResult = { active: boolean; type: Commitment; count: number; counterKind: "organic" | "demo"; city?: string };
@@ -40,6 +40,8 @@ export function ScoutSocialPanel({ card }: Props) {
   const [city, setCity] = useState("");
   const [vote, setVote] = useState<string | undefined>();
   const [takes, setTakes] = useState<Take[]>([]);
+  const [sortBy, setSortBy] = useState<"top" | "recent">("recent");
+  const [upvotedTakes, setUpvotedTakes] = useState<Record<string, boolean>>({});
   const [replies, setReplies] = useState<Record<string, Reply[]>>({});
   const [takeWhy, setTakeWhy] = useState("");
   const [takeNote, setTakeNote] = useState("");
@@ -50,6 +52,7 @@ export function ScoutSocialPanel({ card }: Props) {
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const signedIn = Boolean(uid);
   const mine = useMemo(() => takes.find((take) => take.uid === uid && take.active !== false), [takes, uid]);
+  const displayedTakes = useMemo(() => sortBy === "top" ? [...takes].sort((a, b) => (b.upvoteCount ?? 0) - (a.upvoteCount ?? 0)) : takes, [takes, sortBy]);
 
   useEffect(() => {
     if (!hasFirebaseClientConfig()) return;
@@ -103,6 +106,19 @@ export function ScoutSocialPanel({ card }: Props) {
     } catch { return undefined; }
   }, [card.projectId, uid]);
 
+  useEffect(() => {
+    if (!hasFirebaseClientConfig() || !uid || !takes.length) return;
+    try {
+      const db = getClientFirestore();
+      const stops = takes.map((take) =>
+        onSnapshot(doc(db, "takeUpvotes", `${take.id}_${uid}`), (s) => {
+          setUpvotedTakes((old) => ({ ...old, [take.id]: s.data()?.active === true }));
+        }, () => undefined)
+      );
+      return () => stops.forEach((stop) => stop());
+    } catch { return undefined; }
+  }, [takes, uid]);
+
   const action = async (key: string, fn: () => Promise<void>) => { setError(""); setBusy(key); try { await fn(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Action failed."); } finally { setBusy(null); } };
   const requireSignIn = () => { if (!signedIn) { window.location.assign(signInHref(card.slug)); return true; } return false; };
   const onFollow = () => { if (requireSignIn()) return; void action("follow", async () => { const next = !followed; setFollowed(next); try { await socialCommand(`/api/projects/${card.projectId}/follow`, next ? "PUT" : "DELETE"); } catch (e) { setFollowed(!next); throw e; } }); };
@@ -136,6 +152,42 @@ export function ScoutSocialPanel({ card }: Props) {
   const withdrawTake = () => action("withdraw", async () => { await socialCommand(`/api/projects/${card.projectId}/take`, "DELETE"); setEditing(false); });
   const saveReply = (takeId: string) => action(`reply-${takeId}`, async () => { const body = replyDraft[takeId]?.trim(); if (!body || body.length > 600) throw new Error("Reply must be between 1 and 600 characters."); const existing = replies[takeId]?.find((reply) => reply.uid === uid); await socialCommand(`/api/takes/${takeId}/reply`, existing ? "PATCH" : "PUT", { body }); setReplyDraft((old) => ({ ...old, [takeId]: "" })); });
   const withdrawReply = (takeId: string) => action(`withdraw-reply-${takeId}`, async () => { await socialCommand(`/api/takes/${takeId}/reply`, "DELETE"); });
+  const onUpvoteTake = (takeId: string) => {
+    if (requireSignIn()) return;
+    void action(`upvote-${takeId}`, async () => {
+      const wasUpvoted = Boolean(upvotedTakes[takeId]);
+      const next = !wasUpvoted;
+      setUpvotedTakes((old) => ({ ...old, [takeId]: next }));
+      setTakes((old) =>
+        old.map((t) =>
+          t.id === takeId
+            ? { ...t, upvoteCount: Math.max(0, (t.upvoteCount ?? 0) + (next ? 1 : -1)) }
+            : t
+        )
+      );
+      try {
+        const result = await socialCommand<{ active: boolean; upvoteCount: number }>(
+          `/api/takes/${takeId}/upvote`,
+          next ? "POST" : "DELETE"
+        );
+        if (typeof result?.upvoteCount === "number") {
+          setTakes((old) =>
+            old.map((t) => (t.id === takeId ? { ...t, upvoteCount: result.upvoteCount } : t))
+          );
+        }
+      } catch (cause) {
+        setUpvotedTakes((old) => ({ ...old, [takeId]: wasUpvoted }));
+        setTakes((old) =>
+          old.map((t) =>
+            t.id === takeId
+              ? { ...t, upvoteCount: Math.max(0, (t.upvoteCount ?? 0) + (wasUpvoted ? 1 : -1)) }
+              : t
+          )
+        );
+        throw cause;
+      }
+    });
+  };
 
   // Populate the editor from the user's current Take when it arrives from Firestore.
   useEffect(() => { if (mine && !editing) { setTakeWhy(mine.whyItShouldGrow ?? ""); setTakeNote(mine.audienceNote ?? ""); setTakePath(mine.preferredPathwayId ?? card.pathways[0]?.id ?? ""); } }, [mine, editing, card.pathways]);
@@ -151,7 +203,8 @@ export function ScoutSocialPanel({ card }: Props) {
     </div>
     <div className="take-editor"><div><span className="route-label">One structured Take</span><h3>Make the case for what&apos;s next</h3><p>One Take per person. Flat replies keep the conversation legible.</p></div><form onSubmit={(event) => { event.preventDefault(); if (requireSignIn()) return; void saveTake(); }}><label>What should happen next? <textarea value={takeWhy} onChange={(event) => setTakeWhy(event.target.value)} maxLength={600} required disabled={!signedIn || busy !== null} /><small>{takeWhy.length}/600</small></label><label>Preferred pathway<select value={takePath} onChange={(event) => setTakePath(event.target.value)} disabled={!signedIn || busy !== null}>{card.pathways.map((pathway) => <option value={pathway.id} key={pathway.id}>{pathway.label}</option>)}</select></label><label>Audience note (optional)<textarea value={takeNote} onChange={(event) => setTakeNote(event.target.value)} maxLength={600} disabled={!signedIn || busy !== null} /></label><div><button className="button-primary" type="submit" disabled={busy !== null}>{mine ? "Edit Take" : "Publish Take"}</button>{mine ? <button type="button" onClick={withdrawTake} disabled={busy !== null}>Withdraw</button> : null}</div></form></div>
     {error ? <p className="field-error" role="alert">{error}</p> : null}<div className="social-live" aria-live="polite">{(counts.takeCount ?? 0) || (counts.demoTakeCount ?? 0) ? <>{counts.takeCount ?? 0} organic published Takes <DemoCount value={counts.demoTakeCount} /></> : "No published Takes yet."}</div>
-    <div className="takes-list" aria-label="Published Takes">{takes.map((take) => { const visibleReplies = replies[take.id] ?? []; const organicReplyCount = visibleReplies.length ? visibleReplies.filter((reply) => !reply.demoOnly).length : take.replyCount ?? 0; const demoReplyCount = visibleReplies.length ? visibleReplies.filter((reply) => reply.demoOnly).length : take.demoReplyCount ?? 0; return <article key={take.id}><h4>{take.displayName ?? "Audience member"} {take.demoOnly ? <span className="demo-activity-badge">Demo activity</span> : null}</h4><p>{take.whyItShouldGrow}</p><small>{card.pathways.find((pathway) => pathway.id === take.preferredPathwayId)?.label ?? "Pathway"} · {organicReplyCount} organic replies <DemoCount value={demoReplyCount} /></small><div className="replies-list">{visibleReplies.map((reply) => <div key={reply.id}><strong>{reply.displayName ?? "Audience member"} {reply.demoOnly ? <span className="demo-activity-badge">Demo activity</span> : null}</strong><p>{reply.body}</p>{reply.uid === uid ? <><button type="button" onClick={() => setReplyDraft((old) => ({ ...old, [take.id]: reply.body ?? "" }))} disabled={busy !== null}>Edit reply</button> <button type="button" onClick={() => withdrawReply(take.id)} disabled={busy !== null}>Withdraw reply</button></> : null}</div>)}</div>{signedIn ? <form onSubmit={(event) => { event.preventDefault(); void saveReply(take.id); }}><label>Reply<textarea value={replyDraft[take.id] ?? ""} maxLength={600} onChange={(event) => setReplyDraft((old) => ({ ...old, [take.id]: event.target.value }))} /></label><button type="submit" disabled={busy !== null}>Reply</button></form> : null}</article>; })}</div>
+    <div className="takes-sort-controls" role="group" aria-label="Sort Takes"><button type="button" className={`sort-button${sortBy === "top" ? " active" : ""}`} aria-pressed={sortBy === "top"} onClick={() => setSortBy("top")}>Top Signal</button><button type="button" className={`sort-button${sortBy === "recent" ? " active" : ""}`} aria-pressed={sortBy === "recent"} onClick={() => setSortBy("recent")}>Recent</button></div>
+    <div className="takes-list" aria-label="Published Takes">{displayedTakes.map((take) => { const visibleReplies = replies[take.id] ?? []; const organicReplyCount = visibleReplies.length ? visibleReplies.filter((reply) => !reply.demoOnly).length : take.replyCount ?? 0; const demoReplyCount = visibleReplies.length ? visibleReplies.filter((reply) => reply.demoOnly).length : take.demoReplyCount ?? 0; return <article key={take.id}><div className="take-header"><h4>{take.displayName ?? "Audience member"} {take.demoOnly ? <span className="demo-activity-badge">Demo activity</span> : null}</h4><button type="button" className="take-upvote-button" aria-label="Upvote this Take" aria-pressed={Boolean(upvotedTakes[take.id])} disabled={busy !== null} onClick={() => onUpvoteTake(take.id)}>▲ {take.upvoteCount ?? 0}</button></div><p>{take.whyItShouldGrow}</p><small>{card.pathways.find((pathway) => pathway.id === take.preferredPathwayId)?.label ?? "Pathway"} · {organicReplyCount} organic replies <DemoCount value={demoReplyCount} /></small><div className="replies-list">{visibleReplies.map((reply) => <div key={reply.id}><strong>{reply.displayName ?? "Audience member"} {reply.demoOnly ? <span className="demo-activity-badge">Demo activity</span> : null}</strong><p>{reply.body}</p>{reply.uid === uid ? <><button type="button" onClick={() => setReplyDraft((old) => ({ ...old, [take.id]: reply.body ?? "" }))} disabled={busy !== null}>Edit reply</button> <button type="button" onClick={() => withdrawReply(take.id)} disabled={busy !== null}>Withdraw reply</button></> : null}</div>)}</div>{signedIn ? <form onSubmit={(event) => { event.preventDefault(); void saveReply(take.id); }}><label>Reply<textarea value={replyDraft[take.id] ?? ""} maxLength={600} onChange={(event) => setReplyDraft((old) => ({ ...old, [take.id]: event.target.value }))} /></label><button type="submit" disabled={busy !== null}>Reply</button></form> : null}</article>; })}</div>
     <div className="social-demo-label"><strong>Audience Pulse is native-only.</strong> No external-web attention is included. Demo-account activity is labeled and excluded from organic totals.</div>
   </section>;
 }
