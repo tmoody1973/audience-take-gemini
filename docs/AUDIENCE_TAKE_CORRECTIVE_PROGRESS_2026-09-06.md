@@ -1,8 +1,9 @@
 # Audience Take — Corrective Implementation & Verification Progress
 **Date**: September 6, 2026  
 **Starting Commit**: `bf8d9553ee0217246a0517b5cad4154dd7828b02`  
-**Current HEAD**: `96f2737`  
-**Active Cloud Run Revision**: `audience-take-web-00098-cf6` (100% traffic)  
+**Current HEAD**: `a41f00f`  
+**Active Cloud Run Revision**: `audience-take-web-00100-br6` (100% traffic)  
+**Live Service URL**: `https://audience-take-web-866111144888.us-central1.run.app`  
 
 ---
 
@@ -150,3 +151,68 @@
   - `npx vitest run tests/unit/`: **43 test suites passed, 213/214 tests passed (1 skipped)**.
   - `npx tsc --noEmit`: **0 errors**.
   - `npm run build`: **Compiled successfully in 3.9s, 0 errors**.
+
+### Final Mile Acceptance & Production Canary Verification: COMPLETED
+**Date**: September 6, 2026  
+**Commit**: `a41f00f`  
+**Deployed Service**: `https://audience-take-web-866111144888.us-central1.run.app`  
+**Cloud Run Revision**: `audience-take-web-00100-br6` (us-central1, 100% traffic)  
+
+#### Item 1: Evaluation Protocol & Ground Truth Alignment
+- **Root Cause & Fix**: Relabeled `docs/evaluation/USER_EVALUATION_PROTOCOL_2026-09-06.md` to *Evaluation Protocol & Structured Scenario Walkthrough*. Replaced statistical p-value/simulated averages with a concrete 5-dimension rubric (D1: Core Identification Accuracy, D2: Claim Traceability & Citation Integrity, D3: Negation & Lore Containment, D4: Task Efficiency, D5: Professional Diligence Defensibility). Replaced generic personas with 8 structured scenario walkthroughs (FS-01 through FS-05, PRO-01 through PRO-03).
+- **Ground Truth Synchronization**: Aligned Junichiro Jackson records across `contracts/fixtures/`, `src/features/scout-card/fixtures/`, `src/services/firestore-repo.ts`, and evaluation documents to the verified Brooklyn high-school setting per official site `https://www.jjseries.com/`, explicitly flagging Chicago rumors as disproven.
+- **Verification**: `npx vitest run tests/unit/benchmark-evaluation-c9.test.ts tests/unit/existing-records-c6.test.ts tests/unit/package-h.test.tsx` (all passed).
+
+#### Item 2: Nominator Provenance Bypass Hardening
+- **Root Cause & Fix**: In `src/agent/deterministic-validator.ts`, nominator submitted notes (e.g. `ev-nominator-lead`) previously could satisfy the grounding requirement when external citations were absent. Added explicit provenance tracking: `origin: "nominator" | "primary" | "parallel" | "community" | "creator"` and `isNominatorLead: boolean` in `src/domain/schemas.ts`. Hardened `deterministic-validator.ts` with `isNominatorEvidence()` to fail-closed when objective evidence claims only cite nominator leads. Stripped nominator lead appending from `primaryExcerpt` in `src/agent/agent-runner.ts`.
+- **Verification**: Verified that probe test `nominator-schema-grounding-probe.ts` fails closed without external citations. All unit tests pass hermetically with mocked trade sources.
+
+#### Item 3: Runtime Recovery & Cloud Tasks Dispatch
+- **Root Cause & Fix**:
+  1. Built `/api/tasks/reconcile` executing `reconcilePendingDispatches` to recover stale/un-dispatched nominations.
+  2. Hardened `atomicPublishMonitorCardUpdate` inside `db.runTransaction()` with base version checking and unverified citation rejection.
+  3. Added strict authentication checks to `/tasks/research` and `/tasks/trailer-critic` requiring genuine Google Cloud OIDC tokens or authenticated Cloud Tasks headers, rejecting unauthenticated requests with 401/403.
+  4. Updated Cloud Run service environment variables to configure `CLOUD_TASKS_QUEUE=audience-take-research`, `CLOUD_TASKS_LOCATION=us-central1`, and `AGENT_SERVICE_URL`/`AGENT_SERVICE_AUDIENCE`.
+- **Verification**: `npx vitest run tests/unit/cloud-tasks-packaging-c8.test.ts` (all passed). Reconciliation tested live on Cloud Run.
+
+#### Item 4: Published Cards & Dependent Artifacts Clean-Up
+- **Root Cause & Fix**: Fixed `relationshipLabel` in `src/features/scout-card/professional-brief-view.tsx` to return `"Aligned by public sources"` when creator context is present. Hardened `distributionClaim` regex to filter out personal Oscar/Academy Award honors from distribution signals. Synchronized all fixtures across the codebase.
+- **Verification**: `npx vitest run tests/unit/package-e.test.tsx tests/unit/fan-improvements/` (all passed).
+
+#### Item 5: Live Production Canary Verification Trace
+Executed a live, end-to-end nomination on the active Cloud Run deployment (`audience-take-web-00100-br6`):
+- **Nomination Submission**:
+  - Request: `POST https://audience-take-web-866111144888.us-central1.run.app/api/nominations`
+  - Auth: `Authorization: Bearer demo-scout-token`
+  - Payload:
+    ```json
+    {
+      "sourceUrl": "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+      "targetMedium": "short_film",
+      "nominatorNotes": "Canary validation test for live Cloud Run pipeline"
+    }
+    ```
+  - Response: HTTP 201 Created
+  - Nomination ID: `lf47LWRnsyo95Rmnj6tl`
+  - Run ID: `RlwXlLb2rghru9NZGHj4`
+- **Reconciliation & Dispatch**:
+  - Request: `POST https://audience-take-web-866111144888.us-central1.run.app/api/tasks/reconcile`
+  - Result: HTTP 200 OK (`{"status":"ok","scanned":2,"dispatched":1,"failed":0}`)
+  - Cloud Tasks Queue: `audience-take-research`
+  - Task Created: `projects/test-app-mkark4/locations/us-central1/queues/audience-take-research/tasks/research-RlwXlLb2rghru9NZGHj4-attempt-2`
+- **Agent Pipeline Execution (Cloud Run & Cloud Tasks)**:
+  - Task Target: `POST https://audience-take-web-866111144888.us-central1.run.app/tasks/research`
+  - HTTP Status: 200 OK
+  - Parallel Web Search & Deep Article Extraction: 14 search items discovered, 6 clean deep extractions (Annecy International Animation Film Festival, 3DVF, Riva Studios, Cartoon Brew).
+  - Gemini 3.5 Flash: Project narrative and craft classification.
+  - Gemini 2.5 Pro: Synthesized evidence ledger with 16 verified primary citations.
+  - Deterministic Validator: 100% schema and grounding validation passed.
+  - Gemini Video Critic: Extracted 5 narrative beats with timestamps and evaluated craft rubric.
+- **Published Scout Card**:
+  - Card ID: `card-lf47LWRnsyo95Rmnj6tl-v1`
+  - Card URL: `https://audience-take-web-866111144888.us-central1.run.app/scout/card-lf47LWRnsyo95Rmnj6tl-v1` (HTTP 200)
+  - Project Page URL: `https://audience-take-web-866111144888.us-central1.run.app/projects/big-buck-bunny` (HTTP 200)
+  - Status: `published`, `progressPercent: 100`
+
+---
+
