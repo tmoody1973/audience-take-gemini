@@ -1645,6 +1645,10 @@ export const dataRepo = {
           projectId: String(data.projectId),
           queryScope: String(data.queryScope || ""),
           providerState: data.providerState || "active",
+          registrationState: data.registrationState,
+          lastExecutionResult: data.lastExecutionResult,
+          lastSuccessfulCheckAt: data.lastSuccessfulCheckAt,
+          lastMaterialChangeAt: data.lastMaterialChangeAt,
           createdAt: typeof data.createdAt === "string" ? data.createdAt : new Date().toISOString(),
           lastCheckedAt: data.lastCheckedAt,
           lastEventAt: data.lastEventAt,
@@ -1667,6 +1671,10 @@ export const dataRepo = {
             projectId: String(data.projectId),
             queryScope: String(data.queryScope || ""),
             providerState: data.providerState || "active",
+            registrationState: data.registrationState,
+            lastExecutionResult: data.lastExecutionResult,
+            lastSuccessfulCheckAt: data.lastSuccessfulCheckAt,
+            lastMaterialChangeAt: data.lastMaterialChangeAt,
             createdAt: typeof data.createdAt === "string" ? data.createdAt : new Date().toISOString(),
             lastCheckedAt: data.lastCheckedAt,
             lastEventAt: data.lastEventAt,
@@ -1677,6 +1685,110 @@ export const dataRepo = {
     } catch {}
     return Array.from(store.projectMonitors.values()).filter((m) => m.projectId === projectId);
   },
+
+  async getProjectMonitorByProjectId(projectId: string): Promise<ProjectMonitor | null> {
+    const monitors = await this.listProjectMonitors(projectId);
+    if (!monitors || monitors.length === 0) return null;
+    const active = monitors.find((m) => m.providerState === "active");
+    if (active) return active;
+    return monitors[monitors.length - 1];
+  },
+
+  async atomicPublishMonitorCardUpdate(params: {
+    projectId: string;
+    expectedBaseVersion: number;
+    newCard: ScoutCard;
+    monitorId: string;
+    receipt: WebhookReceipt;
+    monitorUpdates?: Partial<ProjectMonitor>;
+    livingUpdate?: {
+      summary: string;
+      citations?: any[];
+      category?: string;
+    };
+  }): Promise<{ card: ScoutCard; project: Project }> {
+    const { projectId, expectedBaseVersion, newCard, monitorId, receipt, monitorUpdates, livingUpdate } = params;
+    const project = await this.getProjectById(projectId);
+    if (!project) {
+      throw new Error(`Project ${projectId} not found for monitor card update`);
+    }
+
+    if (project.publishedCardId) {
+      const currentCard = await this.getScoutCardById(project.publishedCardId);
+      const currentVersion = currentCard?.version || 1;
+      if (currentVersion !== expectedBaseVersion) {
+        throw new Error(
+          `Concurrency conflict: current card version is ${currentVersion}, expected base was ${expectedBaseVersion}`
+        );
+      }
+    }
+
+    const now = new Date().toISOString();
+    project.publishedCardId = newCard.id;
+    project.audioStale = true;
+    project.updatedAt = now;
+
+    const monitor = await this.getProjectMonitorById(monitorId);
+    if (monitor) {
+      monitor.lastCheckedAt = now;
+      monitor.lastEventAt = now;
+      monitor.lastSuccessfulCheckAt = now;
+      monitor.lastMaterialChangeAt = now;
+      monitor.lastExecutionResult = "detected_change";
+      if (monitorUpdates) {
+        Object.assign(monitor, monitorUpdates);
+      }
+    }
+
+    try {
+      const db = getAdminFirestore();
+      if (db) {
+        await db.runTransaction(async (transaction) => {
+          transaction.set(db.collection("scoutCards").doc(newCard.id), cleanFirestoreObject(newCard));
+          transaction.set(
+            db.collection("projects").doc(projectId),
+            cleanFirestoreObject({
+              publishedCardId: newCard.id,
+              audioStale: true,
+              updatedAt: now,
+            }),
+            { merge: true }
+          );
+          if (monitor) {
+            transaction.set(db.collection("projectMonitors").doc(monitor.id), cleanFirestoreObject(monitor), { merge: true });
+          }
+          transaction.set(db.collection("webhookReceipts").doc(receipt.webhookId), cleanFirestoreObject(receipt));
+          if (livingUpdate) {
+            const updateId = `update-${Date.now()}`;
+            transaction.set(db.collection("projectLivingUpdates").doc(updateId), {
+              id: updateId,
+              projectId,
+              summary: livingUpdate.summary,
+              eventDate: now,
+              citations: livingUpdate.citations || [],
+              confidence: "high",
+              detectedAt: now,
+              category: livingUpdate.category || "production",
+            });
+          }
+        });
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`Database error in atomicPublishMonitorCardUpdate: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    store.scoutCards.set(newCard.id, newCard);
+    store.projects.set(projectId, project);
+    if (monitor) {
+      store.projectMonitors.set(monitor.id, monitor);
+    }
+    store.webhookReceipts.set(receipt.webhookId, receipt);
+
+    return { card: newCard, project };
+  },
+
 
   async recordWebhookReceipt(receipt: WebhookReceipt): Promise<void> {
     try {

@@ -347,7 +347,11 @@ export interface ProjectMonitor {
   id: string; // monitor_id from Parallel
   projectId: string;
   queryScope: string;
-  providerState: "active" | "pending" | "disabled";
+  providerState: "active" | "pending" | "disabled" | "canceled";
+  registrationState?: "registered" | "active" | "failing" | "paused" | "canceled";
+  lastExecutionResult?: "detected_change" | "completed_quiet" | "failed" | "withheld";
+  lastSuccessfulCheckAt?: string;
+  lastMaterialChangeAt?: string;
   createdAt: string;
   lastCheckedAt?: string;
   lastEventAt?: string;
@@ -362,4 +366,7 @@ export interface WebhookReceipt {
   monitorId?: string;
   projectId?: string;
   processed: boolean;
+  outcome?: "accepted" | "withheld" | "noop" | "failed" | "duplicate";
+  reason?: string;
 }
+

@@ -1,29 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dataRepo } from "@/services/firestore-repo";
-import { getAdminFirestore } from "@/lib/firebase/admin";
 import { verifyParallelWebhookSignature } from "@/lib/webhooks/parallel-signature";
 import { verifyPublicationGate, checkCitationCoverage } from "@/agent/deterministic-validator";
-import type { ScoutCard, EvidenceItem } from "@/domain";
+import type { EvidenceItem, WebhookReceipt } from "@/domain";
 
 export interface ParallelWebhookPayload {
-  event: "monitor.event.detected" | "monitor.diff_detected" | "monitor.milestone_reached" | "monitor.ping";
-  monitor_id: string;
+  event?: string;
+  type?: string;
+  monitor_id?: string;
   target_url?: string;
   projectId?: string;
   diff_summary?: string;
   milestone_text?: string;
   summary?: string;
+  error?: string;
   event_details?: {
     summary?: string;
     facts_found?: string[];
   };
   timestamp?: string;
   citations?: Array<{
-    url: string;
-    title: string;
-    excerpt: string;
+    url?: string;
+    sourceUrl?: string;
+    title?: string;
+    excerpt?: string;
+    publisher?: string;
     published_at?: string;
   }>;
+  data?: {
+    monitor_id?: string;
+    id?: string;
+    event?: {
+      type?: string;
+      content?: string;
+      error?: string;
+      id?: string;
+      date?: string;
+      monitor_ts?: string;
+      event_group_id?: string;
+      citations?: any[];
+    };
+    summary?: string;
+    citations?: any[];
+    metadata?: Record<string, any>;
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -75,47 +95,76 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Malformed JSON payload" }, { status: 400 });
     }
 
-    if (!payload || !payload.event) {
-      return NextResponse.json({ error: "Invalid webhook payload structure" }, { status: 400 });
+    // Normalize event type and monitor ID from standard Parallel structure or legacy flat format
+    const eventType =
+      payload.type ||
+      payload.event ||
+      payload.data?.event?.type ||
+      "";
+
+    const monitorId =
+      payload.monitor_id ||
+      payload.data?.monitor_id ||
+      payload.data?.id ||
+      "";
+
+    if (!eventType) {
+      return NextResponse.json({ error: "Invalid webhook payload structure: missing event type" }, { status: 400 });
     }
 
     const allowedEvents = new Set([
       "monitor.event.detected",
+      "monitor.execution.completed",
+      "monitor.execution.failed",
       "monitor.diff_detected",
       "monitor.milestone_reached",
       "monitor.ping",
     ]);
 
-    if (!allowedEvents.has(payload.event)) {
-      return NextResponse.json({ error: `Unsupported event type: ${payload.event}` }, { status: 400 });
+    if (!allowedEvents.has(eventType)) {
+      return NextResponse.json({ error: `Unsupported event type: ${eventType}` }, { status: 400 });
     }
 
-    if (payload.event === "monitor.ping") {
+    if (eventType === "monitor.ping") {
       if (webhookId) {
         await dataRepo.recordWebhookReceipt({
           webhookId,
           receivedAt: new Date().toISOString(),
-          eventType: payload.event,
-          monitorId: payload.monitor_id,
+          eventType,
+          monitorId: monitorId || undefined,
           processed: true,
+          outcome: "noop",
+          reason: "Parallel ping acknowledged",
         });
       }
       return NextResponse.json({ ok: true, message: "Parallel webhook ping acknowledged" }, { status: 200 });
     }
 
-    if (!payload.monitor_id) {
+    if (!monitorId) {
       return NextResponse.json({ error: "Missing monitor_id in webhook payload" }, { status: 400 });
     }
 
     // Strict server-side monitor-to-project mapping (never trust client-selected projectId fallback)
-    const monitor = await dataRepo.getProjectMonitorById(payload.monitor_id);
+    const monitor = await dataRepo.getProjectMonitorById(monitorId);
     if (!monitor) {
       return NextResponse.json({ error: "Unknown monitor ID. Server-side project mapping required." }, { status: 404 });
     }
     const projectId = monitor.projectId;
 
-    if (monitor && monitor.providerState === "disabled") {
-      return NextResponse.json({ ok: true, message: "Monitor is disabled, event ignored" }, { status: 200 });
+    if (monitor.providerState === "disabled" || monitor.providerState === "canceled") {
+      if (webhookId) {
+        await dataRepo.recordWebhookReceipt({
+          webhookId,
+          receivedAt: new Date().toISOString(),
+          eventType,
+          monitorId,
+          projectId,
+          processed: true,
+          outcome: "noop",
+          reason: `Monitor is ${monitor.providerState}`,
+        });
+      }
+      return NextResponse.json({ ok: true, message: `Monitor is ${monitor.providerState}, event ignored` }, { status: 200 });
     }
 
     const project = await dataRepo.getProjectById(projectId);
@@ -123,150 +172,250 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Project not found for monitor event" }, { status: 404 });
     }
 
+    const now = new Date().toISOString();
+
+    // Handle monitor.execution.completed (quiet check with no new material events)
+    if (eventType === "monitor.execution.completed") {
+      monitor.lastCheckedAt = now;
+      monitor.lastSuccessfulCheckAt = now;
+      monitor.lastExecutionResult = "completed_quiet";
+      await dataRepo.saveProjectMonitor(monitor);
+
+      if (webhookId) {
+        await dataRepo.recordWebhookReceipt({
+          webhookId,
+          receivedAt: now,
+          eventType,
+          monitorId,
+          projectId,
+          processed: true,
+          outcome: "noop",
+          reason: "Quiet execution with no material changes",
+        });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        status: "noop",
+        message: "Quiet execution recorded without card mutation",
+      });
+    }
+
+    // Handle monitor.execution.failed (execution error on provider side)
+    if (eventType === "monitor.execution.failed") {
+      const errorDetail =
+        payload.data?.event?.error ||
+        payload.error ||
+        "Monitor execution failed on provider";
+
+      monitor.lastCheckedAt = now;
+      monitor.lastExecutionResult = "failed";
+      await dataRepo.saveProjectMonitor(monitor);
+
+      if (webhookId) {
+        await dataRepo.recordWebhookReceipt({
+          webhookId,
+          receivedAt: now,
+          eventType,
+          monitorId,
+          projectId,
+          processed: true,
+          outcome: "failed",
+          reason: errorDetail,
+        });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        status: "failure_recorded",
+        message: "Monitor execution failure recorded",
+        error: errorDetail,
+      });
+    }
+
+    // Handle monitor.event.detected (and diff/milestone variations)
     const changeSummary =
       payload.summary ||
       payload.milestone_text ||
       payload.diff_summary ||
+      payload.data?.summary ||
+      payload.data?.event?.content ||
       payload.event_details?.summary ||
       "";
 
-    // Detect no-op health checks or events without material changes (R6.6)
-    const hasCitations = Array.isArray(payload.citations) && payload.citations.length > 0;
-    if (!changeSummary || changeSummary.trim() === "" || (!hasCitations && payload.event === "monitor.diff_detected")) {
-      if (monitor) {
-        monitor.lastCheckedAt = new Date().toISOString();
-        await dataRepo.saveProjectMonitor(monitor);
-      }
+    const rawCitations =
+      payload.citations ||
+      payload.data?.citations ||
+      payload.data?.event?.citations ||
+      [];
+
+    const hasCitations = Array.isArray(rawCitations) && rawCitations.length > 0;
+
+    // Detect no-op health checks or events without material changes
+    if (!changeSummary || changeSummary.trim() === "" || (!hasCitations && eventType === "monitor.diff_detected")) {
+      monitor.lastCheckedAt = now;
+      monitor.lastSuccessfulCheckAt = now;
+      monitor.lastExecutionResult = "completed_quiet";
+      await dataRepo.saveProjectMonitor(monitor);
+
       if (webhookId) {
         await dataRepo.recordWebhookReceipt({
           webhookId,
-          receivedAt: new Date().toISOString(),
-          eventType: payload.event,
-          monitorId: payload.monitor_id,
+          receivedAt: now,
+          eventType,
+          monitorId,
           projectId,
           processed: true,
+          outcome: "noop",
+          reason: "Health check or empty change summary recorded without card mutation",
         });
       }
       return NextResponse.json({ ok: true, status: "noop", message: "Health check recorded without card mutation" });
     }
 
     // Targeted reassessment: Material facts create a candidate update and a new card version
-    let newVersion = 1;
-    if (project.publishedCardId) {
-      const currentCard = await dataRepo.getScoutCardById(project.publishedCardId);
-      if (currentCard) {
-        newVersion = (currentCard.version || 1) + 1;
-        const newCardId = `card-${projectId}-v${newVersion}`;
-
-        const newCitations: EvidenceItem[] = (payload.citations || []).map((c: any, idx: number) => ({
-          id: `ev-mon-${Date.now()}-${idx}`,
-          sourceUrl: c.url || c.sourceUrl || "https://parallel.ai",
-          title: c.title || "Live Monitor Observation",
-          publisher: c.publisher || "Parallel Monitor",
-          claimType: "observation",
-          excerpt: c.excerpt || c.title || "Monitor observation passage.",
-          verified: true,
-          retrievedAt: new Date().toISOString(),
-        }));
-
-        // Verify that the candidate change summary is genuinely grounded by the new citations (R6.5 & R6.6)
-        const coverage = checkCitationCoverage(newCitations, [changeSummary]);
-        if (!coverage.sufficientCoverage) {
-          console.warn("[Parallel Webhook] Monitor update withheld: changeSummary lacks citation passage support:", changeSummary);
-          return NextResponse.json({
-            ok: true,
-            status: "withheld",
-            message: "Event processed but card update withheld due to unverified claims or contradictions.",
-            errors: [`changeSummary lacks passage grounding in provided citations: ${changeSummary}`],
-          });
-        }
-
-        const updatedWhatWeKnow = [
-          ...currentCard.whatWeKnow,
-          `Live Monitor Update (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}): ${changeSummary}`,
-        ];
-
-        const candidateCard: any = {
-          ...currentCard,
-          projectTitle: project.identity.title,
-          medium: project.identity.medium,
-          stage: project.identity.currentStage,
-          creators: project.identity.creators,
-          id: newCardId,
-          version: newVersion,
-          whatWeKnow: updatedWhatWeKnow,
-          evidenceLedger: [...currentCard.evidenceLedger, ...newCitations],
-          versionProvenance: {
-            generatedAt: new Date().toISOString(),
-            model: currentCard.versionProvenance?.model || "parallel-monitor",
-            changeReason: `Live Parallel Monitor update: ${changeSummary.slice(0, 100)}`,
-          },
-        };
-
-        const gateResult = verifyPublicationGate(candidateCard);
-        if (!gateResult.passed || !gateResult.sanitizedCard) {
-          console.warn("[Parallel Webhook] Monitor update failed publication gate:", gateResult.errors);
-          return NextResponse.json({
-            ok: true,
-            status: "withheld",
-            message: "Event processed but card update withheld due to unverified claims or contradictions.",
-            errors: gateResult.errors,
-          });
-        }
-
-        // Publish ONLY the new version; keep historical versions immutable (R6.7)
-        await dataRepo.publishScoutCard(gateResult.sanitizedCard);
-
-        project.publishedCardId = newCardId;
-        project.audioStale = true;
-      }
+    if (!project.publishedCardId) {
+      return NextResponse.json({ error: "No published card found for project" }, { status: 404 });
     }
 
-    project.updatedAt = new Date().toISOString();
-    await dataRepo.createProject(project);
+    const currentCard = await dataRepo.getScoutCardById(project.publishedCardId);
+    if (!currentCard) {
+      return NextResponse.json({ error: "Published scout card record not found" }, { status: 404 });
+    }
 
-    // Update monitor timestamps
-    if (monitor) {
-      monitor.lastCheckedAt = new Date().toISOString();
-      monitor.lastEventAt = new Date().toISOString();
-      monitor.lastSuccessfulResearchAt = new Date().toISOString();
+    const currentVersion = currentCard.version || 1;
+    const newVersion = currentVersion + 1;
+    const newCardId = `card-${projectId}-v${newVersion}`;
+
+    const newCitations: EvidenceItem[] = rawCitations.map((c: any, idx: number) => ({
+      id: `ev-mon-${Date.now()}-${idx}`,
+      sourceUrl: c.url || c.sourceUrl || "https://parallel.ai",
+      title: c.title || "Live Monitor Observation",
+      publisher: c.publisher || "Parallel Monitor",
+      claimType: "observation",
+      excerpt: c.excerpt || c.title || "Monitor observation passage.",
+      verified: true,
+      retrievedAt: now,
+    }));
+
+    // Citation coverage gate: verify candidate change summary is genuinely supported by source passages
+    const coverage = checkCitationCoverage(newCitations, [changeSummary]);
+    if (!coverage.sufficientCoverage) {
+      console.warn("[Parallel Webhook] Monitor update withheld: changeSummary lacks citation passage support:", changeSummary);
+      const reasonMsg = `changeSummary lacks passage grounding in provided citations: ${changeSummary}`;
+
+      monitor.lastCheckedAt = now;
+      monitor.lastExecutionResult = "withheld";
       await dataRepo.saveProjectMonitor(monitor);
-    }
 
-    // Record living update in Firestore collection for activity feeds
-    try {
-      const db = getAdminFirestore();
-      if (db) {
-        await db.collection("projectLivingUpdates").add({
-          id: `update-${Date.now()}`,
+      if (webhookId) {
+        await dataRepo.recordWebhookReceipt({
+          webhookId,
+          receivedAt: now,
+          eventType,
+          monitorId,
           projectId,
-          summary: payload.summary || payload.milestone_text || payload.diff_summary || "Live update detected",
-          eventDate: new Date().toISOString(),
-          citations: payload.citations || [],
-          confidence: "high",
-          detectedAt: new Date().toISOString(),
+          processed: true,
+          outcome: "withheld",
+          reason: reasonMsg,
         });
       }
-    } catch {}
 
-    // Record webhook receipt for idempotency
-    if (webhookId) {
-      await dataRepo.recordWebhookReceipt({
-        webhookId,
-        receivedAt: new Date().toISOString(),
-        eventType: payload.event,
-        monitorId: payload.monitor_id,
-        projectId,
-        processed: true,
+      return NextResponse.json({
+        ok: true,
+        status: "withheld",
+        message: "Event processed but card update withheld due to unverified claims or contradictions.",
+        errors: [reasonMsg],
       });
     }
+
+    const updatedWhatWeKnow = [
+      ...currentCard.whatWeKnow,
+      `Live Monitor Update (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}): ${changeSummary}`,
+    ];
+
+    const candidateCard: any = {
+      ...currentCard,
+      projectTitle: project.identity.title,
+      medium: project.identity.medium,
+      stage: project.identity.currentStage,
+      creators: project.identity.creators,
+      id: newCardId,
+      version: newVersion,
+      whatWeKnow: updatedWhatWeKnow,
+      evidenceLedger: [...currentCard.evidenceLedger, ...newCitations],
+      versionProvenance: {
+        generatedAt: now,
+        model: currentCard.versionProvenance?.model || "parallel-monitor",
+        changeReason: `Live Parallel Monitor update: ${changeSummary.slice(0, 100)}`,
+      },
+    };
+
+    const gateResult = verifyPublicationGate(candidateCard);
+    if (!gateResult.passed || !gateResult.sanitizedCard) {
+      console.warn("[Parallel Webhook] Monitor update failed publication gate:", gateResult.errors);
+      const reasonMsg = `Publication gate failed: ${gateResult.errors.join("; ")}`;
+
+      monitor.lastCheckedAt = now;
+      monitor.lastExecutionResult = "withheld";
+      await dataRepo.saveProjectMonitor(monitor);
+
+      if (webhookId) {
+        await dataRepo.recordWebhookReceipt({
+          webhookId,
+          receivedAt: now,
+          eventType,
+          monitorId,
+          projectId,
+          processed: true,
+          outcome: "withheld",
+          reason: reasonMsg,
+        });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        status: "withheld",
+        message: "Event processed but card update withheld due to unverified claims or contradictions.",
+        errors: gateResult.errors,
+      });
+    }
+
+    const receipt: WebhookReceipt = {
+      webhookId: webhookId || `wh-mon-${Date.now()}`,
+      receivedAt: now,
+      eventType,
+      monitorId,
+      projectId,
+      processed: true,
+      outcome: "accepted",
+      reason: `Published v${newVersion} from live monitor observation`,
+    };
+
+    // Atomically publish card update, update project pointer, set audioStale, and write receipt
+    const atomicResult = await dataRepo.atomicPublishMonitorCardUpdate({
+      projectId,
+      expectedBaseVersion: currentVersion,
+      newCard: gateResult.sanitizedCard,
+      monitorId,
+      receipt,
+      monitorUpdates: {
+        lastExecutionResult: "detected_change",
+        lastMaterialChangeAt: now,
+      },
+      livingUpdate: {
+        summary: changeSummary,
+        citations: rawCitations,
+        category: "production",
+      },
+    });
 
     return NextResponse.json({
       success: true,
       projectId,
       cardVersion: newVersion,
-      event: payload.event,
-      updatedAt: project.updatedAt,
+      event: eventType,
+      updatedAt: atomicResult.project.updatedAt,
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
@@ -274,3 +423,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal webhook processing error" }, { status: 500 });
   }
 }
+

@@ -90,4 +90,16 @@
   - `npx vitest run tests/unit/reliable-execution-c3.test.ts tests/unit/parallel-research-quality-c4.test.ts tests/unit/reliability-r*.test.ts`: **10 files passed, 55/55 tests passed**.
   - `npx tsc --noEmit`: **0 errors**.
 
+### C5 — Parallel Monitor Webhook & Lifecycle Repair: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. `src/app/api/webhooks/parallel/route.ts`: Allowed events were restricted to 4 hardcoded events, rejecting official Parallel lifecycle events `monitor.execution.completed` and `monitor.execution.failed` with 400 errors. Added full support for `monitor.execution.completed` (updates health timestamps with `lastExecutionResult: "completed_quiet"`, records receipt with `outcome: "noop"`, returns 200 without mutating card) and `monitor.execution.failed` (records failure receipt and state without crashing).
+  2. `src/agent/agent-runner.ts`: Line 753 called `dataRepo.getProjectMonitorById(project.id)`. Since monitor IDs are provider-generated `monitor_...` while project IDs are `proj-...`, this always returned null and created duplicate provider subscriptions on every run. Replaced with `dataRepo.getProjectMonitorByProjectId(project.id)` to find existing monitors before registration.
+  3. `src/app/api/webhooks/parallel/route.ts`: Withheld events (e.g. failed citation coverage or publication gate) and quiet executions previously failed to write durable `WebhookReceipt`s to `dataRepo`. Now all outcomes (`accepted`, `withheld`, `noop`, `failed`) record durable receipts with reasons for full idempotency.
+  4. `src/domain/index.ts` & `src/services/firestore-repo.ts`: Extended `ProjectMonitor` with `registrationState`, `lastExecutionResult`, `lastSuccessfulCheckAt`, `lastMaterialChangeAt`, and `"canceled"` state. Extended `WebhookReceipt` with `outcome` and `reason`. Added `atomicPublishMonitorCardUpdate` to verify `expectedBaseVersion`, atomically write card v2, set `project.audioStale = true`, update monitor health, and record delivery receipt inside a single transactional boundary.
+  5. `src/services/parallel-client.ts`: Added `getMonitor(monitorId)` (`GET /monitors/{id}`), `deleteMonitor(monitorId)` (`DELETE /monitors/{id}`), and `getMonitorEvents(monitorId, eventGroupId)` (`GET /monitors/{id}/events`).
+- **Verification Commands Executed**:
+  - `npx vitest run tests/unit/parallel-monitor-c5.test.ts`: **9/9 tests passed**.
+  - `npx vitest run tests/unit/reliability-r*.test.ts tests/unit/evidence-integrity-c2.test.ts tests/unit/reliable-execution-c3.test.ts tests/unit/parallel-research-quality-c4.test.ts tests/unit/parallel-monitor-c5.test.ts`: **12 files passed, 71/71 tests passed**.
+  - `npx tsc --noEmit`: **0 errors**.
 
+### C6 — Existing Record Repair: NEXT UP

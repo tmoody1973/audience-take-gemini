@@ -22,6 +22,7 @@ vi.mock("@/services/firestore-repo", () => {
       renewResearchRunLease: vi.fn().mockResolvedValue({ renewed: true }),
       atomicPublishScoutCard: vi.fn(),
       getProjectMonitorById: vi.fn(),
+      getProjectMonitorByProjectId: vi.fn().mockResolvedValue(null),
       saveProjectMonitor: vi.fn(),
     },
   };

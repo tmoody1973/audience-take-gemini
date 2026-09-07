@@ -750,8 +750,8 @@ Output MUST strictly adhere to the following JSON structure:
 
     // Register Living Dossier monitor sensor via Parallel Monitor API (decoupled follow-up per R5.12)
     try {
-      const existingMonitor = await dataRepo.getProjectMonitorById(project.id);
-      if (!existingMonitor) {
+      const existingMonitor = await dataRepo.getProjectMonitorByProjectId(project.id);
+      if (!existingMonitor || existingMonitor.providerState === "disabled" || existingMonitor.providerState === "canceled") {
         const monitorQuery = `${proposalData.projectTitle || project.identity.title} financing production partners festival distribution rights`;
         const monRes = await parallelClient.createMonitor({
           name: `Scout Monitor: ${proposalData.projectTitle || project.identity.title}`,
@@ -766,7 +766,8 @@ Output MUST strictly adhere to the following JSON structure:
             id: monRes.monitor_id,
             projectId: project.id,
             queryScope: monitorQuery,
-            providerState: monRes.status || "active",
+            providerState: monRes.status === "disabled" ? "disabled" : "active",
+            registrationState: "active",
             createdAt: monRes.created_at || new Date().toISOString(),
             targetUrl: run.sourceUrl,
           });

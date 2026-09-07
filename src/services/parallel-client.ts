@@ -350,6 +350,79 @@ export class ParallelSearchClient {
   }
 
   /**
+   * Retrieves a monitor's current configuration and state
+   */
+  async getMonitor(monitorId: string): Promise<ParallelMonitorResponse | null> {
+    const key = this.apiKey || process.env.PARALLEL_API_KEY || null;
+    if (!key) return null;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/monitors/${encodeURIComponent(monitorId)}`, {
+        method: "GET",
+        headers: { "x-api-key": key },
+      });
+      if (response.ok) {
+        return (await response.json()) as ParallelMonitorResponse;
+      }
+    } catch (err) {
+      console.warn(`Parallel Monitor getMonitor fetch error for ${monitorId}:`, err);
+    }
+    return null;
+  }
+
+  /**
+   * Deletes a monitor to cease future executions and stop webhook event notifications
+   */
+  async deleteMonitor(monitorId: string): Promise<{ success: boolean; warnings?: string[] }> {
+    const key = this.apiKey || process.env.PARALLEL_API_KEY || null;
+    if (!key) {
+      return { success: false, warnings: ["PARALLEL_API_KEY not configured"] };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/monitors/${encodeURIComponent(monitorId)}`, {
+        method: "DELETE",
+        headers: { "x-api-key": key },
+      });
+      if (response.ok) {
+        return { success: true };
+      }
+      const errText = await response.text();
+      return { success: false, warnings: [`HTTP ${response.status}: ${errText}`] };
+    } catch (err) {
+      return {
+        success: false,
+        warnings: [err instanceof Error ? err.message : String(err)],
+      };
+    }
+  }
+
+  /**
+   * Fetches events for a specific monitor
+   */
+  async getMonitorEvents(monitorId: string, eventGroupId?: string): Promise<any[]> {
+    const key = this.apiKey || process.env.PARALLEL_API_KEY || null;
+    if (!key) return [];
+
+    try {
+      const url = eventGroupId
+        ? `${this.baseUrl}/monitors/${encodeURIComponent(monitorId)}/events?event_group_id=${encodeURIComponent(eventGroupId)}`
+        : `${this.baseUrl}/monitors/${encodeURIComponent(monitorId)}/events`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "x-api-key": key },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return Array.isArray(data) ? data : data.events || data.results || [];
+      }
+    } catch (err) {
+      console.warn(`Parallel Monitor getMonitorEvents fetch error for ${monitorId}:`, err);
+    }
+    return [];
+  }
+
+  /**
    * Validate returned URLs through SSRF Guard
    */
   private async sanitizeSearchResults(data: ParallelSearchResponse): Promise<ParallelSearchResponse> {
