@@ -225,3 +225,33 @@
 
 ---
 
+## 7. September 7, 2026 Code-Complete Auditor Remediation Deployment
+
+- **Deployment Details**:
+  - Cloud Run Service: `audience-take-web`
+  - Revision: `audience-take-web-00103-dlb`
+  - Deployment Timestamp: `2026-09-07T07:31:33Z`
+  - Git HEAD Commit: `5183e10` (`fix(integrity): resolve auditor p1 grounding, audio fidelity, critic modality, and vampair source defects`)
+  - Cloud Run Service URL: `https://audience-take-web-866111144888.us-central1.run.app`
+
+- **Auditor P1 & Evidence Integrity Verification (6/6 Probes Passed)**:
+  - `evidence-final-probe.ts`:
+    - Probe 1 (`awardKeywordLaundering`): PASSED (`false`) — Unsubstantiated festival nominations/awards filtered into `whatWereChecking`
+    - Probe 2 (`unsupportedOrdinaryPublicFacts`): PASSED (`false`) — Unsupported ordinary public facts quarantined
+    - Probe 3 (`innocentFestivalMention`): PASSED (`true`) — Legitimate festival locations/context preserved
+    - Probe 4 (`audioValidIdsWrongText`): PASSED (`valid: false`) — Rejected audio brief transcripts asserting ungrounded awards/cast despite valid source IDs
+    - Probe 5 (`audioEmptyLedgersInventedIds`): PASSED (`valid: false`) — Closed empty-ledger citation bypass
+    - Probe 6 (`trailerShapeWithoutLimitationsOrMediaProof`): PASSED (`false`) — Enforced modality typing and mandatory limitations on video critic analyses
+
+- **Compilation and Test Suite Verification**:
+  - TypeScript Compilation (`npx tsc --noEmit`): 0 errors
+  - Production Next.js Build (`npm run build`): 0 errors across 27 static/dynamic routes
+  - Full Vitest Unit & Regression Suites: 100% passing across all packages (including `package-d.test.ts`, `package-h.test.tsx`, `reliability-r2.test.ts`, `reliability-r3.test.ts`, `reliable-execution-c3.test.ts`)
+
+- **Live Canary Confirmation**:
+  - Endpoint: `https://audience-take-web-866111144888.us-central1.run.app/projects/vampair` (**HTTP 200 OK**)
+  - Active YouTube Player: Verified working embed (`6d-e3WrApCo`, *The Night*) replacing dead URL
+  - Quarantined Sources: 404 Animation Magazine link marked `unresolved` / `verified: false`
+  - Qualified Figures: Crowdfunding and IP retention accurately bounded
+
+
