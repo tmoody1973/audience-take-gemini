@@ -1,8 +1,8 @@
 # Audience Take — Corrective Implementation & Verification Progress
 **Date**: September 6, 2026  
 **Starting Commit**: `bf8d9553ee0217246a0517b5cad4154dd7828b02`  
-**Current HEAD**: `bf8d9553ee0217246a0517b5cad4154dd7828b02`  
-**Active Cloud Run Revision**: `audience-take-web-00097-jtz` (100% traffic)  
+**Current HEAD**: `96f2737`  
+**Active Cloud Run Revision**: `audience-take-web-00098-cf6` (100% traffic)  
 
 ---
 
@@ -10,16 +10,16 @@
 
 | Package | Name | Primary Outcome | Status | Verification Tier |
 |---|---|---|---|---|
-| **C0** | Baseline & Contract Repair | Hermetic test environment, zero TS errors, progress log | COMPLETED | Local Mock / Pure Unit |
-| **C1** | Truthful Surfaces | Eliminate fake city fallback, auto-outreach claims, false confidentiality | COMPLETED | Local & Staged |
-| **C2** | Evidence & Publication Integrity | Provenance separation (nominator vs source), negation handling, full-surface gates | COMPLETED | Local & Adversarial |
-| **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | COMPLETED | Local & Firestore Emulator |
-| **C4** | Parallel Research Quality | Identity-first resolution, eliminate placeholder queries, bounded receipts | COMPLETED | Local & Parallel Provider |
-| **C5** | Parallel Monitor Repair | Lifecycle event alignment, HMAC signature, deduplication, versioned updates | PENDING | Local & Provider Webhook |
-| **C6** | Existing Record Repair | Correction manifest for Junichiro, Vampair, CYCLE; reversible versioning | PENDING | Local & Production Dry-Run |
-| **C7** | Purposeful Product Experience | Separated Fan/Pro journeys, grounded audio narration, responsive/a11y check | PENDING | Local & Chrome DevTools |
-| **C8** | Final Image & Deployed Proof | 7-point Cloud Tasks image audit, smoke check, canonical canary trace | PENDING | Container Image & Cloud Run |
-| **C9** | Demonstrated Impact & Submission | 16-case frozen benchmark evaluation, user testing protocol, demo script | PENDING | Human-Reviewed Benchmark |
+| **C0** | Baseline & Contract Repair | Hermetic test environment, zero TS errors, progress log | COMPLETED | Local Mock / Pure Unit (`18ea9bf`) |
+| **C1** | Truthful Surfaces | Eliminate fake city fallback, auto-outreach claims, false confidentiality | COMPLETED | Local & Staged (`c2dd846`) |
+| **C2** | Evidence & Publication Integrity | Provenance separation (nominator vs source), negation handling, full-surface gates | COMPLETED | Local & Adversarial (`bf738f9`) |
+| **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | COMPLETED | Local & Firestore Emulator (`3174f21`) |
+| **C4** | Parallel Research Quality | Identity-first resolution, eliminate placeholder queries, bounded receipts | COMPLETED | Local & Parallel Provider (`0b1910c`) |
+| **C5** | Parallel Monitor Repair | Lifecycle event alignment, HMAC signature, deduplication, versioned updates | COMPLETED | Local & Provider Webhook (`35de35e`) |
+| **C6** | Existing Record Repair | Correction manifest for Junichiro, Vampair, CYCLE; reversible versioning | COMPLETED | Local & Production Dry-Run (`476eb20`) |
+| **C7** | Purposeful Product Experience | Separated Fan/Pro journeys, grounded audio narration, responsive/a11y check | COMPLETED | Local & Chrome DevTools (`8562ce7`) |
+| **C8** | Final Image & Deployed Proof | 7-point Cloud Tasks image audit, smoke check, canonical canary trace | COMPLETED | Container Image & Cloud Run (`531ba48`) |
+| **C9** | Demonstrated Impact & Submission | 16-case frozen benchmark evaluation, user testing protocol, demo script | COMPLETED | Human-Reviewed Benchmark (`96f2737`) |
 
 ---
 
