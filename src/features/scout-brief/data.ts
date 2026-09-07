@@ -3,7 +3,7 @@ import type { ScoutBrief } from "./types";
 import { ScoutBriefSchema } from "./schema";
 import { scoutBriefStore } from "@/services/scout-brief/store";
 import { generateAndPublishScoutBrief } from "@/services/scout-brief/service";
-import { validateScoutBriefTranscript } from "@/services/scout-brief/script-builder";
+import { validateScoutBriefTranscript, computeCardInputDigest } from "@/services/scout-brief/script-builder";
 
 /**
  * Server-side loader for the Scout Brief attached to a specific Scout Card version and audience variant.
@@ -21,12 +21,16 @@ export async function loadScoutBriefForCard(
       const parsed = ScoutBriefSchema.safeParse(existing);
       if (parsed.success) {
         const briefData = parsed.data as ScoutBrief;
-        if (briefData.transcript) {
+        const expectedDigest = computeCardInputDigest(card);
+        const digestMatches = briefData.inputDigest ? briefData.inputDigest === expectedDigest : true;
+        if (digestMatches && briefData.transcript) {
           const val = validateScoutBriefTranscript(briefData.transcript, card, 20, 600);
           if (val.valid) {
             return briefData;
           }
           console.warn(`[ScoutBrief] Existing brief ${briefData.artifactId} is stale or violates transcript constraints; regenerating:`, val.errors);
+        } else {
+          console.warn(`[ScoutBrief] Existing brief ${briefData.artifactId} inputDigest mismatch (stale); regenerating.`);
         }
       }
     }

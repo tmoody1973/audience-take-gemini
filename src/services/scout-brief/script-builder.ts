@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type { ScoutCard } from "@/features/scout-card/types";
 import type {
   ScoutBriefTranscript,
@@ -173,28 +174,31 @@ export function validateScoutBriefTranscript(
     }
 
     // Check that spoken segment text does not make ungrounded award or festival claims unsupported by card evidence
-    const segHasAward = /\b(won|winner|best\s+director|grand\s+jury|sundance|cannes|oscars?)\b/i.test(seg.text);
+    const segHasAward = /\b(won|winner|winning|best\s+\w+|grand\s+jury|palme\s+d'or|golden\s+lion|silver\s+bear|award|prize)\b/i.test(seg.text);
     if (segHasAward) {
-      const cardSupportsAward = (card.evidenceClaims || []).some(
+      const citedClaims = (card.evidenceClaims || []).filter((c: any) => (seg.claimIds || []).includes(c.id));
+      const claimsSupportAward = citedClaims.some(
         (c: any) =>
           c.status === "supported" &&
-          /\b(won|winner|award|sundance|cannes|oscars?|festival)\b/i.test(c.statement || "")
+          /\b(won|winner|awarded|grand\s+jury|best\s+\w+|audience\s+award|jury\s+prize)\b/i.test(c.statement || "")
       );
-      if (!cardSupportsAward) {
+      if (!claimsSupportAward) {
         errors.push(`Transcript segment ${seg.order} asserts ungrounded award or festival claim: "${seg.text.slice(0, 60)}..."`);
       }
     }
 
     // Check that spoken segment text does not make ungrounded talent or cast attachment claims
-    const segHasTalent = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b)/i.test(seg.text);
+    const segHasTalent = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b|plays\b|cast\s+as\b)/i.test(seg.text);
     if (segHasTalent) {
-      const talentMatch = seg.text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b)/i)?.[1];
-      const cardSupportsTalent = (card.evidenceClaims || []).some(
+      const talentMatch = seg.text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b|plays\b|cast\s+as\b)/i)?.[1];
+      const citedClaims = (card.evidenceClaims || []).filter((c: any) => (seg.claimIds || []).includes(c.id));
+      const claimsSupportTalent = citedClaims.some(
         (c: any) =>
           c.status === "supported" &&
-          (c.statement || "").toLowerCase().includes(talentMatch?.toLowerCase() || "")
+          (c.statement || "").toLowerCase().includes(talentMatch?.toLowerCase() || "") &&
+          /\b(stars?|starring|cast(?:\s+as|\s+in)?|plays|portrays?|lead\s+role)\b/i.test(c.statement || "")
       );
-      if (!cardSupportsTalent) {
+      if (!claimsSupportTalent) {
         errors.push(`Transcript segment ${seg.order} asserts ungrounded cast attachment: "${talentMatch}"`);
       }
     }
@@ -275,3 +279,28 @@ DATA:
 ${JSON.stringify(cardInput, null, 2)}
 `;
 }
+
+/**
+ * Computes a deterministic SHA-256 digest of card inputs consumed by the Scout Brief.
+ * Any change to claims, qualifications, or next diligence steps invalidates cached briefings.
+ */
+export function computeCardInputDigest(card: any): string {
+  const supportedClaims = (card.evidenceClaims || [])
+    .filter((c: any) => c.status === "supported")
+    .map((c: any) => `${c.id}:${c.statement}`)
+    .sort();
+  const rawData = {
+    cardVersionId: card.cardVersionId || card.id || "",
+    researchVersion: card.researchVersion || card.version || 1,
+    title: card.title || "",
+    supportedClaims,
+    whatWeKnow: [...(card.whatWeKnow || [])].sort(),
+    whatWereChecking: [...(card.whatWereChecking || [])].sort(),
+    triageSummary: card.decisionBrief?.triageSummary || "",
+    materialUncertainty: card.decisionBrief?.materialUncertainty || card.materialUncertainty || "",
+    nextDiligenceStep: card.decisionBrief?.nextDiligenceStep || card.nextDiligenceStep || "",
+    nextExperiment: card.pathways?.[0]?.nextBoundedExperiment?.name || card.industryLens?.recommendedNextExperiment?.title || "",
+  };
+  return createHash("sha256").update(JSON.stringify(rawData)).digest("hex");
+}
+

@@ -72,4 +72,5 @@ export const ScoutBriefSchema = z.object({
   sizeBytes: z.number().int().min(100),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
   generatedAt: z.string(),
+  inputDigest: z.string().optional(),
 });

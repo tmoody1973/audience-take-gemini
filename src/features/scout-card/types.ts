@@ -77,6 +77,7 @@ export type TrailerCriticAnalysis = {
   modelId: string;
   analysisVersion: number;
   cardVersionId: string;
+  modality?: "audiovisual" | "text_context_only" | "audio_only";
   structuralNarrative: {
     genreSignaling: string;
     narrativeDelivery: string;

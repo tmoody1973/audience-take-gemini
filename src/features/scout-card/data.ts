@@ -736,22 +736,27 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           modelId: dynamicCritic.model || "gemini-3.7-flash",
           analysisVersion: 1,
           cardVersionId: dynamicCard.id,
+          modality: (dynamicCritic.modality as any) || "text_context_only",
           structuralNarrative: {
             genreSignaling: dynamicCritic.genreAndForm || "Independent Screen Project",
-            narrativeDelivery: dynamicCritic.summary || "Audiovisual scene development",
-            trailerType: dynamicCritic.genreAndForm?.includes("Trailer") ? "Official Trailer" : "Project Media Preview",
-            beats: (dynamicCritic.timestampedBeats || []).slice(0, 6).map((b: any, bIdx: number, allBeats: any[]) => {
-              const nextBeat = allBeats[bIdx + 1];
-              const start = b.timestampFormatted || "0:00";
-              const end = nextBeat?.timestampFormatted || "1:00";
-              return {
-                label: b.label || "Narrative Beat",
-                start,
-                end,
-                observation: b.description || "Audiovisual scene development",
-                modality: "audiovisual" as const,
-              };
-            }),
+            narrativeDelivery: dynamicCritic.summary || "Contextual narrative development",
+            trailerType: dynamicCritic.genreAndForm?.includes("Trailer")
+              ? "Official Trailer"
+              : (dynamicCritic.modality === "text_context_only" ? "Contextual Source Analysis" : "Project Media Preview"),
+            beats: dynamicCritic.modality === "text_context_only"
+              ? []
+              : (dynamicCritic.timestampedBeats || []).slice(0, 6).map((b: any, bIdx: number, allBeats: any[]) => {
+                  const nextBeat = allBeats[bIdx + 1];
+                  const start = b.timestampFormatted || "0:00";
+                  const end = nextBeat?.timestampFormatted || "1:00";
+                  return {
+                    label: b.label || "Narrative Beat",
+                    start,
+                    end,
+                    observation: b.description || "Audiovisual scene development",
+                    modality: "audiovisual" as const,
+                  };
+                }),
           },
           technicalCraft: {
             editingAndPace: dynamicCritic.craftAnalysis?.editingAndPacing || "Media analysis pending or unavailable.",

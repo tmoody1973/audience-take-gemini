@@ -14,6 +14,14 @@ export function validateCriticPayload(data: unknown): boolean {
   if (typeof d.summary !== "string" || !d.summary.trim()) return false;
   // Limitations is strictly required to enforce truthful methodology disclosure
   if (typeof d.limitations !== "string" || !d.limitations.trim() || d.limitations.trim().length < 10) return false;
+
+  // Modality & methodology invariant: text-only/contextual reading must not claim direct frame inspection or scene beats
+  const isContextOnly = /\b(limited\s+to\s+available\s+context|contextual\s+reading|metadata\s+rather\s+than\s+direct|no\s+direct\s+video|text\s+context)\b/i.test(d.limitations);
+  const claimsDirectFrames = /\bdirect\s+frame\s+(?:analysis|inspection)\b/i.test(d.summary);
+  if (isContextOnly && (claimsDirectFrames || (Array.isArray(d.timestampedBeats) && d.timestampedBeats.length > 0))) {
+    return false;
+  }
+
   if (!Array.isArray(d.timestampedBeats)) return false;
   let lastSeconds = -1;
   for (const beat of d.timestampedBeats) {

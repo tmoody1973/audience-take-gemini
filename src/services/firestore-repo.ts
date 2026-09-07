@@ -871,9 +871,9 @@ class InMemoryStore {
       sourceMedia: [
         {
           type: "youtube_embed",
-          url: "https://www.youtube.com/watch?v=6d-e3WrApCo",
+          url: "https://www.youtube.com/watch?v=4FWO4VM-y1U",
           verified: true,
-          caption: "The Vampair Series — The Night (Official Episode 1)"
+          caption: "The Real Vampair Pilot's Trailer That Ever Trailered! (Official Trailer — Daria Cohen)"
         }
       ],
       evidenceLedger: [

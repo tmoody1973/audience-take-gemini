@@ -73,6 +73,7 @@ export interface ScoutBrief {
   sizeBytes: number;
   sha256: string;
   generatedAt: string;
+  inputDigest?: string;
 }
 
 export interface ScoutBriefJob {
@@ -88,6 +89,7 @@ export interface ScoutBriefJob {
   leaseExpiresAt?: string;
   attempt?: number;
   taskName?: string;
+  inputDigest?: string;
   scriptRequestStartedAt?: string;
   scriptCompletedAt?: string;
   ttsRequestStartedAt?: string;

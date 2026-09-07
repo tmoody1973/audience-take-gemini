@@ -210,7 +210,7 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
         results: opts.urls.map((u) => ({
           url: u,
           title: "Extracted Article Title",
-          markdown: "# Extracted Article\nDirector Chaz Bottoms unveils Junichiro Jackson anime proof of concept in Chicago. Production completed independently with TeamTO co-producing the pilot teaser.",
+          markdown: "# Extracted Article\nDirector Chaz Bottoms unveils Junichiro Jackson anime proof of concept in near-future Brooklyn. Production completed independently with TeamTO co-producing the pilot teaser.",
           publish_date: "2025-05-10",
         })),
       };
@@ -225,7 +225,7 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
             stage: "concept",
             creators: ["Chaz Bottoms", "TeamTO"],
             whatWeKnow: [
-              "Director Chaz Bottoms is developing Junichiro Jackson as an anime proof of concept in Chicago.",
+              "Director Chaz Bottoms is developing Junichiro Jackson as an anime proof of concept in near-future Brooklyn.",
               "Production completed independently with TeamTO co-producing the pilot teaser.",
             ],
             whatWereChecking: ["Festival distribution rights."],
@@ -249,8 +249,8 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
               },
             ],
             decisionBrief: {
-              logline: "An atmospheric anime proof of concept set in neo-noir Chicago.",
-              coreHook: "Afro-anime neo-noir visual style with authentic Chicago jazz and hip-hop scoring.",
+              logline: "An atmospheric anime proof of concept set in neo-noir Brooklyn.",
+              coreHook: "Afro-anime neo-noir visual style with authentic hip-hop scoring in near-future Brooklyn.",
               comparativeTitles: ["Yasuke", "Samurai Champloo"],
               primaryRisk: "High cost of hand-drawn 2D animation pipeline.",
               triageSummary: "Promising proof of concept with strong visual identity seeking episodic development partners.",
@@ -276,7 +276,7 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
           originalUrl: testUrl,
           medium: "proof_of_concept",
           currentStage: "concept",
-          logline: "An atmospheric anime proof of concept set in neo-noir Chicago.",
+          logline: "An atmospheric anime proof of concept set in neo-noir Brooklyn.",
           creators: ["Chaz Bottoms", "TeamTO"],
         },
         publishedCardId: null,

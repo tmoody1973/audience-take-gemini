@@ -99,17 +99,28 @@ export function TrailerCritic({
   if (!analyses.length) return null;
   const stateMessage = stateMessages[previewState];
 
+  const isContextOnly = analyses.every((a) => a.modality === "text_context_only");
+  const headingKicker = isContextOnly
+    ? "Creative notes · Contextual reading from text sources"
+    : "Creative notes · Sampled audiovisual reading";
+  const countLabel = isContextOnly
+    ? `${analyses.length} ${analyses.length === 1 ? "source reading" : "source readings"}`
+    : `${analyses.length} ${analyses.length === 1 ? "video" : "videos"} analyzed`;
+  const disclaimerText = isContextOnly
+    ? "Contextual AI interpretation of narrative framing, genre positioning, and craft from verified source text. Direct video frames were not inspected."
+    : "Descriptive AI interpretation of sampled audiovisual pacing, craft, and tone. This is an editorial observation and not a frame-perfect technical audit or commercial judgment.";
+
   return (
     <section className="trailer-critic" aria-labelledby={`${idPrefix}-title`} data-state={previewState}>
       <header className="section-heading-line trailer-critic-heading">
         <div>
-          <span>Creative notes · Sampled audiovisual reading</span>
+          <span>{headingKicker}</span>
           <h2 id={`${idPrefix}-title`}>Creative notes</h2>
           <p className="trailer-critic-disclaimer">
-            Descriptive AI interpretation of sampled audiovisual pacing, craft, and tone. This is an editorial observation and not a frame-perfect technical audit or commercial judgment.
+            {disclaimerText}
           </p>
         </div>
-        <strong>{analyses.length} {analyses.length === 1 ? "video" : "videos"} analyzed</strong>
+        <strong>{countLabel}</strong>
       </header>
 
       <div className="trailer-critic-list">
@@ -128,7 +139,9 @@ export function TrailerCritic({
               <summary aria-disabled={disabled || undefined} tabIndex={disabled ? -1 : undefined}>
                 <span className="trailer-critic-number">{String(analysisIndex + 1).padStart(2, "0")}</span>
                 <span className="trailer-critic-summary-copy">
-                  <span className="trailer-critic-summary-kicker">Critic read / source video</span>
+                  <span className="trailer-critic-summary-kicker">
+                    {analysis.modality === "text_context_only" ? "Critic read / contextual text analysis" : "Critic read / source video"}
+                  </span>
                   <span className="trailer-critic-scan">
                     <ScanItem label="Genre" value={matrixValue(analysis, "genre")} />
                     <ScanItem label="Form" value={analysis.structuralNarrative.trailerType} />
@@ -145,8 +158,8 @@ export function TrailerCritic({
 
               <div className="trailer-critic-body">
                 <div className="trailer-critic-meta">
-                  <span>Source video {String(analysisIndex + 1).padStart(2, "0")}</span>
-                  <a href={analysis.youtubeUrl} target="_blank" rel="noreferrer">Open analyzed video</a>
+                  <span>{analysis.modality === "text_context_only" ? `Source reading ${String(analysisIndex + 1).padStart(2, "0")}` : `Source video ${String(analysisIndex + 1).padStart(2, "0")}`}</span>
+                  <a href={analysis.youtubeUrl} target="_blank" rel="noreferrer">Open analyzed media</a>
                   <small>Model {analysis.modelId} / version {analysis.analysisVersion} / {formatDate(analysis.analyzedAt)}</small>
                 </div>
 
@@ -155,11 +168,13 @@ export function TrailerCritic({
                     <h3>Structural &amp; narrative timeline</h3>
                     <dl className="trailer-critic-facts-horizontal">
                       <div><dt>Genre signaling</dt><dd>{analysis.structuralNarrative.genreSignaling}</dd></div>
-                      <div><dt>Trailer format</dt><dd>{analysis.structuralNarrative.trailerType}</dd></div>
+                      <div><dt>Format</dt><dd>{analysis.structuralNarrative.trailerType}</dd></div>
                       <div className="trailer-narrative-summary"><dt>Narrative delivery</dt><dd>{analysis.structuralNarrative.narrativeDelivery}</dd></div>
                     </dl>
                     <div className="trailer-beats-wrap">
-                      <span className="trailer-beats-kicker">Timestamped narrative beats</span>
+                      <span className="trailer-beats-kicker">
+                        {analysis.modality === "text_context_only" ? "Narrative overview" : "Timestamped narrative beats"}
+                      </span>
                       {analysis.structuralNarrative.beats.length > 0 ? (
                         <ol className="trailer-beats">
                           {analysis.structuralNarrative.beats.map((beat) => (
@@ -171,7 +186,9 @@ export function TrailerCritic({
                         </ol>
                       ) : (
                         <p className="trailer-beats-empty" style={{ padding: "0.75rem 0", color: "var(--ink-subtle, #737373)", fontStyle: "italic", fontSize: "0.875rem" }}>
-                          No audiovisual timestamped beats available for this media source.
+                          {analysis.modality === "text_context_only"
+                            ? "Contextual reading from text sources; direct visual frame inspection was not performed."
+                            : "No audiovisual timestamped beats available for this media source."}
                         </p>
                       )}
                     </div>

@@ -1,7 +1,7 @@
 import type { ScoutCard } from "@/features/scout-card/types";
 import type { ScoutBrief, ScoutBriefJob } from "@/features/scout-brief/types";
 import { generateScoutBriefTranscript } from "./gemini-script-generator";
-import { countTranscriptWords } from "./script-builder";
+import { countTranscriptWords, computeCardInputDigest } from "./script-builder";
 import { generateMultiSpeakerAudio } from "./gemini-tts-client";
 import { wrapPcmToWav } from "./audio-processor";
 import { scoutBriefStore } from "./store";
@@ -13,10 +13,11 @@ export async function generateAndPublishScoutBrief(
 ): Promise<ScoutBrief> {
   const artifactId = `scout-brief-${card.cardVersionId}-${variant}-g${generationVersion}`;
   const now = new Date().toISOString();
+  const inputDigest = computeCardInputDigest(card);
 
   // 1. Check existing ready artifact for idempotency (or legacy pro artifact)
   const existing = await scoutBriefStore.getScoutBrief(artifactId);
-  if (existing && existing.status === "ready") {
+  if (existing && existing.status === "ready" && existing.inputDigest === inputDigest) {
     return existing;
   }
   if (variant === "pro") {
@@ -37,6 +38,7 @@ export async function generateAndPublishScoutBrief(
     generationVersion,
     variant,
     state: "generating_script",
+    inputDigest,
     scriptRequestStartedAt: now,
     updatedAt: now,
   };
@@ -97,6 +99,7 @@ export async function generateAndPublishScoutBrief(
     sizeBytes: processedAudio.sizeBytes,
     sha256: processedAudio.sha256,
     generatedAt: new Date().toISOString(),
+    inputDigest,
   };
 
   // 7. Save immutable public artifact

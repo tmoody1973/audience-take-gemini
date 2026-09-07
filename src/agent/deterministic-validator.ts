@@ -672,8 +672,13 @@ export function validateScoutProposal(
         if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
         const evText = `${ev.title || ""} ${ev.excerpt || ""} ${ev.publisher || ""}`.toLowerCase();
         const mentionsFestival = evText.includes(festivalMatch.toLowerCase());
-        const mentionsHonor = /\b(won|winner|award|prize|laurel|selection|selected|premiered|screened|nominee|nominated|competition)\b/i.test(evText);
-        const hasNegativeContext = /\b(deadline|no selections|not selected|unannounced|pending announcement|submissions?)\b/i.test(evText);
+        const hasNegativeContext = /\b(deadline|no selections|not selected|unannounced|pending announcement|submissions?|guide|rules|guidelines|call\s+for\s+entries|prospective)\b/i.test(evText);
+        const claimsWin = /\b(won|winner|winning|best\s+\w+|grand\s+jury\s+prize|jury\s+award|audience\s+award|palme\s+d'or|golden\s+lion|silver\s+bear)\b/i.test(surface.text);
+        if (claimsWin) {
+          const mentionsWin = /\b(won|winner|awarded|grand\s+jury\s+prize|jury\s+prize|audience\s+award|palme\s+d'or|golden\s+lion|silver\s+bear|best\s+\w+)\b/i.test(evText);
+          return mentionsFestival && mentionsWin && !hasNegativeContext && !hasNegationContradiction(`won award at ${festivalMatch}`, evText);
+        }
+        const mentionsHonor = /\b(won|winner|award|prize|laurel|selection|selected|premiered|screened|nominee|nominated)\b/i.test(evText);
         return mentionsFestival && mentionsHonor && !hasNegativeContext && !hasNegationContradiction(`selected or won award at ${festivalMatch}`, evText);
       });
 
@@ -702,7 +707,9 @@ export function validateScoutProposal(
         const isTalentAttested = proposal.evidenceLedger?.some((ev: any) => {
           if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
           const evText = `${ev.title || ""} ${ev.excerpt || ""} ${ev.publisher || ""}`.toLowerCase();
-          return evText.includes(talentName.toLowerCase());
+          const hasTalentName = evText.includes(talentName.toLowerCase());
+          const hasAffirmativeRole = /\b(stars?|starring|cast(?:\s+as|\s+in)?|plays|portrays?|lead\s+role|features\s+[a-z]+|attached\s+to\s+star)\b/i.test(evText);
+          return hasTalentName && hasAffirmativeRole;
         });
         if (!isTalentAttested) {
           errors.push(
@@ -712,7 +719,30 @@ export function validateScoutProposal(
       }
     }
 
-    // C. Check for ungrounded buyer acquisition or commercial market hype
+    // C. Affirmative financial or budget assertion check
+    // Public factual surfaces (whyScouted, logline, triageSummary) must not assert ungrounded project budgets.
+    // In industryLens.marketContext, only flag if claiming the project itself has a confirmed budget/raise.
+    const isProjectBudgetClaim = surface.field !== "industryLens.marketContext"
+      ? /\$\d+[\d,]*\s*(?:million|m\b|billion|b\b|k\b)/i.test(surface.text)
+      : /(?:this\s+project|this\s+film|the\s+production|confirmed|budget\s+of|budget\s+is|budgeted\s+at|raised)\s+(?:has\s+a\s+)?(?:confirmed\s+)?\$\d+[\d,]*\s*(?:million|m\b|billion|b\b|k\b)/i.test(surface.text);
+
+    if (isProjectBudgetClaim) {
+      const budgetMatch = surface.text.match(/\$\d+[\d,]*\s*(?:million|m\b|billion|b\b|k\b)/i);
+      if (budgetMatch) {
+        const isBudgetSupported = proposal.evidenceLedger?.some((ev: any) => {
+          if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
+          const evText = `${ev.title || ""} ${ev.excerpt || ""} ${ev.publisher || ""}`.toLowerCase();
+          return evText.includes(budgetMatch[0].toLowerCase());
+        });
+        if (!isBudgetSupported) {
+          errors.push(
+            `Ungrounded budget or financial assertion in ${surface.field}: "${budgetMatch[0]}" is not attested by verified evidence in evidenceLedger.`
+          );
+        }
+      }
+    }
+
+    // D. Check for ungrounded buyer acquisition or commercial market hype
     const hypeCheck = checkHypeAndHallucinations(surface.text, proposal.evidenceLedger);
     if (!hypeCheck.clean) {
       for (const m of hypeCheck.matches) {
