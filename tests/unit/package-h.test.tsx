@@ -11,6 +11,23 @@ import { analyzeAudienceComments } from "@/critic/audience-comment-analyzer";
 import * as genaiClient from "@/lib/google/genai-client";
 import type { ScoutCard } from "@/features/scout-card/types";
 
+const dummyIndustryLens: ScoutCard["industryLens"] = {
+  pathwayIds: [],
+  comparables: [],
+  risks: [],
+  unresolvedQuestions: [],
+  signalLimitations: [],
+  creatorClaimStatus: "unclaimed",
+  recommendedNextExperiment: {
+    title: "Next Experiment",
+    hypothesis: "H",
+    method: "M",
+    participantAction: "A",
+    signal: "S",
+    timebox: "2 weeks",
+  },
+};
+
 describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => {
   describe("Gate EI-3: Junichiro Jackson Evidence & Chicago Setting Reconciliation", () => {
     it("resolves proj-junichiro via slug lookup and validates unified Chicago evidence ledger", async () => {
@@ -34,8 +51,8 @@ describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => 
       expect(evidence.length).toBeGreaterThanOrEqual(2);
       const variety = evidence.find((e: any) => e.publisher === "Variety");
       expect(variety).toBeDefined();
-      expect(variety.excerpt).toContain("futuristic Chicago");
-      expect(variety.excerpt).not.toContain("Brooklyn");
+      expect(variety?.excerpt).toContain("futuristic Chicago");
+      expect(variety?.excerpt).not.toContain("Brooklyn");
     });
 
     it("dynamically renders verified partners and financing in Stage & Availability Audit", () => {
@@ -113,6 +130,7 @@ describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => 
             verificationStatus: "verified",
             sourceRole: "trade_reporting",
             sourceTier: "reputable_trade",
+            externalCommentary: false,
             supportsClaimIds: ["claim-1"],
           },
           {
@@ -126,6 +144,7 @@ describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => 
             verificationStatus: "verified",
             sourceRole: "primary_work",
             sourceTier: "primary",
+            externalCommentary: false,
             supportsClaimIds: ["claim-2"],
           },
         ],
@@ -201,6 +220,7 @@ describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => 
         missingSections: [],
         limitations: ["Based on public reporting and submitted media."],
         externalSignals: [],
+        industryLens: dummyIndustryLens,
         identity: {
           relationshipStatus: "source_aligned",
         },
@@ -295,6 +315,7 @@ describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => 
             retrievedAt: "2026-08-30",
             availability: "available",
             verificationStatus: "observed",
+            externalCommentary: false,
             supportsClaimIds: [],
           },
         ],
@@ -370,6 +391,7 @@ describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => 
         missingSections: [],
         limitations: ["Unverified"],
         externalSignals: [],
+        industryLens: dummyIndustryLens,
         identity: {
           relationshipStatus: "unresolved",
         },

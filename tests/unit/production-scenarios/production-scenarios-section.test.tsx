@@ -70,6 +70,22 @@ describe("ProductionScenariosSection UI Component", () => {
     missingSections: [],
     limitations: [],
     externalSignals: [],
+    industryLens: {
+      pathwayIds: [],
+      comparables: [],
+      risks: [],
+      unresolvedQuestions: [],
+      signalLimitations: [],
+      creatorClaimStatus: "unclaimed",
+      recommendedNextExperiment: {
+        title: "Next Experiment",
+        hypothesis: "H",
+        method: "M",
+        participantAction: "A",
+        signal: "S",
+        timebox: "2 weeks",
+      },
+    },
   };
 
   it("renders compact collapsed header with reported budget state", () => {

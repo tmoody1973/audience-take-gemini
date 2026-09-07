@@ -339,6 +339,8 @@ export interface ResearchRunState {
   attempt?: number;
 }
 
+export type ResearchRun = ResearchRunState;
+
 export interface ProjectMonitor {
   id: string; // monitor_id from Parallel
   projectId: string;

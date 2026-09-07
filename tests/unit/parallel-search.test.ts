@@ -22,7 +22,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
   describe("search()", () => {
     it("handles missing API key safely without making network requests", async () => {
       const fetchMock = vi.fn();
-      globalThis.fetch = fetchMock;
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
 
       const client = new ParallelSearchClient();
       const result = await client.search({
@@ -61,7 +61,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
           status: 200,
           json: async () => mockResponsePayload,
         } as unknown as Response;
-      });
+      }) as unknown as typeof fetch;
 
       const fakeKey = "mock-fake-test-key-never-live";
       const client = new ParallelSearchClient(fakeKey);
@@ -120,7 +120,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
         ok: true,
         status: 200,
         json: async () => mockResponseWithPrivateIps,
-      } as unknown as Response));
+      } as unknown as Response)) as unknown as typeof fetch;
 
       const client = new ParallelSearchClient("mock-test-key");
       const result = await client.search({
@@ -138,7 +138,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
         ok: false,
         status: 401,
         text: async () => "Unauthorized: Invalid API Key",
-      } as unknown as Response));
+      } as unknown as Response)) as unknown as typeof fetch;
 
       const client = new ParallelSearchClient("invalid-mock-key");
       const result = await client.search({
@@ -148,7 +148,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
 
       expect(result.search_id).toMatch(/^parallel_(failed|empty)_/);
       expect(result.results).toEqual([]);
-      expect(result.warnings.some((w) => w.includes("Parallel Search"))).toBe(true);
+      expect(result.warnings?.some((w) => w.includes("Parallel Search"))).toBe(true);
     });
   });
 
@@ -185,7 +185,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
             ],
           }),
         } as unknown as Response;
-      });
+      }) as unknown as typeof fetch;
 
       const client = new ParallelSearchClient("mock-test-key");
       const res = await client.extract({
@@ -230,7 +230,7 @@ describe("ParallelSearchClient Unit Tests (Mocked Transport)", () => {
             created_at: new Date().toISOString(),
           }),
         } as unknown as Response;
-      });
+      }) as unknown as typeof fetch;
 
       const client = new ParallelSearchClient("mock-test-key");
       const res = await client.createMonitor({

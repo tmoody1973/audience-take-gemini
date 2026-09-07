@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 import { describe, it, expect, vi } from "vitest";
+import { NextRequest } from "next/server";
 import { POST as nominateHandler } from "@/app/api/nominate/route";
 import { POST as agentRunHandler, GET as agentGetHandler } from "@/app/api/agent/run/route";
 import { parallelClient } from "@/services/parallel-client";
@@ -10,12 +11,12 @@ describe("Scout Agent API End-to-End Handlers", () => {
     const uniqueUrl = `https://www.youtube.com/watch?v=s8G7425lfKs&t=${Date.now()}`;
 
     const searchSpy = vi.spyOn(parallelClient, "search").mockResolvedValue({
+      providerStatus: "succeeded",
       search_id: "search_mock_123",
       results: [
         {
           url: "https://variety.com/article-indie-animation",
           title: "Indie animated project exploring rich urban mythology",
-          publisher: "Variety",
           excerpts: [
             "Exceptional indie animated project exploring rich urban mythology with distinctive 2D visual craft and independent creator leadership.",
           ],
@@ -29,7 +30,7 @@ describe("Scout Agent API End-to-End Handlers", () => {
     let createdCardId: string | undefined;
 
     try {
-      const nomReq = new Request("http://localhost:3000/api/nominate", {
+      const nomReq = new NextRequest("http://localhost:3000/api/nominate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

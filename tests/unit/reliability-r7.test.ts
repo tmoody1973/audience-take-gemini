@@ -111,6 +111,7 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       id: "proj-r7-links",
       identity: {
         title: "Supporting Links Film",
+        normalizedUrl: "https://youtube.com/watch?v=sample123",
         medium: "short",
         currentStage: "festival_circuit",
         logline: "A compelling short.",
@@ -121,14 +122,18 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
         reason: "Innovative sci-fi short with deck and press article.",
         formatNotes: "Short film",
         audienceNotes: "Growing views",
-        nominatorUid: "user-nom-1",
-        submittedAt: new Date().toISOString(),
+        submittedByUid: "user-nom-1",
+        nominatorRole: "fan",
+        createdAt: new Date().toISOString(),
         initialLinks: [
           "https://variety.com/2026/film/news/supporting-links-film-preview",
           "https://filmmakermagazine.com/features/supporting-links-interview",
         ],
       },
-      status: "scouted",
+      creatorClaim: { status: "unclaimed" },
+      metrics: { watchCount: 0, payCount: 0, cityDemandCount: 0, backCount: 0, pathwayVotes: [0, 0, 0], cities: {} },
+      publishedCardId: null,
+      publicationStatus: "published",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -137,13 +142,10 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       id: "run-r7-links",
       projectId: "proj-r7-links",
       sourceUrl: "https://youtube.com/watch?v=sample123",
-      sourceType: "youtube",
       nominatorUid: "user-nom-1",
-      currentStep: "queued",
+      currentStep: "fetching",
+      progressPercent: 10,
       stepLogs: [],
-      candidateCard: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
     vi.mocked(dataRepo.getProjectById).mockResolvedValue(mockProject);
@@ -151,7 +153,16 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
     vi.mocked(dataRepo.acquireResearchRunLease).mockResolvedValue({
       acquired: true,
       leaseToken: "lease-r7-links",
-      run: { ...mockRun, lease: { workerId: "w1", expiresAt: new Date(Date.now() + 60000).toISOString(), leaseToken: "lease-r7-links" } },
+      run: {
+        ...mockRun,
+        lease: {
+          workerId: "w1",
+          acquiredAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 60000).toISOString(),
+          attempt: 1,
+          leaseToken: "lease-r7-links",
+        },
+      },
     });
     vi.mocked(dataRepo.verifyResearchRunLease).mockResolvedValue({ valid: true });
 
@@ -165,9 +176,11 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       ],
       search_id: "search-r7-links",
       providerStatus: "succeeded",
+      warnings: [],
     });
 
     vi.mocked(parallelClient.extract).mockResolvedValue({
+      extract_id: "ext-r7-links",
       results: [
         {
           url: "https://variety.com/2026/film/news/supporting-links-film-preview",
@@ -231,7 +244,7 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       run: { ...mockRun, currentStep: "complete" as any },
     }));
 
-    await executeScoutResearchRun("run-r7-links", "proj-r7-links");
+    await executeScoutResearchRun("run-r7-links");
 
     // Expect extract was called with candidate URLs that included the submitted supporting variety URL
     expect(parallelClient.extract).toHaveBeenCalled();
@@ -294,6 +307,7 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       id: "proj-r7-diligence",
       identity: {
         title: "Unresolved Rights Indie",
+        normalizedUrl: "https://example.com/concept",
         medium: "proof_of_concept",
         currentStage: "concept",
         logline: "An indie concept.",
@@ -303,10 +317,15 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       nomination: {
         reason: "Great pitch",
         formatNotes: "Proof of concept",
-        nominatorUid: "user-1",
-        submittedAt: new Date().toISOString(),
+        submittedByUid: "user-1",
+        nominatorRole: "fan",
+        initialLinks: [],
+        createdAt: new Date().toISOString(),
       },
-      status: "scouted",
+      creatorClaim: { status: "unclaimed" },
+      metrics: { watchCount: 0, payCount: 0, cityDemandCount: 0, backCount: 0, pathwayVotes: [0, 0, 0], cities: {} },
+      publishedCardId: null,
+      publicationStatus: "published",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -315,13 +334,10 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       id: "run-r7-diligence",
       projectId: "proj-r7-diligence",
       sourceUrl: "https://example.com/concept",
-      sourceType: "web",
       nominatorUid: "user-1",
-      currentStep: "queued",
+      currentStep: "fetching",
+      progressPercent: 10,
       stepLogs: [],
-      candidateCard: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
     vi.mocked(dataRepo.getProjectById).mockResolvedValue(mockProject);
@@ -329,7 +345,16 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
     vi.mocked(dataRepo.acquireResearchRunLease).mockResolvedValue({
       acquired: true,
       leaseToken: "lease-r7-diligence",
-      run: { ...mockRun, lease: { workerId: "w1", expiresAt: new Date(Date.now() + 60000).toISOString(), leaseToken: "lease-r7-diligence" } },
+      run: {
+        ...mockRun,
+        lease: {
+          workerId: "w1",
+          acquiredAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 60000).toISOString(),
+          attempt: 1,
+          leaseToken: "lease-r7-diligence",
+        },
+      },
     });
     vi.mocked(dataRepo.verifyResearchRunLease).mockResolvedValue({ valid: true });
 
@@ -407,7 +432,7 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
       };
     });
 
-    await executeScoutResearchRun("run-r7-diligence", "proj-r7-diligence");
+    await executeScoutResearchRun("run-r7-diligence");
 
     expect(publishedCard).toBeDefined();
     // Diligence step must be creator-controlled diligence because rights are unknown

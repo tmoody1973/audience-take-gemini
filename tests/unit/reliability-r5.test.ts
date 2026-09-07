@@ -168,6 +168,11 @@ describe("Scout Agent Reliability R5: Durable Execution, Retries, and Atomic Pub
         realisticConstraints: "Constraints",
       },
       trailerCriticId: null,
+      versionProvenance: {
+        generatedAt: new Date().toISOString(),
+        model: "gemini-2.5-flash",
+        changeReason: "Initial publication",
+      },
     };
 
     // Worker 1 attempts to publish with its stale leaseToken
@@ -263,6 +268,11 @@ describe("Scout Agent Reliability R5: Durable Execution, Retries, and Atomic Pub
         realisticConstraints: "Constraints",
       },
       trailerCriticId: null,
+      versionProvenance: {
+        generatedAt: new Date().toISOString(),
+        model: "gemini-2.5-flash",
+        changeReason: "Initial publication",
+      },
     };
 
     // First publication: publishes version 1
@@ -362,6 +372,7 @@ describe("Scout Agent Reliability R5: Durable Execution, Retries, and Atomic Pub
     // Mock Parallel Extract API
     vi.spyOn(parallelClient, "extract").mockResolvedValue({
       providerStatus: "succeeded",
+      extract_id: "ext-1",
       results: [
         {
           url: "https://example.com/neon-echoes",

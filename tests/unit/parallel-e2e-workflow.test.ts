@@ -69,6 +69,7 @@ describe("Parallel End-to-End Autonomous Agent Workflow", () => {
     // 3. Spy on Parallel Extract, Search, and Monitor
     const extractSpy = vi.spyOn(parallelClient, "extract").mockImplementation(async (opts) => {
       return {
+        providerStatus: "succeeded",
         extract_id: `ext_e2e_test_${Date.now()}`,
         results: opts.urls.map((u) => ({
           url: u,
@@ -81,6 +82,7 @@ describe("Parallel End-to-End Autonomous Agent Workflow", () => {
     });
 
     const searchSpy = vi.spyOn(parallelClient, "search").mockResolvedValue({
+      providerStatus: "succeeded",
       search_id: "search_e2e_test_456",
       results: [
         {
@@ -94,6 +96,7 @@ describe("Parallel End-to-End Autonomous Agent Workflow", () => {
           excerpts: ["Prime Video and Adult Swim express interest in adult animation slate."],
         },
       ],
+      warnings: [],
     });
 
     const monitorSpy = vi.spyOn(parallelClient, "createMonitor").mockResolvedValueOnce({

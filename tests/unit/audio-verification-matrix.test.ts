@@ -4,6 +4,23 @@ import { validateScoutBriefTranscript, countTranscriptWords } from "@/services/s
 import { wrapPcmToWav, extractPcmFromWav, createWavHeader } from "@/services/scout-brief/audio-processor";
 import type { ScoutCard } from "@/features/scout-card/types";
 
+const dummyIndustryLens: ScoutCard["industryLens"] = {
+  pathwayIds: [],
+  comparables: [],
+  risks: [],
+  unresolvedQuestions: [],
+  signalLimitations: [],
+  creatorClaimStatus: "unclaimed",
+  recommendedNextExperiment: {
+    title: "Next Experiment",
+    hypothesis: "H",
+    method: "M",
+    participantAction: "A",
+    signal: "S",
+    timebox: "2 weeks",
+  },
+};
+
 describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", () => {
   const junichiroCard: ScoutCard = {
     cardVersionId: "card-jj-v1",
@@ -76,6 +93,7 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
         retrievedAt: "2026-08-28",
         availability: "available",
         verificationStatus: "verified",
+        externalCommentary: false,
         supportsClaimIds: ["c-1"],
       },
       {
@@ -87,6 +105,7 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
         retrievedAt: "2026-08-28",
         availability: "available",
         verificationStatus: "verified",
+        externalCommentary: false,
         supportsClaimIds: ["c-2"],
       },
     ],
@@ -118,6 +137,7 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
     missingSections: [],
     limitations: ["Animation production budget and tax credits subject to studio diligence."],
     externalSignals: [],
+    industryLens: dummyIndustryLens,
   };
 
   const vampairCard: ScoutCard = {
@@ -184,6 +204,7 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
         retrievedAt: "2026-08-28",
         availability: "available",
         verificationStatus: "verified",
+        externalCommentary: false,
         supportsClaimIds: ["vc-1"],
       },
     ],
@@ -220,6 +241,7 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
     missingSections: [],
     limitations: ["No verified production budget exists in public record."],
     externalSignals: [],
+    industryLens: dummyIndustryLens,
   };
 
   it("generates concise Discovery brief (60-90s, 130-190 words) leading with project and premise", () => {
@@ -290,9 +312,9 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
       claimStatus: "unclaimed",
       publishedAt: "2026-08-30T00:00:00Z",
       submissionLabel: "Community Nom",
-      completeness: "minimal",
+      completeness: "partial",
       hook: "A minimalist sci-fi short film filmed in an abandoned grain elevator.",
-      projectType: "short",
+      projectType: "short_film",
       fallbackUsed: true,
       provenance: {
         submissionType: "fan",
@@ -300,6 +322,13 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
         nominationLabel: "Fan nomination",
         nominatedByLabel: "Anonymous",
         researchedAt: "2026-08-30",
+      },
+      media: {
+        state: "authorized_embed",
+        title: "Video",
+        sourceUrl: "https://vimeo.com/unknown",
+        attribution: "None",
+        accessibleFallback: "None",
       },
       storyContext: {
         summary: "A lone explorer finds an artifact in a silo.",
@@ -330,6 +359,7 @@ describe("Audio Verification Matrix (AUDIENCE_TAKE_AUDIO_ANTIGRAVITY_HANDOFF)", 
       missingSections: ["creatorContext", "pathways"],
       limitations: ["Minimal public sources available."],
       externalSignals: [],
+      industryLens: dummyIndustryLens,
     };
 
     const discover = createFallbackTranscript(unfamiliarCard, "discover");

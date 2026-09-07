@@ -7,6 +7,7 @@ import { ScoutSocialPanel } from "@/features/social/scout-social-panel";
 import { getScoutCardFixture } from "@/features/scout-card/data";
 import * as socialRoute from "@/lib/social/route";
 import { RATE_LIMITS } from "@/lib/trust/rate-limit";
+import { NextResponse } from "next/server";
 
 const mocks = vi.hoisted(() => ({
   socialCommand: vi.fn(),
@@ -309,7 +310,7 @@ describe("Take Upvote API Route Handlers", () => {
 
     const runSpy = vi.spyOn(socialRoute, "run").mockImplementation(async (_req, action) => {
       const result = await action("user-1", mockStore as any);
-      return new Response(JSON.stringify({ ok: true, data: result }), { status: 200 });
+      return NextResponse.json({ ok: true, data: result, error: null, requestId: "req-1" }, { status: 200 });
     });
     const limitSpy = vi.spyOn(socialRoute, "limit").mockResolvedValue({
       remainingBurst: 5,
@@ -331,7 +332,7 @@ describe("Take Upvote API Route Handlers", () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ ok: true, data: { active: true, upvoteCount: 1 } });
+    expect(body).toEqual({ ok: true, data: { active: true, upvoteCount: 1 }, error: null, requestId: "req-1" });
 
     runSpy.mockRestore();
     limitSpy.mockRestore();
@@ -344,7 +345,7 @@ describe("Take Upvote API Route Handlers", () => {
 
     const runSpy = vi.spyOn(socialRoute, "run").mockImplementation(async (_req, action) => {
       const result = await action("user-1", mockStore as any);
-      return new Response(JSON.stringify({ ok: true, data: result }), { status: 200 });
+      return NextResponse.json({ ok: true, data: result, error: null, requestId: "req-1" }, { status: 200 });
     });
     const limitSpy = vi.spyOn(socialRoute, "limit").mockResolvedValue({
       remainingBurst: 5,
@@ -366,7 +367,7 @@ describe("Take Upvote API Route Handlers", () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ ok: true, data: { active: false, upvoteCount: 0 } });
+    expect(body).toEqual({ ok: true, data: { active: false, upvoteCount: 0 }, error: null, requestId: "req-1" });
 
     runSpy.mockRestore();
     limitSpy.mockRestore();

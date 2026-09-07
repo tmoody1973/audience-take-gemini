@@ -68,7 +68,7 @@ describe("Google GenAI Speech Generation Client", () => {
       const call2 = generateContentMock.mock.calls[1][0];
       expect(call2.config.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe("Puck");
     } finally {
-      process.env.NODE_ENV = origEnv;
+      (process.env as any).NODE_ENV = origEnv;
       if (origVitest) process.env.VITEST = origVitest;
       vi.restoreAllMocks();
     }
@@ -87,7 +87,7 @@ describe("Google GenAI Speech Generation Client", () => {
         /Gemini TTS speech generation unavailable/
       );
     } finally {
-      process.env.NODE_ENV = origEnv;
+      (process.env as any).NODE_ENV = origEnv;
       if (origVitest) process.env.VITEST = origVitest;
       vi.restoreAllMocks();
     }

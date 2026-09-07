@@ -178,6 +178,7 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
     const searchSpy = vi.spyOn(parallelClient, "search").mockImplementation(async (opts) => {
       searchCount += 1;
       return {
+        providerStatus: "succeeded",
         search_id: `search-test-${searchCount}`,
         results: [
           {
@@ -196,12 +197,14 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
             excerpts: ["Specialty distributors seek unencumbered creator-driven animated IP."],
           },
         ],
+        warnings: [],
       };
     });
 
     const extractSpy = vi.spyOn(parallelClient, "extract").mockImplementation(async (opts) => {
       extractPageCount += opts.urls.length;
       return {
+        providerStatus: "succeeded",
         extract_id: `extract-test-${extractPageCount}`,
         results: opts.urls.map((u) => ({
           url: u,

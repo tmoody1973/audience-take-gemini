@@ -73,8 +73,9 @@ describe("Package G: Honest Media, Video Critic & Audio Status", () => {
         retrievedAt: "2026-08-30",
         availability: "available",
         verificationStatus: "verified",
-        sourceRole: "festival_selection",
+        sourceRole: "trade_reporting",
         sourceTier: "primary",
+        externalCommentary: false,
         supportsClaimIds: ["claim-doc-1"],
       },
     ],
@@ -150,6 +151,22 @@ describe("Package G: Honest Media, Video Critic & Audio Status", () => {
     missingSections: [],
     limitations: ["Documentary impact metrics subject to broadcast window."],
     externalSignals: [],
+    industryLens: {
+      pathwayIds: [],
+      comparables: [],
+      risks: [],
+      unresolvedQuestions: [],
+      signalLimitations: [],
+      creatorClaimStatus: "approved",
+      recommendedNextExperiment: {
+        title: "Next Experiment",
+        hypothesis: "H",
+        method: "M",
+        participantAction: "A",
+        signal: "S",
+        timebox: "2 weeks",
+      },
+    },
   };
 
   it("generates truthful audio brief transcript strictly grounded in card without Junichiro or animation fabrications", () => {

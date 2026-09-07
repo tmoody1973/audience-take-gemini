@@ -348,6 +348,22 @@ describe("Production Scenarios 14-Point Acceptance Matrix (Section 10)", () => {
       missingSections: [],
       limitations: [],
       externalSignals: [],
+      industryLens: {
+        pathwayIds: [],
+        comparables: [],
+        risks: [],
+        unresolvedQuestions: [],
+        signalLimitations: [],
+        creatorClaimStatus: "unclaimed",
+        recommendedNextExperiment: {
+          title: "Next Experiment",
+          hypothesis: "H",
+          method: "M",
+          participantAction: "A",
+          signal: "S",
+          timebox: "2 weeks",
+        },
+      },
     };
 
     const hasExplicitBudget = cardWithCrowdfund.evidenceClaims.some((c) =>
