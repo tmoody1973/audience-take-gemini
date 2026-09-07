@@ -20,7 +20,10 @@ export function PathwayVotingSection({ card, onVote }: PathwayVotingSectionProps
     }
   };
 
-  const creatorAmbition = card.creatorContext?.summary || null;
+  const isCreatorVerified = card.claimStatus === "approved";
+  const creatorAmbition = isCreatorVerified
+    ? (card.creatorStatement?.statementText || card.creatorContext?.summary || null)
+    : null;
 
   return (
     <section
@@ -37,14 +40,14 @@ export function PathwayVotingSection({ card, onVote }: PathwayVotingSectionProps
 
         {creatorAmbition ? (
           <div className="creator-ambition-banner">
-            <span className="creator-ambition-tag">CREATOR&apos;S STATED AMBITION</span>
+            <span className="creator-ambition-tag">CREATOR&apos;S VERIFIED STATEMENT</span>
             <p className="creator-ambition-text">{creatorAmbition}</p>
           </div>
         ) : (
           <div className="creator-ambition-banner is-undocumented">
-            <span className="creator-ambition-tag">CREATOR&apos;S STATED AMBITION</span>
+            <span className="creator-ambition-tag">CREATOR&apos;S DIRECT AMBITION</span>
             <p className="creator-ambition-text">
-              Not publicly documented. The pathways below represent community and scout hypotheses.
+              Not yet documented by creator. The options below represent independent community and scout hypotheses.
             </p>
           </div>
         )}

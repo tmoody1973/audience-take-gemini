@@ -115,4 +115,15 @@
   - `npx vitest run tests/unit/`: **42 test suites passed, 207/208 tests passed (1 skipped)**.
   - `npx tsc --noEmit`: **0 errors**.
 
-### C7 — Audience Experiences, Narration Truthfulness & Polish: NEXT UP
+### C7 — Audience Experiences, Narration Truthfulness & Polish: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. *Creator Ambition vs. AI Synthesis Grounding* (`src/features/scout-card/pathway-voting-section.tsx`): Previously, unverified AI background summaries from `card.creatorContext?.summary` were presented under the banner `"CREATOR'S STATED AMBITION"`. Fixed to require `card.claimStatus === "approved"`; when unclaimed or pending, truthfully displays: `"CREATOR'S DIRECT AMBITION: Not yet documented by creator. The options below represent independent community and scout hypotheses."`
+  2. *Audio Script Prompt Anti-Hype Constraints* (`src/services/scout-brief/script-builder.ts`): Enforced strict editorial rules barring unmeasured promotional exaggeration (such as *"undeniable demand"*, *"blockbuster certainty"*, or *"surefire hit"*). Added explicit directive prohibiting independent AI synthesis from being described as the creator's stated ambition.
+  3. *Trailer Critic Runtime Schema Validation* (`src/critic/trailer-critic-engine.ts`): Added `validateCriticPayload` to enforce bounded matrix scores ($0 \le score \le 10$), non-negative and strictly chronological timestamp beats, non-empty summaries, and required craft sections. Invalid or drifting model responses now safely trigger the truthful unavailable fallback rather than fabricating scenes or persisting malformed scores.
+  4. *Professional Brief & Physical Production Scenarios*: Preserved separation between reported commercial baseline facts and hypothetical production budget/scenario modeling (`ProductionScenariosSection`), with full source disclosure and copyable diligence memos.
+- **Verification Commands Executed**:
+  - `npx vitest run tests/unit/audience-experience-c7.test.tsx`: **8/8 tests passed**.
+  - `npx vitest run tests/unit/package-e.test.tsx tests/unit/fan-improvements/`: **9 files, 35/35 tests passed**.
+  - `npx tsc --noEmit`: **0 errors**.
+
+### C8 — Final Image & Deployment Verification: NEXT UP

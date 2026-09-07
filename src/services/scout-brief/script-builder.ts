@@ -195,6 +195,8 @@ EDITORIAL RULES:
 - Never invent facts, numbers, awards, or cast attachments.
 - Do NOT read opaque market ratings or scores.
 - Avoid repetitive filler like "That is right, Scout" or "Exactly, Scout".
+- Never use automatic promotional exaggeration or unmeasured claims like "undeniable demand", "blockbuster certainty", or "surefire hit". All statements of audience interest must match measured evidence.
+- Do not describe independent AI interpretation or external hypotheses as the "creator's stated ambition" unless verified by an approved creator statement.
 - Map each segment to valid sourceIds and claimIds from the DATA below.
 
 DATA:
@@ -218,6 +220,8 @@ EDITORIAL RULES:
 - Never invent facts, budget estimates, €/min unit costs, or distribution claims.
 - Put uncertainty directly next to the associated claim.
 - Avoid filler introductions like "That is right, Scout".
+- Never use automatic promotional exaggeration or unmeasured claims like "undeniable demand".
+- Do not make independent AI interpretation the "creator's stated ambition."
 - Map each segment to valid sourceIds and claimIds from the DATA below.
 
 DATA:

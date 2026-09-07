@@ -8,6 +8,26 @@ import { dataRepo } from "@/services/firestore-repo";
 import { fetchYouTubeMetadata } from "@/lib/media/youtube";
 import type { TrailerCritic } from "@/domain";
 
+export function validateCriticPayload(data: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, any>;
+  if (typeof d.summary !== "string" || !d.summary.trim()) return false;
+  if (!Array.isArray(d.timestampedBeats)) return false;
+  let lastSeconds = -1;
+  for (const beat of d.timestampedBeats) {
+    if (typeof beat.timestampSeconds !== "number" || beat.timestampSeconds < 0) return false;
+    if (beat.timestampSeconds < lastSeconds) return false; // must be chronological
+    lastSeconds = beat.timestampSeconds;
+    if (typeof beat.label !== "string" || typeof beat.description !== "string") return false;
+  }
+  if (!d.criticMatrix || typeof d.criticMatrix !== "object") return false;
+  for (const key of ["clarity", "toneConsistency", "visualOriginality", "narrativeTension"]) {
+    const val = d.criticMatrix[key];
+    if (typeof val !== "number" || val < 0 || val > 10) return false;
+  }
+  return true;
+}
+
 export async function analyzeAnyTrailerVideo(
   videoUrl: string,
   title: string = "Independent Screen Project",
@@ -84,7 +104,12 @@ Output strictly in JSON matching this schema:
       });
 
       if (res.text) {
-        criticData = JSON.parse(res.text);
+        const parsed = JSON.parse(res.text);
+        if (validateCriticPayload(parsed)) {
+          criticData = parsed;
+        } else {
+          console.warn("[TrailerCritic] Live payload failed runtime schema validation; using unavailable fallback");
+        }
       }
     } catch (err: unknown) {
       console.warn("Live Gemini video critic analysis fell back to deterministic fixture", err);
@@ -233,7 +258,12 @@ Output strictly in JSON matching this schema:
       });
 
       if (res.text) {
-        criticData = JSON.parse(res.text);
+        const parsed = JSON.parse(res.text);
+        if (validateCriticPayload(parsed)) {
+          criticData = parsed;
+        } else {
+          console.warn("[TrailerCritic] Live payload failed runtime schema validation; using unavailable fallback");
+        }
       }
     } catch (err: unknown) {
       console.warn("Live Gemini video critic analysis fell back to deterministic fixture", err);
