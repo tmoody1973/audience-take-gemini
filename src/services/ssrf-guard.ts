@@ -134,9 +134,7 @@ export async function fetchSafeWebContent(
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-  const signal = typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
-    ? AbortSignal.timeout(10000)
-    : controller.signal;
+  const signal = controller.signal;
 
   try {
     const response = await fetch(check.normalizedUrl, {

@@ -24,15 +24,15 @@ const STRICT_HYPE_PATTERNS = [
 ];
 
 const BUYER_ACQUISITION_PATTERNS = [
-  { regex: /\b(netflix)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "netflix" },
-  { regex: /\b(a24)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "a24" },
-  { regex: /\b(hbo)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "hbo" },
-  { regex: /\b(disney)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "disney" },
-  { regex: /\b(apple\s*tv|apple)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "apple" },
-  { regex: /\b(amazon\s*studios|amazon)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "amazon" },
-  { regex: /\b(paramount)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "paramount" },
-  { regex: /\b(warner)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "warner" },
-  { regex: /\b(buying|acquired|acquisition|talks|bidding|deal)\b.*?\b(?:with|to|from|by)?\s*(netflix|a24|hbo|disney|apple|amazon|paramount|warner)\b/i, buyer: "any" },
+  { regex: /\b(netflix)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "netflix" },
+  { regex: /\b(a24)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "a24" },
+  { regex: /\b(hbo)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "hbo" },
+  { regex: /\b(disney)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "disney" },
+  { regex: /\b(apple\s*tv|apple)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "apple" },
+  { regex: /\b(amazon\s*studios|amazon)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "amazon" },
+  { regex: /\b(paramount)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "paramount" },
+  { regex: /\b(warner)\b.{0,60}?\b(buying|acquired|acquisition|in\s+talks|bidding|bid|pre-buy)\b/i, buyer: "warner" },
+  { regex: /\b(buying|acquired|acquisition|in\s+talks\s+with|bidding\s+on|deal\s+with)\b.{0,60}?\s+(netflix|a24|hbo|disney|apple|amazon|paramount|warner)\b/i, buyer: "any" },
 ];
 
 export const NEGATION_PATTERNS = [

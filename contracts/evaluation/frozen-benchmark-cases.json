@@ -1,0 +1,278 @@
+{
+  "version": "1.0.0",
+  "asOfDate": "2026-09-01",
+  "totalCases": 16,
+  "description": "Frozen 16-case benchmark evaluation dataset spanning animation, documentary, short film, crowdfunding, ambiguous titles, sparse sources, and conflicting reports.",
+  "cases": [
+    {
+      "id": "case-junichiro",
+      "title": "Junichiro Jackson",
+      "category": "animation",
+      "medium": "proof_of_concept",
+      "expectedCreators": ["Chaz Bottoms", "CBC Studios", "TeamTO"],
+      "verifiedSetting": "Chicago",
+      "disprovedSetting": "Brooklyn",
+      "verifiedFacts": [
+        "Proof-of-concept animation directed by Chaz Bottoms (CBC Studios) in co-production with TeamTO.",
+        "Set in an anime-inspired futuristic Chicago scored to Chicago hip-hop.",
+        "Seeking series financing for a half-hour episodic format."
+      ],
+      "materialUnknowns": ["SVOD vs linear broadcast exclusivity", "Final episodic season budget clearance"],
+      "conflictsOrNegations": ["Setting is Chicago, disproving hallucinated near-future Brooklyn claims."],
+      "exactSources": [
+        "https://variety.com/2026/film/news/junichiro-jackson-chaz-bottoms-teamto",
+        "https://teamto.com/projects/junichiro-jackson"
+      ]
+    },
+    {
+      "id": "case-cycle",
+      "title": "CYCLE",
+      "category": "documentary",
+      "medium": "documentary",
+      "expectedCreators": ["Laura Dyan Kezman", "Lion Art Media", "Vianca Fuster", "Michelle Craig"],
+      "verifiedSubject": "Ty'Rese West fatal police shooting in Mount Pleasant, WI",
+      "disprovedLore": "Youth bicycle collective rebuilding discarded bikes",
+      "verifiedFacts": [
+        "Directed by Laura Dyan Kezman and produced by Lion Art Media.",
+        "Investigative documentary covering the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin.",
+        "Covered by Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin."
+      ],
+      "materialUnknowns": ["Midwest festival premiere dates", "Regional broadcast window terms"],
+      "conflictsOrNegations": ["Zero bicycle collective lore; strictly investigative civil rights documentary."],
+      "exactSources": [
+        "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
+        "https://racinecountyeye.com/cycle-documentary-investigation"
+      ]
+    },
+    {
+      "id": "case-vampair",
+      "title": "The Vampair Series",
+      "category": "animation",
+      "medium": "series",
+      "expectedCreators": ["Daria Cohen"],
+      "verifiedPilotFunding": "$286,000+",
+      "verifiedSeriesBudget": "$1.5M - $2.0M",
+      "verifiedFacts": [
+        "Independent gothic musical animation franchise created by Daria Cohen.",
+        "Crowdfunded $286,400 across Kickstarter and Indiegogo specifically for an 11-minute musical pilot.",
+        "Daria Cohen retains 100% intellectual property ownership."
+      ],
+      "materialUnknowns": ["Episodic studio co-production agreement terms", "Full episodic series financing structure"],
+      "conflictsOrNegations": ["$286k pilot campaign funding is distinct from $1.5M-$2.0M full episodic series budget."],
+      "exactSources": [
+        "https://www.kickstarter.com/projects/dariacohen/the-vampair-series-pilot",
+        "https://www.animationmagazine.net/2025/daria-cohen-vampair-breakout"
+      ]
+    },
+    {
+      "id": "case-pachuco",
+      "title": "American Pachuco",
+      "category": "documentary",
+      "medium": "documentary",
+      "expectedCreators": ["Luis Valdez", "El Teatro Campesino Film Collective"],
+      "verifiedFacts": [
+        "Documentary chronicling Luis Valdez, El Teatro Campesino, and the United Farm Workers movement.",
+        "Features restored 16mm archival footage from 1968 agricultural strikes."
+      ],
+      "materialUnknowns": ["PBS Independent Lens national carriage clearance"],
+      "conflictsOrNegations": [],
+      "exactSources": [
+        "https://deadline.com/2026/08/american-pachuco-documentary-luis-valdez",
+        "https://americanpachuco.film"
+      ]
+    },
+    {
+      "id": "case-signal-pines",
+      "title": "Signal in the Pines",
+      "category": "short_film",
+      "medium": "short",
+      "expectedCreators": ["Elena Vance", "Marcus Cruz"],
+      "verifiedFacts": [
+        "14-minute analog sci-fi short filmed entirely on 16mm celluloid in the Pacific Northwest.",
+        "Won Best Sound Design at Northwest Film Forum 2025."
+      ],
+      "materialUnknowns": ["WGA feature adaptation treatment status"],
+      "conflictsOrNegations": [],
+      "exactSources": [
+        "https://nwfilmforum.org/awards/2025-winners",
+        "https://elenavance.film/signal"
+      ]
+    },
+    {
+      "id": "case-river-copper",
+      "title": "River of Copper",
+      "category": "documentary",
+      "medium": "documentary",
+      "expectedCreators": ["Hannah Morgan", "Caleb Hayes"],
+      "verifiedFacts": [
+        "Investigative documentary documenting illegal copper runoff in eastern Kentucky watersheds.",
+        "Funded via Kickstarter with $49,200 raised from 612 backers."
+      ],
+      "materialUnknowns": ["PBS POV pitch review status"],
+      "conflictsOrNegations": [],
+      "exactSources": [
+        "https://kickstarter.com/projects/appalachia-media/river-of-copper"
+      ]
+    },
+    {
+      "id": "case-ambiguous-icarus",
+      "title": "Icarus Rising",
+      "category": "ambiguous_title",
+      "medium": "short",
+      "expectedCreators": ["Maya Lin", "Independent Animation Collective"],
+      "verifiedFacts": [
+        "Student animated short by Maya Lin exploring digital isolation.",
+        "Completely unrelated to the 2017 Bryan Fogel Oscar-winning documentary Icarus."
+      ],
+      "materialUnknowns": ["VOD release rights"],
+      "conflictsOrNegations": ["Must not conflate with Netflix/Bryan Fogel Olympic doping documentary."],
+      "exactSources": [
+        "https://mayalin.art/icarus-rising-short"
+      ]
+    },
+    {
+      "id": "case-ambiguous-bear",
+      "title": "The Bear",
+      "category": "ambiguous_title",
+      "medium": "short",
+      "expectedCreators": ["Liam Kelly"],
+      "verifiedFacts": [
+        "Independent stop-motion short film by Liam Kelly following a polar bear in a melting habitat.",
+        "Not affiliated with the FX/Hulu culinary drama television series The Bear."
+      ],
+      "materialUnknowns": ["Festival circuit premiere"],
+      "conflictsOrNegations": ["Must not link to FX on Hulu or Jeremy Allen White."],
+      "exactSources": [
+        "https://liamkellystopmotion.com/the-bear"
+      ]
+    },
+    {
+      "id": "case-sparse-signals",
+      "title": "Echoes in the Chalk",
+      "category": "sparse_sources",
+      "medium": "short",
+      "expectedCreators": ["Clara Hughes"],
+      "verifiedFacts": [
+        "Experimental 8-minute short selected for Cornwall Film Festival 2025.",
+        "Only 1 verifiable primary web citation exists."
+      ],
+      "materialUnknowns": ["Budget, team roster, future distribution"],
+      "conflictsOrNegations": ["Must abstain from demographic, budget, or theatrical audience claims due to source sparsity."],
+      "exactSources": [
+        "https://cornwallfilmfestival.org/program-2025"
+      ]
+    },
+    {
+      "id": "case-conflicting-rights",
+      "title": "Cyber-Ronin",
+      "category": "conflicting_reports",
+      "medium": "proof_of_concept",
+      "expectedCreators": ["Kenji Sato"],
+      "verifiedFacts": [
+        "Independent CGI proof of concept created by Kenji Sato.",
+        "Creator publicly clarified on Twitter/X that rumored acquisition by Sony Pictures is false."
+      ],
+      "materialUnknowns": ["Independent financing options"],
+      "conflictsOrNegations": ["Studio acquisition rumor was explicitly denied by creator; rights remain 100% independent."],
+      "exactSources": [
+        "https://x.com/kenjisato/status/18290192837482"
+      ]
+    },
+    {
+      "id": "case-crowdfund-milestone",
+      "title": "Lackadaisy",
+      "category": "crowdfunding",
+      "medium": "series",
+      "expectedCreators": ["Tracy Butler", "FableSiege Studios", "Iron Circus Animation"],
+      "verifiedFacts": [
+        "Animated web series based on Tracy Butler's webcomic.",
+        "Crowdfunded over $2,000,000 on BackerKit for Season 1 production."
+      ],
+      "materialUnknowns": ["Episode 3 release date", "Commercial streaming windows"],
+      "conflictsOrNegations": [],
+      "exactSources": [
+        "https://www.backerkit.com/c/projects/iron-circus-comics/lackadaisy"
+      ]
+    },
+    {
+      "id": "case-cancelled-revival",
+      "title": "Scavengers Reign",
+      "category": "series",
+      "medium": "series",
+      "expectedCreators": ["Joe Bennett", "Charles Huettner", "Green Street Pictures"],
+      "verifiedFacts": [
+        "Adult animated sci-fi series originally premiered on Max.",
+        "Cancelled by Max after season 1; licensed non-exclusively to Netflix in 2024."
+      ],
+      "materialUnknowns": ["Season 2 greenlight decision by Netflix"],
+      "conflictsOrNegations": ["Netflix holds streaming license but has not officially greenlit Season 2."],
+      "exactSources": [
+        "https://variety.com/2024/tv/news/scavengers-reign-netflix-max-season-2-1235999824"
+      ]
+    },
+    {
+      "id": "case-student-thesis",
+      "title": "Sonder",
+      "category": "short_film",
+      "medium": "short",
+      "expectedCreators": ["Neth Nom", "Sonder Studios"],
+      "verifiedFacts": [
+        "13-minute 3D computer-animated short made using Unity game engine for real-time rendering.",
+        "Premiered at festivals; no commercial feature deal signed."
+      ],
+      "materialUnknowns": ["Commercial studio adaptation plans"],
+      "conflictsOrNegations": [],
+      "exactSources": [
+        "https://unity.com/madewith/sonder"
+      ]
+    },
+    {
+      "id": "case-local-screening",
+      "title": "Racine River Blues",
+      "category": "documentary",
+      "medium": "short",
+      "expectedCreators": ["Marcus Taylor"],
+      "verifiedFacts": [
+        "Regional short documentary on southeastern Wisconsin blues musicians.",
+        "Screened at Racine Heritage Museum and local library circuit."
+      ],
+      "materialUnknowns": ["Digital streaming release"],
+      "conflictsOrNegations": ["Hyper-local community impact screening model with zero commercial theatrical release."],
+      "exactSources": [
+        "https://racineheritagemuseum.org/exhibits/racine-river-blues"
+      ]
+    },
+    {
+      "id": "case-nominator-exaggeration",
+      "title": "The Last Horizon",
+      "category": "unverified_nominator_claim",
+      "medium": "proof_of_concept",
+      "expectedCreators": ["Tarek Mansour"],
+      "verifiedFacts": [
+        "Independent VFX test by Tarek Mansour.",
+        "Fan nominator claimed James Cameron was executive producing; public records verify no Cameron attachment."
+      ],
+      "materialUnknowns": ["Actual producer attachments"],
+      "conflictsOrNegations": ["Nominator claim of James Cameron attachment is completely unverified and contradicted by crew listings."],
+      "exactSources": [
+        "https://tarekmansour.vfx/the-last-horizon"
+      ]
+    },
+    {
+      "id": "case-unreleased-master",
+      "title": "Neon Drift",
+      "category": "proof_of_concept",
+      "medium": "proof_of_concept",
+      "expectedCreators": ["Maya Chen"],
+      "verifiedFacts": [
+        "Stylized synthwave racing proof of concept.",
+        "Seeking series packaging representation; no streaming platform distribution."
+      ],
+      "materialUnknowns": ["Attached packaging agency", "Pilot budget requirements"],
+      "conflictsOrNegations": [],
+      "exactSources": [
+        "https://mayachen.art/neon-drift-pitch"
+      ]
+    }
+  ]
+}

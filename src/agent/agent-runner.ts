@@ -411,10 +411,19 @@ STRICT INVARIANTS & INJECTION DEFENSE:
    - materialUncertainty: The single most material unknown or risk factor that cannot be verified from public records (e.g. underlying IP chain of title, unencumbered rights, financing sufficiency) (max 400 chars).
    - nextDiligenceStep: The prerequisite-aware single next diligence action for a film professional (e.g. 'Request chain of title and pitch deck from creator' or 'Check festival screener status') (max 400 chars).
 10. CLEAN TEXT ONLY: Never output raw markdown links [text](url), headers #, image tags ![], or website navigation boilerplate in whatWeKnow or evidenceLedger. Synthesize clean, professional, factual 1-2 sentence statements.
+11. FACTUAL GROUNDING IN WHAT WE KNOW: Every statement in whatWeKnow MUST directly describe verifiable facts established in <project_identity>, <primary_source_metadata>, or research excerpts (verified creators, medium/format, verified setting/premise, or production stage). Avoid purely subjective aesthetic commentary.
 `;
 
         const userPrompt = `
 Synthesize a decision-focused Scout Proposal JSON for this project using Gemini.
+
+<project_identity>
+Title: ${project.identity?.title || ytMeta?.title || "Unknown"}
+Creators: ${(project.identity?.creators || []).join(", ") || ytMeta?.authorName || "Unknown"}
+Medium: ${project.identity?.medium || "proof_of_concept"}
+Stage: ${project.identity?.currentStage || "concept"}
+Logline: ${project.identity?.logline || "None provided"}
+</project_identity>
 
 <primary_source_metadata uri="${run.sourceUrl}">
 ${ytMeta ? `Video Title: ${ytMeta.title}\nCreator / Channel: ${ytMeta.authorName} (${ytMeta.authorUrl})\nThumbnail: ${ytMeta.thumbnailUrl}` : `URL: ${run.sourceUrl}`}
@@ -550,11 +559,18 @@ Output MUST strictly adhere to the following JSON structure:
 
     const hasVerifiedPrimary = Boolean(ytMeta || (fetchedText && fetchedText.length > 50 && !fetchedText.startsWith("Nominated Project:")));
     const ytDesc = ytMeta?.description ? cleanTextExcerpt(ytMeta.description.slice(0, 2000), ytMeta.title, 2000, 10) : "";
+    const projectIdentityContext = [
+      project.identity?.title ? `Title: ${project.identity.title}` : null,
+      project.identity?.creators?.length ? `Creators: ${project.identity.creators.join(", ")}` : null,
+      project.identity?.medium ? `Medium: ${project.identity.medium}` : null,
+      project.identity?.logline ? `Premise: ${project.identity.logline}` : null,
+    ].filter(Boolean).join(". ");
+
     const primaryExcerpt = ytMeta
-      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}`
+      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}${projectIdentityContext ? ` Verified context: ${projectIdentityContext}` : ""}`
       : fetchedText && !fetchedText.startsWith("Nominated Project:")
-        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}`
-        : `Nominated project URL: ${run.sourceUrl}.`;
+        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}${projectIdentityContext ? ` Verified context: ${projectIdentityContext}` : ""}`
+        : `Nominated project URL: ${run.sourceUrl}.${projectIdentityContext ? ` Verified context: ${projectIdentityContext}` : ""}`;
 
     const primaryEvidence = {
       id: "ev-source-primary",
