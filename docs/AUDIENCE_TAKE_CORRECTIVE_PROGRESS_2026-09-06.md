@@ -12,8 +12,8 @@
 |---|---|---|---|---|
 | **C0** | Baseline & Contract Repair | Hermetic test environment, zero TS errors, progress log | COMPLETED | Local Mock / Pure Unit |
 | **C1** | Truthful Surfaces | Eliminate fake city fallback, auto-outreach claims, false confidentiality | COMPLETED | Local & Staged |
-| **C2** | Evidence & Publication Integrity | Provenance separation (nominator vs source), negation handling, full-surface gates | IN PROGRESS | Local & Adversarial |
-| **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | PENDING | Local & Firestore Emulator |
+| **C2** | Evidence & Publication Integrity | Provenance separation (nominator vs source), negation handling, full-surface gates | COMPLETED | Local & Adversarial |
+| **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | IN PROGRESS | Local & Firestore Emulator |
 | **C4** | Parallel Research Quality | Identity-first resolution, eliminate placeholder queries, bounded receipts | PENDING | Local & Parallel Provider |
 | **C5** | Parallel Monitor Repair | Lifecycle event alignment, HMAC signature, deduplication, versioned updates | PENDING | Local & Provider Webhook |
 | **C6** | Existing Record Repair | Correction manifest for Junichiro, Vampair, CYCLE; reversible versioning | PENDING | Local & Production Dry-Run |
@@ -58,4 +58,16 @@
   - `npx vitest run tests/unit/truthful-surfaces.test.tsx`: **11/11 tests passed**.
   - `npx vitest run tests/unit/fan-improvements/`: **8 files passed, 27/27 tests passed**.
   - `npx vitest run tests/unit/reliability-r*.test.ts`: **8 files passed, 43/43 tests passed**.
+  - `npx tsc --noEmit`: **0 errors**.
+
+### C2 — Evidence & Publication Integrity: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. `src/agent/agent-runner.ts`: Nominator context (`project.nomination.reason`) was previously concatenated directly into `primaryEvidence.excerpt`, allowing unverified nominator claims to inherit primary source verification. Removed nominator text concatenation and separated it into a distinct unverified lead item (`isNominatorLead: true`, `verified: false`).
+  2. `src/agent/deterministic-validator.ts`: Substring and token overlap matching in `checkCitationCoverage` lacked negation detection, causing passages stating "Netflix has not acquired" to falsely verify "Netflix has acquired". Implemented `hasNegationContradiction(claim, passage)` to detect when passages deny or contradict affirmative claims.
+  3. `src/agent/deterministic-validator.ts`: Added `isBuyerOrHypeClaim(claim)`. While general production facts can be grounded by unverified reported items (and projected to `qualified`), buyer acquisitions and multi-million dollar commercial claims strictly require verified trade/press coverage without negation.
+  4. `src/agent/deterministic-validator.ts`: In `checkHypeAndHallucinations`, expanded buyer acquisition patterns to match bidirectional phrasing and enforced that buyer mentions must be supported by verified trade coverage free of negation contradictions.
+- **Verification Commands Executed**:
+  - `npx vitest run tests/unit/evidence-integrity-c2.test.ts`: **7/7 tests passed**.
+  - `npx vitest run tests/unit/reliability-r*.test.ts`: **8 files passed, 43/43 tests passed**.
+  - `npx tsc --noEmit`: **0 errors**.
   - `npx tsc --noEmit`: **0 errors**.

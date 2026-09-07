@@ -498,12 +498,11 @@ Output MUST strictly adhere to the following JSON structure:
 
     const hasVerifiedPrimary = Boolean(ytMeta || (fetchedText && fetchedText.length > 50 && !fetchedText.startsWith("Nominated Project:")));
     const ytDesc = ytMeta?.description ? cleanTextExcerpt(ytMeta.description.slice(0, 2000), ytMeta.title, 2000, 10) : "";
-    const nominatorReason = project.nomination?.reason ? ` Nominator context: "${project.nomination.reason}".` : "";
     const primaryExcerpt = ytMeta
-      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}${nominatorReason}`
+      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}`
       : fetchedText && !fetchedText.startsWith("Nominated Project:")
-        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}${nominatorReason}`
-        : `Nominated project URL: ${run.sourceUrl}.${nominatorReason}`;
+        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}`
+        : `Nominated project URL: ${run.sourceUrl}.`;
 
     const primaryEvidence = {
       id: "ev-source-primary",
@@ -516,6 +515,21 @@ Output MUST strictly adhere to the following JSON structure:
       publishedAt: null,
       retrievedAt: new Date().toISOString(),
     };
+
+    const nominatorLeadItem = project.nomination?.reason
+      ? {
+          id: "ev-nominator-lead",
+          sourceUrl: run.sourceUrl,
+          title: "Nominator Submission Lead",
+          publisher: "Nominator",
+          claimType: "reported" as const,
+          excerpt: `Nominator context: "${project.nomination.reason}"`,
+          verified: false,
+          isNominatorLead: true,
+          publishedAt: null,
+          retrievedAt: new Date().toISOString(),
+        }
+      : null;
 
     const titleTokens = (proposalData.projectTitle || "")
       .toLowerCase()
@@ -594,7 +608,12 @@ Output MUST strictly adhere to the following JSON structure:
         };
       });
 
-    proposalData.evidenceLedger = [primaryEvidence, ...extractedEvidence, ...parallelEvidence];
+    proposalData.evidenceLedger = [
+      primaryEvidence,
+      ...(nominatorLeadItem ? [nominatorLeadItem] : []),
+      ...extractedEvidence,
+      ...parallelEvidence,
+    ];
 
     await logStep("extracting_evidence", `Synthesized evidence ledger with ${proposalData.evidenceLedger.length} verified primary citations (including Parallel Search results).`, 75, "done");
 

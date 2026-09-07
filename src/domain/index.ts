@@ -58,6 +58,7 @@ export interface EvidenceItem {
   publishedAt?: string | null;
   retrievedAt?: string;
   supportingClaimIds?: string[];
+  isNominatorLead?: boolean;
 }
 
 export interface BoundedExperiment {

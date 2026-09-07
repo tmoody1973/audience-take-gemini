@@ -24,15 +24,57 @@ const STRICT_HYPE_PATTERNS = [
 ];
 
 const BUYER_ACQUISITION_PATTERNS = [
-  { regex: /\b(netflix)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "netflix" },
-  { regex: /\b(a24)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "a24" },
-  { regex: /\b(hbo)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "hbo" },
-  { regex: /\b(disney)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "disney" },
-  { regex: /\b(apple\s*tv)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "apple" },
-  { regex: /\b(amazon\s*studios)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "amazon" },
-  { regex: /\b(paramount)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "paramount" },
-  { regex: /\b(warner)\s*(is\s*buying|has\s*acquired|is\s*in\s*talks|is\s*bidding)\b/i, buyer: "warner" },
+  { regex: /\b(netflix)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "netflix" },
+  { regex: /\b(a24)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "a24" },
+  { regex: /\b(hbo)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "hbo" },
+  { regex: /\b(disney)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "disney" },
+  { regex: /\b(apple\s*tv|apple)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "apple" },
+  { regex: /\b(amazon\s*studios|amazon)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "amazon" },
+  { regex: /\b(paramount)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "paramount" },
+  { regex: /\b(warner)\b.*?\b(buying|acquired|acquisition|talks|bidding|bid|deal|pre-buy)\b/i, buyer: "warner" },
+  { regex: /\b(buying|acquired|acquisition|talks|bidding|deal)\b.*?\b(?:with|to|from|by)?\s*(netflix|a24|hbo|disney|apple|amazon|paramount|warner)\b/i, buyer: "any" },
 ];
+
+export const NEGATION_PATTERNS = [
+  /\b(not|never|neither|nor|no|denies|denied|unconfirmed|false|refuted|untrue|disputed)\b/i,
+  /\bhasn't\b/i,
+  /\bdidn't\b/i,
+  /\bwasn't\b/i,
+  /\bisn't\b/i,
+  /\bwon't\b/i,
+];
+
+export function hasNegationContradiction(claim: string, passage: string): boolean {
+  const normPassage = passage.toLowerCase();
+  const normClaim = claim.toLowerCase();
+
+  const claimHasNegation = NEGATION_PATTERNS.some((p) => p.test(normClaim));
+  const passageHasNegation = NEGATION_PATTERNS.some((p) => p.test(normPassage));
+
+  if (!claimHasNegation && passageHasNegation) {
+    const claimKeywords = normClaim
+      .replace(/[^\w\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !COMMON_STOPWORDS.has(w));
+
+    for (const pattern of NEGATION_PATTERNS) {
+      const match = normPassage.match(pattern);
+      if (match && match.index !== undefined) {
+        const start = Math.max(0, match.index - 80);
+        const end = Math.min(normPassage.length, match.index + 80);
+        const windowText = normPassage.slice(start, end);
+        const matchedInWindow = claimKeywords.filter((kw) => {
+          const stem = kw.length > 5 ? kw.replace(/(ing|ed|es|s)$/, "") : kw;
+          return windowText.includes(kw) || (stem.length >= 4 && windowText.includes(stem));
+        });
+        if (matchedInWindow.length >= 2) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 
 const COMMON_STOPWORDS = new Set([
   "this", "that", "with", "from", "have", "been", "were", "what", "which",
@@ -168,19 +210,29 @@ export function checkHypeAndHallucinations(
   for (const item of BUYER_ACQUISITION_PATTERNS) {
     const match = text.match(item.regex);
     if (match) {
-      // Check if evidenceLedger has cited trade coverage supporting this buyer report
+      // Check if evidenceLedger has verified trade coverage supporting this buyer report without negation
       const isSourcedInEvidence = Boolean(
         evidenceLedger?.some((ev) => {
+          if (!ev.verified || (ev as any).isNominatorLead || ev.id === "ev-nominator" || ev.claimType === "unresolved") {
+            return false;
+          }
           const passage = `${ev.title} ${ev.excerpt} ${ev.publisher}`.toLowerCase();
-          return (
-            passage.includes(item.buyer) &&
-            (passage.includes("acquire") ||
-              passage.includes("buying") ||
-              passage.includes("bought") ||
-              passage.includes("talks") ||
-              passage.includes("deal") ||
-              passage.includes("bid"))
+          const mentionsBuyer = item.buyer === "any"
+            ? /(netflix|a24|hbo|disney|apple|amazon|paramount|warner)/i.test(passage)
+            : passage.includes(item.buyer);
+          const mentionsAcquisition = (
+            passage.includes("acquire") ||
+            passage.includes("buying") ||
+            passage.includes("bought") ||
+            passage.includes("talks") ||
+            passage.includes("deal") ||
+            passage.includes("bid")
           );
+          if (!mentionsBuyer || !mentionsAcquisition) return false;
+          const targetBuyer = item.buyer === "any"
+            ? (passage.match(/(netflix|a24|hbo|disney|apple|amazon|paramount|warner)/i)?.[0] || "buyer")
+            : item.buyer;
+          return !hasNegationContradiction(`${targetBuyer} has acquired the project`, passage);
         })
       );
       if (!isSourcedInEvidence) {
@@ -192,11 +244,24 @@ export function checkHypeAndHallucinations(
   return { clean: matches.length === 0, matches };
 }
 
+export function isBuyerOrHypeClaim(claim: string): boolean {
+  return (
+    BUYER_ACQUISITION_PATTERNS.some((p) => p.regex.test(claim)) ||
+    STRICT_HYPE_PATTERNS.some((p) => p.test(claim)) ||
+    /\b\$\d+[\d,]*\s*(million|m\b|billion|b\b)/i.test(claim)
+  );
+}
+
 export function checkCitationCoverage(
   evidenceLedger: EvidenceItem[],
   whatWeKnow: string[]
 ): { sufficientCoverage: boolean; ungroundedClaims: string[]; groundedClaims: string[] } {
-  if (evidenceLedger.length === 0) {
+  // Exclude nominator leads and unresolved placeholders from ever grounding claims
+  const nonNominatorEvidence = (evidenceLedger || []).filter(
+    (ev) => !(ev as any).isNominatorLead && ev.id !== "ev-nominator" && ev.claimType !== "unresolved"
+  );
+
+  if (nonNominatorEvidence.length === 0) {
     return { sufficientCoverage: false, ungroundedClaims: whatWeKnow, groundedClaims: [] };
   }
 
@@ -209,11 +274,21 @@ export function checkCitationCoverage(
       .split(/\s+/)
       .filter((w) => w.length > 3 && !COMMON_STOPWORDS.has(w));
 
-    // Check if at least ONE individual source passage supports this claim
+    // Buyer acquisitions and commercial hype require strictly verified evidence
+    const requiresVerified = isBuyerOrHypeClaim(claim);
+    const candidateEvidence = requiresVerified
+      ? nonNominatorEvidence.filter((ev) => ev.verified === true)
+      : nonNominatorEvidence;
+
     let hasPassageSupport = false;
 
-    for (const ev of evidenceLedger) {
+    for (const ev of candidateEvidence) {
       const passage = `${ev.title} ${ev.excerpt} ${ev.publisher}`.toLowerCase().replace(/[^\w\s-]/g, " ");
+
+      // Check negation first! A negating source cannot support an affirmative claim
+      if (hasNegationContradiction(claim, passage)) {
+        continue;
+      }
 
       // 1. Exact phrase / substring match
       if (cleanClaim.length >= 20 && passage.includes(cleanClaim.slice(0, 30))) {
@@ -651,3 +726,5 @@ export function verifyPublicationGate(candidate: unknown): {
     sanitizedCard: card,
   };
 }
+
+export const validateProposal = validateScoutProposal;
