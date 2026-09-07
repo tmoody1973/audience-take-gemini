@@ -145,7 +145,7 @@ export function validateScoutBriefTranscript(
     // Verify citation integrity strictly against the card's sourceLedger
     if (Array.isArray(seg.sourceIds)) {
       for (const sid of seg.sourceIds) {
-        if (validSourceIds.size > 0 && !validSourceIds.has(sid)) {
+        if (!validSourceIds.has(sid)) {
           errors.push(`Referenced unknown sourceId '${sid}' not present in card sourceLedger`);
         }
       }
@@ -154,7 +154,7 @@ export function validateScoutBriefTranscript(
     // Verify claim integrity strictly against the card's evidenceClaims
     if (Array.isArray(seg.claimIds)) {
       for (const cid of seg.claimIds) {
-        if (validClaimIds.size > 0 && !validClaimIds.has(cid)) {
+        if (!validClaimIds.has(cid)) {
           errors.push(`Referenced unknown claimId '${cid}' not present in card evidenceClaims`);
         }
       }
@@ -169,6 +169,33 @@ export function validateScoutBriefTranscript(
       );
       if (!hasSupportedAcquisition) {
         errors.push(`Transcript contains ungrounded acquisition or bidding war claim: "${seg.text.slice(0, 60)}..."`);
+      }
+    }
+
+    // Check that spoken segment text does not make ungrounded award or festival claims unsupported by card evidence
+    const segHasAward = /\b(won|winner|best\s+director|grand\s+jury|sundance|cannes|oscars?)\b/i.test(seg.text);
+    if (segHasAward) {
+      const cardSupportsAward = (card.evidenceClaims || []).some(
+        (c: any) =>
+          c.status === "supported" &&
+          /\b(won|winner|award|sundance|cannes|oscars?|festival)\b/i.test(c.statement || "")
+      );
+      if (!cardSupportsAward) {
+        errors.push(`Transcript segment ${seg.order} asserts ungrounded award or festival claim: "${seg.text.slice(0, 60)}..."`);
+      }
+    }
+
+    // Check that spoken segment text does not make ungrounded talent or cast attachment claims
+    const segHasTalent = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b)/i.test(seg.text);
+    if (segHasTalent) {
+      const talentMatch = seg.text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b)/i)?.[1];
+      const cardSupportsTalent = (card.evidenceClaims || []).some(
+        (c: any) =>
+          c.status === "supported" &&
+          (c.statement || "").toLowerCase().includes(talentMatch?.toLowerCase() || "")
+      );
+      if (!cardSupportsTalent) {
+        errors.push(`Transcript segment ${seg.order} asserts ungrounded cast attachment: "${talentMatch}"`);
       }
     }
   });

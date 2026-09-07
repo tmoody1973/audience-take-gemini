@@ -12,6 +12,8 @@ export function validateCriticPayload(data: unknown): boolean {
   if (!data || typeof data !== "object") return false;
   const d = data as Record<string, any>;
   if (typeof d.summary !== "string" || !d.summary.trim()) return false;
+  // Limitations is strictly required to enforce truthful methodology disclosure
+  if (typeof d.limitations !== "string" || !d.limitations.trim() || d.limitations.trim().length < 10) return false;
   if (!Array.isArray(d.timestampedBeats)) return false;
   let lastSeconds = -1;
   for (const beat of d.timestampedBeats) {
@@ -156,6 +158,7 @@ Output strictly in JSON matching this schema:
     persuasionAndEmotion: criticData.persuasionAndEmotion,
     criticMatrix: criticData.criticMatrix,
     limitations: criticData.limitations,
+    modality: "text_context_only",
     analyzedAt: new Date().toISOString(),
     model: criticModel,
   };
@@ -309,6 +312,7 @@ Output strictly in JSON matching this schema:
     persuasionAndEmotion: criticData.persuasionAndEmotion,
     criticMatrix: criticData.criticMatrix,
     limitations: criticData.limitations,
+    modality: "text_context_only",
     analyzedAt: new Date().toISOString(),
     model: criticModel,
   };

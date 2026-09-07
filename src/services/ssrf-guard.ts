@@ -132,9 +132,9 @@ export async function fetchSafeWebContent(
     throw new Error(check.error || "URL failed security validation");
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-  const signal = controller.signal;
+  const signal = typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+    ? AbortSignal.timeout(10000)
+    : undefined;
 
   try {
     const response = await fetch(check.normalizedUrl, {
@@ -145,8 +145,6 @@ export async function fetchSafeWebContent(
       },
       redirect: "follow",
     });
-
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`);
@@ -196,7 +194,6 @@ export async function fetchSafeWebContent(
     const text = new TextDecoder("utf-8").decode(combined);
     return { text, contentType, finalUrl: response.url };
   } catch (err: unknown) {
-    clearTimeout(timeoutId);
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`Safe fetch failed: ${message}`);
   }

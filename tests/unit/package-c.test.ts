@@ -8,10 +8,12 @@ import { NextRequest } from "next/server";
 import type { ResearchRunState, Project } from "@/domain";
 
 describe("Package C: Nomination, Execution Lease & Persistence", () => {
-  const testRunId = "run-test-c-1";
-  const testProjectId = "proj-test-c-1";
+  let testRunId: string;
+  let testProjectId: string;
 
   beforeEach(async () => {
+    testRunId = `run-test-c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    testProjectId = `proj-test-c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const project: Project = {
       id: testProjectId,
       identity: {

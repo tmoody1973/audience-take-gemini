@@ -661,31 +661,58 @@ export function validateScoutProposal(
   for (const surface of publicSurfaces) {
     if (!surface.text) continue;
 
-    // A. Check for major awards and festival win/selection assertions about the project
-    // In marketContext, general festival ecosystem references are allowed; affirmative project selections/wins require evidence.
-    const affirmativePattern = /\b(selected (at|for|by)|official selection|won|winner|premiered at|screened at|nominated for|nominee|laurel|award-winning)\s+[^.!?]*\b(sundance|cannes|oscars?|academy awards?|bafta|emmys?|golden globes?|sxsw|venice|berlin|tribeca)\b/gi;
-    const bareAwardPattern = /\b(sundance|cannes|oscars?|academy awards?|bafta|emmys?|golden globes?|sxsw|venice|berlin|tribeca)\b/gi;
+    // A. Affirmative award or festival selection/honor assertion check
+    // Distinguish affirmative project accolades from benign geographic/ecosystem mentions
+    const affirmativeAwardRegex = /\b(won|winner|winning|best\s+director|best\s+actor|best\s+actress|best\s+film|best\s+short|grand\s+jury\s+prize|jury\s+award|audience\s+award|palme\s+d'or|golden\s+lion|silver\s+bear|laurel|selected\s+(?:for|by|at)|official\s+selection|premiered\s+at|screened\s+at|nominated\s+for|nominee)\b/i;
+    const festivalBodyRegex = /\b(sundance|cannes|oscars?|academy\s+awards?|bafta|emmys?|golden\s+globes?|sxsw|venice|berlin|tribeca|annecy|clermont-ferrand|toronto|tiff|telluride)\b/i;
 
-    const isMarketContext = surface.field === "industryLens.marketContext";
-    const awardMatches = isMarketContext
-      ? surface.text.match(affirmativePattern)
-      : surface.text.match(bareAwardPattern);
-    if (awardMatches) {
-      for (const award of awardMatches) {
-        const isSourced = proposal.evidenceLedger?.some((ev: any) => {
+    if (affirmativeAwardRegex.test(surface.text) && festivalBodyRegex.test(surface.text)) {
+      const festivalMatch = surface.text.match(festivalBodyRegex)?.[0] || "festival";
+      const isSourced = proposal.evidenceLedger?.some((ev: any) => {
+        if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
+        const evText = `${ev.title || ""} ${ev.excerpt || ""} ${ev.publisher || ""}`.toLowerCase();
+        const mentionsFestival = evText.includes(festivalMatch.toLowerCase());
+        const mentionsHonor = /\b(won|winner|award|prize|laurel|selection|selected|premiered|screened|nominee|nominated|competition)\b/i.test(evText);
+        const hasNegativeContext = /\b(deadline|no selections|not selected|unannounced|pending announcement|submissions?)\b/i.test(evText);
+        return mentionsFestival && mentionsHonor && !hasNegativeContext && !hasNegationContradiction(`selected or won award at ${festivalMatch}`, evText);
+      });
+
+      if (!isSourced) {
+        errors.push(
+          `Ungrounded award or festival claim in ${surface.field}: "${festivalMatch}" accolade is not attested by verified evidence in evidenceLedger.`
+        );
+      }
+    }
+
+    // B. Affirmative talent/cast attachment check
+    const talentAttachmentRegexes = [
+      /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(?:stars\b|is\s+starring\b|joined\s+the\s+cast\b|is\s+attached\s+to\s+star\b)/g,
+      /\b(?:stars?|starring|featuring|joined\s+by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g,
+    ];
+    for (const regex of talentAttachmentRegexes) {
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(surface.text)) !== null) {
+        const talentName = match[1];
+        if (
+          proposal.projectTitle?.toLowerCase().includes(talentName.toLowerCase()) ||
+          proposal.creators?.some((c: string) => c.toLowerCase().includes(talentName.toLowerCase()))
+        ) {
+          continue;
+        }
+        const isTalentAttested = proposal.evidenceLedger?.some((ev: any) => {
           if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
           const evText = `${ev.title || ""} ${ev.excerpt || ""} ${ev.publisher || ""}`.toLowerCase();
-          return evText.includes(award.toLowerCase());
+          return evText.includes(talentName.toLowerCase());
         });
-        if (!isSourced) {
+        if (!isTalentAttested) {
           errors.push(
-            `Ungrounded award or festival claim in ${surface.field}: "${award}" is not attested by verified evidence in evidenceLedger.`
+            `Ungrounded talent or cast attachment in ${surface.field}: "${talentName}" is not attested by verified evidence in evidenceLedger.`
           );
         }
       }
     }
 
-    // B. Check for ungrounded buyer acquisition or commercial market hype
+    // C. Check for ungrounded buyer acquisition or commercial market hype
     const hypeCheck = checkHypeAndHallucinations(surface.text, proposal.evidenceLedger);
     if (!hypeCheck.clean) {
       for (const m of hypeCheck.matches) {

@@ -3,6 +3,7 @@ import { validateScoutProposal, checkHypeAndHallucinations, checkMediumConcordan
 import { dataRepo } from "@/services/firestore-repo";
 import { executeScoutResearchRun } from "@/agent/agent-runner";
 import { parallelClient } from "@/services/parallel-client";
+import * as genaiClient from "@/lib/google/genai-client";
 import type { Project, ResearchRunState, MediumType, PathwayHypothesis } from "@/domain";
 
 describe("Package D: Decision-Focused Research & Bounded Execution", () => {
@@ -209,11 +210,62 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
         results: opts.urls.map((u) => ({
           url: u,
           title: "Extracted Article Title",
-          markdown: "# Extracted Article\nDetailed reporting on the independent proof of concept.",
+          markdown: "# Extracted Article\nDirector Chaz Bottoms unveils Junichiro Jackson anime proof of concept in Chicago. Production completed independently with TeamTO co-producing the pilot teaser.",
           publish_date: "2025-05-10",
         })),
       };
     });
+
+    const genaiSpy = vi.spyOn(genaiClient, "getGoogleGenAIClient").mockReturnValue({
+      models: {
+        generateContent: vi.fn().mockResolvedValue({
+          text: JSON.stringify({
+            projectTitle: "Junichiro Jackson",
+            medium: "proof_of_concept",
+            stage: "concept",
+            creators: ["Chaz Bottoms", "TeamTO"],
+            whatWeKnow: [
+              "Director Chaz Bottoms is developing Junichiro Jackson as an anime proof of concept in Chicago.",
+              "Production completed independently with TeamTO co-producing the pilot teaser.",
+            ],
+            whatWereChecking: ["Festival distribution rights."],
+            whyScouted: "High quality afro-anime blending neo-noir and hip-hop.",
+            sourceMedia: [{ type: "youtube_embed", url: testUrl, verified: true, caption: "Proof of Concept" }],
+            evidenceLedger: [],
+            pathways: [
+              {
+                title: "Episodic Streaming Series Pitch",
+                mediumFitRationale: "Anime proof of concept demonstrates serialized narrative potential.",
+                targetAudience: "Global anime and adult animation viewers.",
+                risksAndUncertainties: ["Securing animation studio co-financing."],
+                nextBoundedExperiment: {
+                  name: "Pitch Bible Community Review",
+                  description: "Share 10-page show bible with verified scouts.",
+                  successMetric: "70% favorable consensus.",
+                },
+                prerequisites: ["Complete series outline draft."],
+                owner: "Lead creator & agent",
+                blockers: ["Music synchronization clearance."],
+              },
+            ],
+            decisionBrief: {
+              logline: "An atmospheric anime proof of concept set in neo-noir Chicago.",
+              coreHook: "Afro-anime neo-noir visual style with authentic Chicago jazz and hip-hop scoring.",
+              comparativeTitles: ["Yasuke", "Samurai Champloo"],
+              primaryRisk: "High cost of hand-drawn 2D animation pipeline.",
+              triageSummary: "Promising proof of concept with strong visual identity seeking episodic development partners.",
+              materialUncertainty: "Status of music rights and underlying IP ownership.",
+              nextDiligenceStep: "Request pilot script and complete chain of title review.",
+            },
+            industryLens: {
+              marketContext: "Anime-influenced adult animation is in high demand across streaming platforms.",
+              comparables: ["Afro Samurai", "Yasuke"],
+              realisticConstraints: "Episodic production budget requires established animation studio backing.",
+            },
+          }),
+        }),
+      },
+    } as any);
 
     try {
       const project: Project = {
@@ -283,6 +335,7 @@ describe("Package D: Decision-Focused Research & Bounded Execution", () => {
     } finally {
       searchSpy.mockRestore();
       extractSpy.mockRestore();
+      genaiSpy.mockRestore();
 
       try {
         const { getAdminFirestore } = await import("@/lib/firebase/admin");

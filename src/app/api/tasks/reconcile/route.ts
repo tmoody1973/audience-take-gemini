@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+      if (!cronSecret && expectedAudience && !expectedServiceAccount) {
+        return NextResponse.json(
+          { ok: false, error: "Server authentication configuration missing (CLOUD_TASKS_SERVICE_ACCOUNT required in production for OIDC mode)" },
+          { status: 500 }
+        );
+      }
     }
 
     // Authenticate caller when configuration is present
@@ -38,8 +44,8 @@ export async function POST(request: NextRequest) {
         authorized = true;
       }
 
-      // 2. Google Cloud OIDC token verification
-      if (!authorized && expectedAudience) {
+      // 2. Google Cloud OIDC token verification (only if configured with service account or in non-production)
+      if (!authorized && expectedAudience && (expectedServiceAccount || process.env.NODE_ENV !== "production")) {
         try {
           const { OAuth2Client } = await import("google-auth-library");
           const client = new OAuth2Client();
@@ -54,7 +60,11 @@ export async function POST(request: NextRequest) {
               { status: 403 }
             );
           }
-          authorized = true;
+          if (expectedServiceAccount && payload?.email === expectedServiceAccount) {
+            authorized = true;
+          } else if (!expectedServiceAccount && process.env.NODE_ENV !== "production") {
+            authorized = true;
+          }
         } catch {
           // Token verification failed
         }

@@ -362,7 +362,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                 <td>
                   <span className="pro-format-pill">{card.projectType.replace("_", " ")}</span>
                   {card.storyContext.currentFormat && card.storyContext.currentFormat !== card.projectType ? (
-                    <span className="pro-secondary-format"> ({card.storyContext.currentFormat})</span>
+                    <span className="pro-secondary-format"> (<span>{card.storyContext.currentFormat}</span>)</span>
                   ) : null}
                 </td>
                 <td>
@@ -372,16 +372,14 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
               <tr>
                 <th scope="row">Development Stage</th>
                 <td>
-                  {card.storyContext.currentFormat ? (
-                    <span>{card.storyContext.currentFormat}</span>
-                  ) : stageClaim ? (
+                  {stageClaim ? (
                     <strong>{stageClaim.statement}</strong>
                   ) : (
                     <UnknownPill />
                   )}
                 </td>
                 <td>
-                  {stageSource && !card.storyContext.currentFormat ? (
+                  {stageSource ? (
                     <button
                       type="button"
                       className="pro-citation-link-btn"
@@ -390,7 +388,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                       {sourcePresentation(stageSource).role} [{effectiveSourceLabels.get(stageSource.id) || "S"}]
                     </button>
                   ) : (
-                    <span className="pro-muted-note">{card.storyContext.currentFormat ? "Observed from submitted format" : "Unconfirmed"}</span>
+                    <span className="pro-muted-note">Unconfirmed</span>
                   )}
                 </td>
               </tr>

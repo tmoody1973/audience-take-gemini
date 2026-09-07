@@ -80,7 +80,7 @@
   "storagePath": "public/projects/junichiro-jackson/scout-briefs/card-junichiro-v1/g1.wav",
   "audioUrl": "/api/scout-briefs/scout-brief-card-junichiro-v1-g1/audio",
   "mimeType": "audio/wav",
-  "sizeBytes": 10752044,
-  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sizeBytes": 11652524,
+  "sha256": "6e0d30640bea13e8e9be80021ccd14e1c2229c0efc322ca87b40aa6a0be29d29",
   "generatedAt": "2026-09-06T12:00:00Z"
 }

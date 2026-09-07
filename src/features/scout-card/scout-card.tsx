@@ -169,12 +169,12 @@ function ProjectHeader({
         </dl>
       </div>
 
-      {audioBriefNode}
-
       <p className="scout-header-hook">{card.hook}</p>
       {card.identity?.relationshipStatus === "unresolved" ? (
         <p className="identity-caution">Identity relationship remains unresolved; similar names are not silently merged.</p>
       ) : null}
+
+      {audioBriefNode}
 
       <div className="scout-header-scores-strip" aria-label="Scout Card status">
         <div className="score-cell">

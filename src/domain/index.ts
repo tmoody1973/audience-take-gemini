@@ -166,6 +166,7 @@ export interface TrailerCritic {
   persuasionAndEmotion: PersuasionAndEmotion;
   criticMatrix: CriticMatrix;
   limitations: string;
+  modality?: "text_context_only" | "multimodal_video";
   analyzedAt: string;
   model: string;
 }

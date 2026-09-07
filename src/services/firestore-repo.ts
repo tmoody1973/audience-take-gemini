@@ -859,41 +859,41 @@ class InMemoryStore {
       version: 1,
       status: "published",
       whatWeKnow: [
-        "Independent gothic animated musical franchise created, directed, and designed by Daria Cohen.",
-        "Successfully raised over $286,000 across Kickstarter and Indiegogo specifically to finance the 11-minute musical pilot episode.",
-        "Daria Cohen retains 100% intellectual property ownership and creative control across all narrative and musical assets."
+        "Independent gothic animated musical franchise created, directed, and designed by Daria Cohen featuring characters Missi and Duke.",
+        "Crowdfunding campaigns reported over $286,000 across platforms to finance initial musical pilot production.",
+        "Daria Cohen retains intellectual property ownership across original narrative and musical assets; formal studio co-production agreements remain in progress."
       ],
       whatWereChecking: [
-        "Co-production studio partnership model for the full $1.5M - $2.0M multi-episode episodic series budget.",
-        "Original voice cast contracts and musical soundtrack distribution agreements."
+        "Verification of primary crowdfunding campaign ledger and active backer totals.",
+        "Co-production studio partnership model for the full $1.5M - $2.0M multi-episode episodic series budget."
       ],
-      whyScouted: "A powerhouse creator-owned gothic animated musical with proven grassroots crowdfunding validation ($286k pilot) and an intensely dedicated global fanbase.",
+      whyScouted: "A powerhouse creator-owned gothic animated musical with passionate grassroots community validation and an intensely dedicated global fanbase.",
       sourceMedia: [
         {
           type: "youtube_embed",
-          url: "https://www.youtube.com/watch?v=qPq8E4LdCqE",
+          url: "https://www.youtube.com/watch?v=6d-e3WrApCo",
           verified: true,
-          caption: "The Vampair Series — Official Pilot Teaser"
+          caption: "The Vampair Series — The Night (Official Episode 1)"
         }
       ],
       evidenceLedger: [
         {
           id: "ev-va-1",
           sourceUrl: "https://www.kickstarter.com/projects/dariacohen/the-vampair-series-pilot",
-          title: "Kickstarter: The Vampair Series — Official 11-Minute Musical Pilot",
+          title: "Kickstarter: The Vampair Series — Official Musical Pilot (Campaign Archive)",
           publisher: "Kickstarter",
-          claimType: "observation",
-          excerpt: "$286,400 raised from 4,100+ backers to fully fund the independent animated pilot episode.",
-          verified: true
+          claimType: "reported",
+          excerpt: "Reported $286,400 raised from 4,100+ backers across crowdfunding drives to finance independent animated pilot production.",
+          verified: false
         },
         {
           id: "ev-va-2",
           sourceUrl: "https://www.animationmagazine.net/2025/daria-cohen-vampair-breakout",
-          title: "Animation Magazine: Indie Animator Daria Cohen Explores New Frontiers in Gothic Musicals",
+          title: "Animation Magazine: Indie Animator Daria Cohen Explores New Frontiers in Gothic Musicals (404 / Unavailable)",
           publisher: "Animation Magazine",
-          claimType: "reported",
-          excerpt: "Daria Cohen's viral animated shorts transition into an ambitious episodic narrative while maintaining 100% creator IP retention.",
-          verified: true
+          claimType: "unresolved",
+          excerpt: "Citation link unavailable (HTTP 404); trade coverage unverified pending refreshed press retrieval.",
+          verified: false
         }
       ],
       pathways: [
@@ -903,9 +903,9 @@ class InMemoryStore {
           targetAudience: "Global indie animation enthusiasts, gothic subculture fans, and musical theatre lovers.",
           risksAndUncertainties: ["Negotiating co-production terms that preserve creator final cut and merchandise rights."],
           nextBoundedExperiment: {
-            name: "Studio Co-Production Pitch Deck Review",
-            description: "Present episodic production schedule and pilot metrics to 3 target independent animation studios.",
-            successMetric: "At least 1 formal co-production term sheet with creator IP retention."
+            name: "Chain-of-Title & Music Rights Diligence",
+            description: "Audit chain-of-title and music synchronization rights for Aurelio Voltaire tracks before drafting co-production diligence memorandum.",
+            successMetric: "Completed rights audit verifying commercial animation clearance status."
           }
         },
         {
@@ -1289,10 +1289,14 @@ export const dataRepo = {
           const snap = await transaction.get(runRef);
           if (snap.exists) {
             const data = snap.data() as any;
-            if (data.lease?.leaseToken && token && data.lease.leaseToken !== token) {
+            const lease = data.lease;
+            if (lease && new Date(lease.expiresAt).getTime() > now) {
+              if (!token || lease.leaseToken !== token) {
+                throw new Error("Execution lease active: another worker holds active lease");
+              }
+            } else if (token && lease?.leaseToken && lease.leaseToken !== token) {
               throw new Error("Execution lease lost: another worker took over lease during run");
-            }
-            if (data.lease && token && new Date(data.lease.expiresAt).getTime() <= now) {
+            } else if (token && lease && new Date(lease.expiresAt).getTime() <= now) {
               throw new Error("Execution lease expired: lease time exceeded");
             }
           }
@@ -1561,16 +1565,21 @@ export const dataRepo = {
             }
           }
 
-          // Verify lease token inside transaction if provided
-          if (leaseToken) {
-            const runRef = db.collection("researchRuns").doc(run.id);
-            const runSnap = await transaction.get(runRef);
-            if (runSnap.exists) {
-              const runData = runSnap.data() as any;
-              if (runData.lease?.leaseToken && runData.lease.leaseToken !== leaseToken) {
+          // Verify lease token inside transaction against persisted research run
+          const runRef = db.collection("researchRuns").doc(run.id);
+          const runSnap = await transaction.get(runRef);
+          if (runSnap.exists) {
+            const runData = runSnap.data() as any;
+            const lease = runData.lease;
+            if (lease && new Date(lease.expiresAt).getTime() > Date.now()) {
+              if (!leaseToken || lease.leaseToken !== leaseToken) {
+                throw new Error("Execution lease active: another worker holds active lease");
+              }
+            } else if (leaseToken) {
+              if (lease?.leaseToken && lease.leaseToken !== leaseToken) {
                 throw new Error("Execution lease lost: another worker took over lease during run");
               }
-              if (runData.lease && new Date(runData.lease.expiresAt).getTime() <= Date.now()) {
+              if (lease && new Date(lease.expiresAt).getTime() <= Date.now()) {
                 throw new Error("Execution lease expired: lease time exceeded before atomic publication");
               }
             }
@@ -1918,30 +1927,33 @@ export const dataRepo = {
         }
       : undefined;
 
+    let txResult: { committed: boolean; duplicate: boolean } = { committed: true, duplicate: false };
     try {
       const db = getAdminFirestore();
       if (db) {
-        await db.runTransaction(async (transaction) => {
+        txResult = await db.runTransaction(async (transaction) => {
           const projRef = db.collection("projects").doc(projectId);
           const projSnap = await transaction.get(projRef);
           if (!projSnap.exists) {
-            throw new Error(`Project ${projectId} not found in Firestore`);
+            throw new Error(`Project ${projectId} not found for monitor card update`);
           }
-          const projData = projSnap.data() as any;
-          if (projData?.publishedCardId) {
-            const cardSnap = await transaction.get(db.collection("scoutCards").doc(projData.publishedCardId));
-            const currentVer = cardSnap.data()?.version || 1;
-            if (currentVer !== expectedBaseVersion) {
-              throw new Error(
-                `Concurrency conflict: current card version is ${currentVer}, expected base was ${expectedBaseVersion}`
-              );
+          if (expectedBaseVersion !== undefined) {
+            const projData = projSnap.data() as any;
+            if (projData?.publishedCardId) {
+              const cardSnap = await transaction.get(db.collection("scoutCards").doc(projData.publishedCardId));
+              const currentVer = cardSnap.data()?.version || 1;
+              if (currentVer !== expectedBaseVersion) {
+                throw new Error(
+                  `Concurrency conflict: current card version is ${currentVer}, expected base was ${expectedBaseVersion}`
+                );
+              }
             }
           }
           const receiptRef = db.collection("webhookReceipts").doc(receipt.webhookId);
           const receiptSnap = await transaction.get(receiptRef);
           if (receiptSnap.exists) {
             // Already processed idempotently
-            return;
+            return { committed: false, duplicate: true };
           }
 
           transaction.set(db.collection("scoutCards").doc(newCard.id), cleanFirestoreObject(newCard));
@@ -1971,10 +1983,17 @@ export const dataRepo = {
               category: livingUpdate.category || "production",
             });
           }
+          return { committed: true, duplicate: false };
         });
       }
     } catch (err) {
       throw new Error(`Database error in atomicPublishMonitorCardUpdate: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    if (txResult && txResult.committed === false) {
+      // Idempotent duplicate: return existing card and project without mutating in-memory store
+      const existingCard = store.scoutCards.get(newCard.id) || (project.publishedCardId ? store.scoutCards.get(project.publishedCardId) : newCard);
+      return { card: existingCard || newCard, project };
     }
 
     // Only mutate in-memory store AFTER transaction has successfully committed
