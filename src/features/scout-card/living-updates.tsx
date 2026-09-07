@@ -14,21 +14,48 @@ export type ProjectLivingUpdate = {
   category?: "funding" | "festival" | "production" | "press" | "community";
 };
 
-export type LivingUpdatesProps = {
-  updates: ProjectLivingUpdate[];
+export type MonitorHealth = {
+  status: "active" | "pending" | "disabled" | "unmonitored";
+  lastSuccessfulResearchAt?: string | null;
+  lastCheckedAt?: string | null;
 };
 
-export function LivingUpdates({ updates }: LivingUpdatesProps) {
+export type LivingUpdatesProps = {
+  updates: ProjectLivingUpdate[];
+  monitorHealth?: MonitorHealth;
+};
+
+export function LivingUpdates({ updates, monitorHealth }: LivingUpdatesProps) {
   if (!updates || updates.length === 0) {
     return null;
   }
 
+  const isLive = monitorHealth?.status === "active";
+  const isDisabled = monitorHealth?.status === "disabled";
+  const isPending = monitorHealth?.status === "pending";
+
   return (
     <section className="living-updates" aria-labelledby="living-updates-title">
       <div className="living-updates-header">
-        <div className="living-updates-badge">
-          <span className="live-indicator" aria-hidden="true" />
-          <span>Live Tracking</span>
+        <div className={`living-updates-badge${isDisabled ? " paused" : ""}`}>
+          {isLive ? (
+            <>
+              <span className="live-indicator active" aria-hidden="true" />
+              <span>Active Monitoring</span>
+            </>
+          ) : isDisabled ? (
+            <>
+              <span className="live-indicator disabled" aria-hidden="true" />
+              <span>Recorded Updates (Monitoring paused)</span>
+            </>
+          ) : isPending ? (
+            <>
+              <span className="live-indicator pending" aria-hidden="true" />
+              <span>Monitoring Pending</span>
+            </>
+          ) : (
+            <span>Recorded Updates</span>
+          )}
         </div>
         <h2 id="living-updates-title">Living Updates</h2>
         <p className="living-updates-subtitle">

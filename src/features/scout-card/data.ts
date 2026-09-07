@@ -839,7 +839,7 @@ function extractProjectThemes(project: any, card?: any): string[] {
   return ["independent storytelling", "creator vision"];
 }
 
-const FALLBACK_RELATED_PROJECTS: RelatedScoutProject[] = [
+export const FALLBACK_RELATED_PROJECTS: RelatedScoutProject[] = [
   {
     slug: "signal-in-the-pines",
     title: "Signal in the Pines",
@@ -859,9 +859,9 @@ const FALLBACK_RELATED_PROJECTS: RelatedScoutProject[] = [
   {
     slug: "cycle",
     title: "CYCLE",
-    hook: "In Milwaukee, a dedicated network of youth mechanics and urban riders rebuild discarded bicycles to heal neighborhood divides.",
+    hook: "A documentary exploring the aftermath of the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, centering the family's pursuit of justice and healing.",
     projectType: "documentary",
-    sharedThemes: ["community resilience", "urban culture"],
+    sharedThemes: ["investigative", "justice", "community resilience"],
     thumbnailUrl: "https://img.youtube.com/vi/k8bM9qaPXLU/hqdefault.jpg",
   },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { EvidenceClaim, ScoutCard, SourceLedgerEntry } from "./types";
 import {
   claimEvidenceState,
@@ -49,10 +49,10 @@ function UnknownPill() {
 
 export type ProfessionalBriefViewProps = {
   card: ScoutCard;
-  sourceLabels: Map<string, string>;
+  sourceLabels?: Map<string, string>;
   livingUpdates?: ProjectLivingUpdate[];
   scoutBrief?: ScoutBrief | null;
-  onOpenCitation: (source: SourceLedgerEntry, claim?: EvidenceClaim) => void;
+  onOpenCitation?: (source: SourceLedgerEntry, claim?: EvidenceClaim) => void;
 };
 
 export function ProfessionalBriefView({
@@ -63,6 +63,15 @@ export function ProfessionalBriefView({
   onOpenCitation,
 }: ProfessionalBriefViewProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  const effectiveSourceLabels = useMemo(() => {
+    if (sourceLabels) return sourceLabels;
+    const map = new Map<string, string>();
+    (card.sourceLedger || []).forEach((s, idx) => {
+      map.set(s.id, `S${idx + 1}`);
+    });
+    return map;
+  }, [sourceLabels, card.sourceLedger]);
 
   const primaryWork = card.primaryWorkSourceId
     ? card.sourceLedger.find((source) => source.id === card.primaryWorkSourceId)
@@ -179,7 +188,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
       <header className="pro-brief-header-module">
         <div className="pro-brief-identity-row">
           <div>
-            <span className="pro-kicker">PROFESSIONAL DOSSIER · CONFIDENTIAL EVALUATION RECORD</span>
+            <span className="pro-kicker">PROFESSIONAL DOSSIER</span>
             <h1 id="pro-brief-heading" className="pro-brief-title">{card.title}</h1>
             <p className="pro-brief-hook">{card.hook}</p>
           </div>
@@ -313,9 +322,9 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                     <button
                       type="button"
                       className="pro-citation-link-btn"
-                      onClick={() => onOpenCitation(primaryWork)}
+                      onClick={() => onOpenCitation?.(primaryWork)}
                     >
-                      {sourcePresentation(primaryWork).role} / {sourcePresentation(primaryWork).tier} [{sourceLabels.get(primaryWork.id) || "S"}]
+                      {sourcePresentation(primaryWork).role} / {sourcePresentation(primaryWork).tier} [{effectiveSourceLabels.get(primaryWork.id) || "S"}]
                     </button>
                   ) : (
                     <UnknownPill />
@@ -338,9 +347,9 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                     <button
                       type="button"
                       className="pro-citation-link-btn"
-                      onClick={() => onOpenCitation(stageSource, stageClaim)}
+                      onClick={() => onOpenCitation?.(stageSource, stageClaim)}
                     >
-                      {sourcePresentation(stageSource).role} [{sourceLabels.get(stageSource.id) || "S"}]
+                      {sourcePresentation(stageSource).role} [{effectiveSourceLabels.get(stageSource.id) || "S"}]
                     </button>
                   ) : (
                     <span className="pro-muted-note">Observed from submitted format</span>
@@ -361,9 +370,9 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                     <button
                       type="button"
                       className="pro-citation-link-btn"
-                      onClick={() => onOpenCitation(financingSource, financingClaim)}
+                      onClick={() => onOpenCitation?.(financingSource, financingClaim)}
                     >
-                      {sourcePresentation(financingSource).role} [{sourceLabels.get(financingSource.id) || "S"}]
+                      {sourcePresentation(financingSource).role} [{effectiveSourceLabels.get(financingSource.id) || "S"}]
                     </button>
                   ) : (
                     <span className="pro-muted-note">No public budget or capitalization filing confirmed</span>
@@ -384,9 +393,9 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                     <button
                       type="button"
                       className="pro-citation-link-btn"
-                      onClick={() => onOpenCitation(partnerSource, partnerClaim)}
+                      onClick={() => onOpenCitation?.(partnerSource, partnerClaim)}
                     >
-                      {sourcePresentation(partnerSource).role} [{sourceLabels.get(partnerSource.id) || "S"}]
+                      {sourcePresentation(partnerSource).role} [{effectiveSourceLabels.get(partnerSource.id) || "S"}]
                     </button>
                   ) : (
                     <span className="pro-muted-note">No verified studio or co-production partner confirmed</span>
@@ -407,9 +416,9 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                     <button
                       type="button"
                       className="pro-citation-link-btn"
-                      onClick={() => onOpenCitation(distributionSource, distributionClaim)}
+                      onClick={() => onOpenCitation?.(distributionSource, distributionClaim)}
                     >
-                      {sourcePresentation(distributionSource).role} [{sourceLabels.get(distributionSource.id) || "S"}]
+                      {sourcePresentation(distributionSource).role} [{effectiveSourceLabels.get(distributionSource.id) || "S"}]
                     </button>
                   ) : (
                     <span className="pro-muted-note">No public theatrical or streaming window announced</span>
@@ -485,13 +494,13 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                       [...new Set(claim.sourceIds)].map((sid) => {
                         const s = card.sourceLedger.find((entry) => entry.id === sid);
                         if (!s) return null;
-                        const label = sourceLabels.get(s.id) || "[S]";
+                        const label = effectiveSourceLabels.get(s.id) || "[S]";
                         return (
                           <button
                             key={s.id}
                             type="button"
                             className="citation-badge"
-                            onClick={() => onOpenCitation(s, claim)}
+                            onClick={() => onOpenCitation?.(s, claim)}
                             aria-label={`View source citation ${label}`}
                           >
                             {label}
@@ -615,7 +624,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
         </div>
       </section>
 
-      <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={sourceLabels} />
+      <TrailerCritic analyses={card.trailerCritiques ?? []} sourceLabels={effectiveSourceLabels} />
       <FandomDnaSection
         fandomDna={card.fandomDna}
         marketViability={card.marketViability}
@@ -636,7 +645,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
           <ol>
             {card.sourceLedger.map((source) => (
               <li key={source.id} id={`pro-source-${source.id.replace(/^source-/, "")}`}>
-                <span className="source-index">{sourceLabels.get(source.id)}</span>
+                <span className="source-index">{effectiveSourceLabels.get(source.id)}</span>
                 <div>
                   <a href={source.url} target="_blank" rel="noreferrer">
                     {source.title}

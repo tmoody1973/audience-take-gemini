@@ -5,11 +5,13 @@ import React from "react";
 export type CityDemandMeterProps = {
   cities?: Record<string, number>;
   threshold?: number;
+  outreachActive?: boolean;
 };
 
 export function CityDemandMeter({
   cities = {},
   threshold = 100,
+  outreachActive = false,
 }: CityDemandMeterProps) {
   const cityEntries = Object.entries(cities)
     .filter(([_, count]) => count > 0)
@@ -20,7 +22,7 @@ export function CityDemandMeter({
       <div className="city-demand-header">
         <h4 id="city-demand-title">Community Screening Demand</h4>
         <p className="city-demand-subtitle">
-          Indie screening threshold: {threshold} signals activate local theater outreach.
+          Indie screening threshold: {threshold} signals to activate local cinema partner outreach.
         </p>
       </div>
 
@@ -58,8 +60,10 @@ export function CityDemandMeter({
 
                 <div className="city-demand-footer">
                   {reached ? (
-                    <span className="threshold-reached-badge">
-                      ✓ Threshold reached — Partner outreach active
+                    <span className={`threshold-reached-badge${outreachActive ? " active" : ""}`}>
+                      {outreachActive
+                        ? "✓ Threshold reached — Partner outreach in progress"
+                        : "✓ Threshold reached — Community interest goal met"}
                     </span>
                   ) : (
                     <span className="signals-needed-label">
