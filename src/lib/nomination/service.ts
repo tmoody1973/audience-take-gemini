@@ -107,3 +107,9 @@ export function noOpResearchDispatcher(): ResearchDispatcher {
     throw new Error("Cloud Tasks dispatch is not configured.");
   };
 }
+
+export {
+  reconcilePendingDispatches,
+  type ReconcileOptions,
+  type ReconcileSummary,
+} from "./reconciler";

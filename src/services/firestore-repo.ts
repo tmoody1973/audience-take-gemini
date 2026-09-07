@@ -1085,17 +1085,50 @@ export const dataRepo = {
     return null;
   },
 
-  async saveResearchRun(run: ResearchRunState): Promise<void> {
-    store.researchRuns.set(run.id, run);
+  async saveResearchRun(run: ResearchRunState, leaseToken?: string): Promise<void> {
+    const now = Date.now();
+    const token = leaseToken || run.lease?.leaseToken;
+
+    // Validate lease ownership in-memory if existing run has lease and token is provided
+    const memRun = store.researchRuns.get(run.id);
+    if (memRun?.lease && token) {
+      if (memRun.lease.leaseToken !== token) {
+        throw new Error("Execution lease lost: another worker took over lease during run");
+      }
+      if (new Date(memRun.lease.expiresAt).getTime() <= now) {
+        throw new Error("Execution lease expired: lease time exceeded");
+      }
+    }
+
     try {
       const db = getAdminFirestore();
-      await db.collection("researchRuns").doc(run.id).set(cleanFirestoreObject(run), { merge: true });
+      if (db) {
+        await db.runTransaction(async (transaction) => {
+          const runRef = db.collection("researchRuns").doc(run.id);
+          const snap = await transaction.get(runRef);
+          if (snap.exists) {
+            const data = snap.data() as any;
+            if (data.lease?.leaseToken && token && data.lease.leaseToken !== token) {
+              throw new Error("Execution lease lost: another worker took over lease during run");
+            }
+            if (data.lease && token && new Date(data.lease.expiresAt).getTime() <= now) {
+              throw new Error("Execution lease expired: lease time exceeded");
+            }
+          }
+          transaction.set(runRef, cleanFirestoreObject(run), { merge: true });
+        });
+      }
     } catch (err) {
+      if (err instanceof Error && err.message.includes("Execution lease")) {
+        throw err;
+      }
       console.warn("Could not persist research run to Firestore:", err);
       if (process.env.NODE_ENV === "production" || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
         throw new Error(`Database error: failed to persist research run: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
+
+    store.researchRuns.set(run.id, run);
   },
 
   async acquireResearchRunLease(
@@ -1218,6 +1251,57 @@ export const dataRepo = {
     return { valid: true };
   },
 
+  async renewResearchRunLease(
+    runId: string,
+    leaseToken: string,
+    extendDurationMs: number = 10 * 60 * 1000
+  ): Promise<{ renewed: boolean; expiresAt?: string; reason?: string }> {
+    const now = Date.now();
+    try {
+      const db = getAdminFirestore();
+      if (db) {
+        return await db.runTransaction(async (transaction) => {
+          const runRef = db.collection("researchRuns").doc(runId);
+          const snap = await transaction.get(runRef);
+          if (!snap.exists) {
+            return { renewed: false, reason: "not_found" };
+          }
+          const data = snap.data() as any;
+          if (!data.lease || data.lease.leaseToken !== leaseToken) {
+            return { renewed: false, reason: "lease_token_mismatch_or_taken_over" };
+          }
+          if (new Date(data.lease.expiresAt).getTime() <= now) {
+            return { renewed: false, reason: "lease_expired" };
+          }
+          const nextExpiresAt = new Date(now + extendDurationMs).toISOString();
+          transaction.update(runRef, {
+            "lease.expiresAt": nextExpiresAt,
+            updatedAt: new Date(now).toISOString(),
+          });
+          const memRun = store.researchRuns.get(runId);
+          if (memRun?.lease) {
+            memRun.lease.expiresAt = nextExpiresAt;
+          }
+          return { renewed: true, expiresAt: nextExpiresAt };
+        });
+      }
+    } catch (err) {
+      console.warn("Could not renew lease in Firestore, checking store:", err);
+    }
+
+    const memRun = store.researchRuns.get(runId);
+    if (!memRun) return { renewed: false, reason: "not_found" };
+    if (!memRun.lease || memRun.lease.leaseToken !== leaseToken) {
+      return { renewed: false, reason: "lease_token_mismatch_or_taken_over" };
+    }
+    if (new Date(memRun.lease.expiresAt).getTime() <= now) {
+      return { renewed: false, reason: "lease_expired" };
+    }
+    const nextExpiresAt = new Date(now + extendDurationMs).toISOString();
+    memRun.lease.expiresAt = nextExpiresAt;
+    return { renewed: true, expiresAt: nextExpiresAt };
+  },
+
   async atomicPublishScoutCard(params: {
     card: ScoutCard;
     project: Project;
@@ -1235,6 +1319,11 @@ export const dataRepo = {
       const leaseStatus = await this.verifyResearchRunLease(run.id, leaseToken);
       if (!leaseStatus.valid) {
         throw new Error(`Execution lease invalid: ${leaseStatus.reason}`);
+      }
+    } else {
+      const memRun = store.researchRuns.get(run.id);
+      if (memRun?.lease && new Date(memRun.lease.expiresAt).getTime() > Date.now()) {
+        throw new Error("Execution lease invalid: missing_lease_token_for_leased_run");
       }
     }
 
@@ -1300,6 +1389,9 @@ export const dataRepo = {
               if (runData.lease?.leaseToken && runData.lease.leaseToken !== leaseToken) {
                 throw new Error("Execution lease lost: another worker took over lease during run");
               }
+              if (runData.lease && new Date(runData.lease.expiresAt).getTime() <= Date.now()) {
+                throw new Error("Execution lease expired: lease time exceeded before atomic publication");
+              }
             }
           }
 
@@ -1336,10 +1428,8 @@ export const dataRepo = {
         });
       }
     } catch (err) {
-      console.warn("Could not execute atomic card publication in Firestore:", err);
-      if (process.env.NODE_ENV === "production" || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-        throw new Error(`Database error: atomic card publication failed: ${err instanceof Error ? err.message : String(err)}`);
-      }
+      console.error("Could not execute atomic card publication in Firestore:", err);
+      throw new Error(`Database error: atomic card publication failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     // Update in-memory store

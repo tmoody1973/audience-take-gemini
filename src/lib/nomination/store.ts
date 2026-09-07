@@ -23,10 +23,23 @@ export type AcceptedNomination =
       canonicalUrl: string;
     };
 
+export type PendingDispatchRun = {
+  runId: string;
+  projectId: string;
+  nominationId: string;
+  attempt: number;
+  dispatchState: "pending" | "retryable_failed";
+  failedAt?: string;
+  sourceUrl?: string;
+};
+
 export interface NominationStore {
   accept(nomination: PreparedNomination): Promise<AcceptedNomination>;
   markDispatched(runId: string): Promise<void>;
   markDispatchFailed(runId: string, safeReason: string): Promise<void>;
+  getPendingOrRetryableRuns?(maxResults?: number): Promise<PendingDispatchRun[]>;
+  markTerminalDispatchFailure?(runId: string, terminalReason: string): Promise<void>;
+  recordDispatchRetry?(runId: string, attempt: number, reason: string): Promise<void>;
 }
 
 export function projectSlugFromId(projectId: string): string {
@@ -285,6 +298,70 @@ export function createFirestoreNominationStore(database: Firestore): NominationS
       batch.update(database.collection("publicResearchRuns").doc(runId), {
         status: "queued",
         publicFailureMessage: safeReason,
+        retryEligible: true,
+        updatedAt: new Date().toISOString(),
+      });
+      await batch.commit();
+    },
+
+    async getPendingOrRetryableRuns(maxResults = 50) {
+      const snap = await database
+        .collection("researchRuns")
+        .where("dispatch.state", "in", ["pending", "retryable_failed"])
+        .limit(maxResults)
+        .get();
+      return snap.docs.map((doc) => {
+        const d = doc.data() as any;
+        return {
+          runId: doc.id,
+          projectId: d.projectId || "",
+          nominationId: d.nominationId || "",
+          attempt: d.dispatch?.attempt || d.attempt || 1,
+          dispatchState: (d.dispatch?.state as "pending" | "retryable_failed") || "pending",
+          failedAt: d.dispatch?.failedAt
+            ? new Date(d.dispatch.failedAt.toDate ? d.dispatch.failedAt.toDate() : d.dispatch.failedAt).toISOString()
+            : undefined,
+          sourceUrl: d.sourceUrl,
+        };
+      });
+    },
+
+    async markTerminalDispatchFailure(runId, terminalReason) {
+      const batch = database.batch();
+      const now = FieldValue.serverTimestamp();
+      batch.update(database.collection("researchRuns").doc(runId), {
+        "dispatch.state": "failed_terminal",
+        "dispatch.failureCode": "dispatch_retries_exhausted",
+        "dispatch.publicMessage": terminalReason,
+        "dispatch.terminatedAt": now,
+        status: "failed",
+        currentStep: "failed",
+        errorMessage: terminalReason,
+        updatedAt: now,
+      });
+      batch.update(database.collection("publicResearchRuns").doc(runId), {
+        status: "failed",
+        publicFailureMessage: terminalReason,
+        retryEligible: false,
+        updatedAt: new Date().toISOString(),
+      });
+      await batch.commit();
+    },
+
+    async recordDispatchRetry(runId, attempt, reason) {
+      const batch = database.batch();
+      const now = FieldValue.serverTimestamp();
+      batch.update(database.collection("researchRuns").doc(runId), {
+        "dispatch.state": "retryable_failed",
+        "dispatch.attempt": attempt,
+        "dispatch.failureCode": "queue_dispatch_retry",
+        "dispatch.publicMessage": reason,
+        "dispatch.lastRetriedAt": now,
+        updatedAt: now,
+      });
+      batch.update(database.collection("publicResearchRuns").doc(runId), {
+        attempt,
+        publicFailureMessage: reason,
         retryEligible: true,
         updatedAt: new Date().toISOString(),
       });

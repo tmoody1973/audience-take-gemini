@@ -7,7 +7,8 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
 
     const expectedAudience = process.env.AGENT_SERVICE_AUDIENCE?.trim();
-    if (process.env.NODE_ENV === "production") {
+    const expectedServiceAccount = process.env.CLOUD_TASKS_SERVICE_ACCOUNT?.trim();
+    if (expectedAudience || process.env.NODE_ENV === "production") {
       if (!expectedAudience) {
         return NextResponse.json(
           { ok: false, error: "Server configuration error: AGENT_SERVICE_AUDIENCE missing" },
@@ -24,10 +25,17 @@ export async function POST(request: NextRequest) {
       try {
         const { OAuth2Client } = await import("google-auth-library");
         const client = new OAuth2Client();
-        await client.verifyIdToken({
+        const ticket = await client.verifyIdToken({
           idToken: token,
           audience: expectedAudience,
         });
+        const payload = ticket.getPayload();
+        if (expectedServiceAccount && payload?.email && payload.email !== expectedServiceAccount) {
+          return NextResponse.json(
+            { ok: false, error: `Unauthorized worker service account: expected ${expectedServiceAccount}, got ${payload.email}` },
+            { status: 403 }
+          );
+        }
       } catch (authErr: any) {
         return NextResponse.json(
           { ok: false, error: `Invalid worker token: ${authErr?.message || "unauthorized"}` },

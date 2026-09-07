@@ -76,10 +76,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized: You may only retry your own runs" }, { status: 403 });
     }
 
-    const updatedRun = await executeScoutResearchRun(runId, {
-      forceRetry: Boolean(forceRetry),
-    });
-    return NextResponse.json({ success: true, run: updatedRun });
+    // User retries require project/user authorization and go through the queue when configured
+    try {
+      const { createCloudTasksResearchDispatcher, cloudTaskConfigFromEnv } = await import("@/lib/tasks/cloud-tasks");
+      const config = cloudTaskConfigFromEnv();
+      const dispatcher = createCloudTasksResearchDispatcher(config);
+      const nextAttempt = (existingRun.attempt || 1) + 1;
+      await dispatcher({
+        runId,
+        projectId: existingRun.projectId,
+        nominationId: existingRun.nominationId || "",
+        attempt: nextAttempt,
+      });
+      return NextResponse.json({ success: true, queued: true, attempt: nextAttempt });
+    } catch {
+      // If Cloud Tasks is not configured (e.g. local dev / testing), fall back to direct execution in non-production
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json({ error: "Cloud Tasks queue dispatch is not configured." }, { status: 503 });
+      }
+      const updatedRun = await executeScoutResearchRun(runId, {
+        forceRetry: Boolean(forceRetry),
+      });
+      return NextResponse.json({ success: true, run: updatedRun });
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     // Sanitize error message so internal provider secrets are not exposed

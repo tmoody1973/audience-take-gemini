@@ -76,6 +76,10 @@ export async function executeScoutResearchRun(
       if (!leaseCheck.valid) {
         throw new Error(`Execution lease invalid: ${leaseCheck.reason}`);
       }
+      // Renew unexpired lease during execution if supported by repo
+      if (typeof dataRepo.renewResearchRunLease === "function") {
+        await dataRepo.renewResearchRunLease(run.id, leaseToken);
+      }
     }
     run.currentStep = step;
     run.progressPercent = percent;
@@ -85,7 +89,7 @@ export async function executeScoutResearchRun(
       message,
       status,
     });
-    await dataRepo.saveResearchRun(run);
+    await dataRepo.saveResearchRun(run, leaseToken);
   };
 
   try {
@@ -727,6 +731,21 @@ Output MUST strictly adhere to the following JSON structure:
     return publishResult.run;
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
+    // If the error was due to losing or expiring lease, abort without wiping successor lease
+    if (errorMsg.includes("Execution lease")) {
+      console.warn(`Worker ${workerId} aborted due to lease check: ${errorMsg}`);
+      throw err;
+    }
+
+    // Verify worker still owns the lease before clearing it or writing failed state
+    if (leaseToken) {
+      const leaseCheck = await dataRepo.verifyResearchRunLease(run.id, leaseToken);
+      if (!leaseCheck.valid) {
+        console.warn(`Worker ${workerId} lost lease before failure write: ${leaseCheck.reason}`);
+        throw new Error(`Worker failure write aborted: execution lease invalid (${leaseCheck.reason})`);
+      }
+    }
+
     run.currentStep = "failed";
     run.errorMessage = errorMsg;
     run.lease = null;
@@ -736,7 +755,7 @@ Output MUST strictly adhere to the following JSON structure:
       message: `Agent run halted: ${errorMsg}`,
       status: "error",
     });
-    await dataRepo.saveResearchRun(run);
+    await dataRepo.saveResearchRun(run, leaseToken);
     return run;
   }
 }

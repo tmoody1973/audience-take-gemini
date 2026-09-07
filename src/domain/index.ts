@@ -322,6 +322,7 @@ export interface ExecutionLease {
 export interface ResearchRunState {
   id: string;
   projectId: string;
+  nominationId?: string;
   nominatorUid: string;
   sourceUrl: string;
   currentStep: "fetching" | "classifying" | "extracting_evidence" | "synthesizing_pathways" | "validating" | "complete" | "failed";

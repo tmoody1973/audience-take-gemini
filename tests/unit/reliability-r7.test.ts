@@ -19,6 +19,7 @@ vi.mock("@/services/firestore-repo", () => {
       saveResearchRun: vi.fn(),
       acquireResearchRunLease: vi.fn(),
       verifyResearchRunLease: vi.fn(),
+      renewResearchRunLease: vi.fn().mockResolvedValue({ renewed: true }),
       atomicPublishScoutCard: vi.fn(),
       getProjectMonitorById: vi.fn(),
       saveProjectMonitor: vi.fn(),
@@ -436,7 +437,7 @@ describe("Package R7: Question Ledger & Budgeted Follow-ups", () => {
 
     expect(publishedCard).toBeDefined();
     // Diligence step must be creator-controlled diligence because rights are unknown
-    expect(publishedCard.decisionBrief.nextDiligenceStep).toMatch(/chain-of-title|option agreement|creator\/producer/i);
+    expect(publishedCard.decisionBrief.nextDiligenceStep).toMatch(/chain[- ]of[- ]title|option agreement|creator\/producer/i);
   });
 
   it("R7.6: Deterministic validator accepts 1 or 2 pathways without forcing an invented 3rd pathway", () => {

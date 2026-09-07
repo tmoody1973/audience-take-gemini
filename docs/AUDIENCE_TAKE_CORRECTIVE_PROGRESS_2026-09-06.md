@@ -13,7 +13,7 @@
 | **C0** | Baseline & Contract Repair | Hermetic test environment, zero TS errors, progress log | COMPLETED | Local Mock / Pure Unit |
 | **C1** | Truthful Surfaces | Eliminate fake city fallback, auto-outreach claims, false confidentiality | COMPLETED | Local & Staged |
 | **C2** | Evidence & Publication Integrity | Provenance separation (nominator vs source), negation handling, full-surface gates | COMPLETED | Local & Adversarial |
-| **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | IN PROGRESS | Local & Firestore Emulator |
+| **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | COMPLETED | Local & Firestore Emulator |
 | **C4** | Parallel Research Quality | Identity-first resolution, eliminate placeholder queries, bounded receipts | PENDING | Local & Parallel Provider |
 | **C5** | Parallel Monitor Repair | Lifecycle event alignment, HMAC signature, deduplication, versioned updates | PENDING | Local & Provider Webhook |
 | **C6** | Existing Record Repair | Correction manifest for Junichiro, Vampair, CYCLE; reversible versioning | PENDING | Local & Production Dry-Run |
@@ -70,4 +70,18 @@
   - `npx vitest run tests/unit/evidence-integrity-c2.test.ts`: **7/7 tests passed**.
   - `npx vitest run tests/unit/reliability-r*.test.ts`: **8 files passed, 43/43 tests passed**.
   - `npx tsc --noEmit`: **0 errors**.
+
+### C3 — Reliable, Authenticated Execution: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. `src/services/firestore-repo.ts`: In `atomicPublishScoutCard`, database errors previously caught exceptions and fell back to updating in-memory store in non-production environments. Removed the production guard; now fails closed on all database errors. In the Firestore transaction, enforced both lease token matching and non-expiration checks (`new Date(runData.lease.expiresAt).getTime() > Date.now()`).
+  2. `src/services/firestore-repo.ts`: Added `renewResearchRunLease(runId, leaseToken, extendDurationMs)` providing atomic lease extensions for active workers while rejecting renewals for expired or stolen leases.
+  3. `src/services/firestore-repo.ts`: Updated `saveResearchRun(run, leaseToken)` to verify caller lease ownership before mutating state, preventing stale workers from overwriting a successor worker's progress.
+  4. `src/agent/agent-runner.ts`: In `executeScoutResearchRun`, periodically renews the unexpired lease during lengthy provider operations. In the catch handler, if an `Execution lease` error occurs, the worker immediately aborts without wiping `run.lease = null` or overwriting the successor worker's run state.
+  5. `src/lib/nomination/store.ts` & `src/lib/nomination/reconciler.ts`: Added `getPendingOrRetryableRuns`, `markTerminalDispatchFailure`, and `recordDispatchRetry` to `NominationStore`. Implemented `reconcilePendingDispatches` to boundedly recover `retryable_failed` nomination intents up to `maxAttempts` (default 3), transitioning to `dispatched` on success or `failed_terminal` with `retryEligible: false` upon retry exhaustion.
+  6. `src/app/tasks/research/route.ts` & `src/app/tasks/trailer-critic/route.ts`: Enforced OIDC token verification whenever `AGENT_SERVICE_AUDIENCE` is configured or in production, and validated `CLOUD_TASKS_SERVICE_ACCOUNT` identity when specified.
+  7. `src/app/api/agent/run/route.ts`: Routed user retries through the Cloud Tasks dispatcher when configured, preventing long synchronous work on web requests.
+- **Verification Commands Executed**:
+  - `npx vitest run tests/unit/reliable-execution-c3.test.ts`: **7/7 tests passed**.
+  - `tests/unit/reliability-r*.test.ts`: **8 files passed, 43/43 tests passed**.
   - `npx tsc --noEmit`: **0 errors**.
+
