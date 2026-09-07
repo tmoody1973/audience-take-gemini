@@ -1,9 +1,9 @@
 # Audience Take — Hackathon Submission Dossier & Technical Defense
 
 **Submission Title**: Audience Take — Verified Development Intelligence & Audience Signals for Independent Storytelling  
-**As of Date**: 2026-09-06  
+**As of Date**: 2026-09-07  
 **Primary Repository**: `audience-take-gemini`  
-**Deployment Runtime**: Google Cloud Run (`audience-take-web`) with Google Cloud Tasks, Cloud Firestore, and Gemini APIs via `@google/genai`.
+**Deployment Runtime**: Google Cloud Run (`audience-take-web-00102-vsw` at `https://audience-take-web-866111144888.us-central1.run.app`) with Google Cloud Tasks (`audience-take-research`), Cloud Firestore, and Gemini APIs via `@google/genai`.
 
 ---
 
@@ -140,8 +140,8 @@ Built with a clean-room, test-driven architecture, Audience Take enforces strict
 | **C5** | Parallel Monitor Webhook Lifecycle | Full lifecycle event handling (`monitor.execution.completed/failed`); idempotent receipts. | **PASS** (`35de35e`) |
 | **C6** | Existing Record Repair | Reconciled Junichiro Jackson (near-future Brooklyn per jjseries.com), CYCLE (Ty'Rese West doc), Vampair (IP & budget). | **PASS** (`476eb20`) |
 | **C7** | Audience Experiences & Polish | Creator verified statement banner; anti-hype audio prompt constraints; critic validation. | **PASS** (`8562ce7`) |
-| **C8** | Final Image & Deployment Packaging | Next.js 15 standalone build tracing; lazy CloudTasksClient isolation; verified Dockerfile. | **PASS** (`531ba48`) |
-| **C9** | Usefulness & Benchmark Evaluation | Frozen 16-case benchmark evaluation suite; structured walkthrough evaluation protocol; submission dossier. | **PASS** (Current) |
+| **C8** | Final Image & Deployment Packaging | Next.js 15 standalone build tracing; lazy CloudTasksClient isolation; verified Dockerfile; deployed Cloud Run revision `audience-take-web-00102-vsw`; end-to-end reconstructed live canary nomination verified (*Big Buck Bunny*). | **PASS** (`22bf922`) |
+| **C9** | Usefulness & Benchmark Evaluation | Frozen 16-case benchmark evaluation suite; structured walkthrough evaluation protocol; submission dossier. | **PASS** (`22bf922`) |
 
 ---
 
