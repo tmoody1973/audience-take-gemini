@@ -25,6 +25,22 @@ import type {
 } from "@/domain";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 
+function toSafeIso(value: unknown, fallback?: string): string {
+  if (typeof value === "string" && value.length > 0) return value;
+  if (value && typeof (value as { toDate?: () => Date }).toDate === "function") {
+    try {
+      return (value as { toDate: () => Date }).toDate().toISOString();
+    } catch {}
+  }
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value).toISOString();
+  }
+  return fallback || new Date().toISOString();
+}
+
 class InMemoryStore {
   projects = new Map<string, Project>();
   scoutCards = new Map<string, ScoutCard>();
@@ -1036,7 +1052,8 @@ export const dataRepo = {
         proj.id === id ||
         proj.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") === id ||
         (proj.id === "proj-junichiro" && (id === "junichiro-jackson" || id === "junichiro-live-project")) ||
-        (proj.id === "proj-vampair" && (id === "proj-1788033835868-tfn0k" || id === "the-vampair-series" || id === "vampair"))
+        (proj.id === "proj-vampair" && (id === "proj-1788033835868-tfn0k" || id === "the-vampair-series" || id === "vampair")) ||
+        (proj.id === "Im84SGKWtglanToAyTi4" && (id === "big-buck-bunny" || id === "project-im84sgkwtg"))
       ) {
         return proj;
       }
@@ -1067,7 +1084,7 @@ export const dataRepo = {
             nominatorRole: raw.submissionType || "fan",
             reason: raw.whyItShouldGrow || "",
             initialLinks: raw.canonicalSourceUrl ? [raw.canonicalSourceUrl] : [],
-            createdAt: raw.createdAt || new Date().toISOString(),
+            createdAt: toSafeIso(raw.createdAt),
           },
           creatorClaim: raw.creatorClaim || {
             status: raw.claimStatus || "unclaimed",
@@ -1080,8 +1097,8 @@ export const dataRepo = {
             pathwayVotes: [0, 0, 0],
             cities: {},
           },
-          createdAt: raw.createdAt || new Date().toISOString(),
-          updatedAt: raw.updatedAt || new Date().toISOString(),
+          createdAt: toSafeIso(raw.createdAt),
+          updatedAt: toSafeIso(raw.updatedAt),
         };
         store.projects.set(p.id, p);
         return p;

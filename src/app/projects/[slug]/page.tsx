@@ -24,6 +24,7 @@ const PROJECT_ROUTE_ALIASES: Readonly<Record<string, string>> = {
   // unresolved. Keep its stored title/slug immutable while supporting the
   // memorable demo URL as a transparent redirect to the verified live route.
   [JUNICHIO_SLUG]: JUNICHIO_LIVE_SLUG,
+  "big-buck-bunny": "project-im84sgkwtg",
 };
 
 export const dynamic = "force-dynamic";

@@ -154,6 +154,22 @@ function boundedDiagnosticScalar(value: unknown, maxLength: number): string | nu
   return redactDiagnosticMessage(value).slice(0, maxLength);
 }
 
+function toSafeIsoString(value: unknown, fallback: string = "2026-08-26T12:00:00Z"): string {
+  if (typeof value === "string" && value.length > 0) return value;
+  if (value && typeof (value as { toDate?: () => Date }).toDate === "function") {
+    try {
+      return (value as { toDate: () => Date }).toDate().toISOString();
+    } catch {}
+  }
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value).toISOString();
+  }
+  return fallback;
+}
+
 function logPublishedCardLoadFailure(slug: string, error: unknown): void {
   const details = error && typeof error === "object" ? error as Record<string, unknown> : {};
   const errorName = error instanceof Error ? error.name : boundedDiagnosticScalar(details.name, 80);
@@ -453,8 +469,8 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           origin: isSubmitted ? ("submitted" as const) : ("parallel" as const),
           title: ev.title || (isSubmitted ? "Submitted Project Media" : "Parallel Web Discovery"),
           url: rawUrl,
-          publishedAt: ev.publishedAt || ev.publish_date || null,
-          retrievedAt: ev.retrievedAt || ev.timestamp || dynamicCard.createdAt || dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
+          publishedAt: ev.publishedAt ? toSafeIsoString(ev.publishedAt, "") : null,
+          retrievedAt: toSafeIsoString(ev.retrievedAt || ev.timestamp || dynamicCard.createdAt || dynamicProject?.createdAt),
           availability: "available" as const,
           verificationStatus: isSubmitted ? ("observed" as const) : (ev.verified ? "verified" as const : "observed" as const),
           sourceRole: isSubmitted ? ("primary_work" as const) : ("trade_reporting" as const),
@@ -472,7 +488,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           title: "Submitted Project Media",
           url: originalUrl,
           publishedAt: null,
-          retrievedAt: dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
+          retrievedAt: toSafeIsoString(dynamicProject?.createdAt),
           availability: "available" as const,
           verificationStatus: "observed" as const,
           sourceRole: "primary_work" as const,
@@ -642,7 +658,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           submittedSourceUrl: originalUrl,
           nominationLabel: "Fan-submitted public project source",
           nominatedByLabel: "Community scout",
-          researchedAt: dynamicProject?.createdAt || dynamicCard.createdAt || "2026-08-26T12:00:00Z",
+          researchedAt: toSafeIsoString(dynamicProject?.createdAt || dynamicCard.createdAt),
         },
         media: {
           state: vidId ? ("authorized_embed" as const) : ("editorial_fallback" as const),
@@ -705,7 +721,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         marketViability: dynamicCard?.marketViability ?? undefined,
         livingDossier: dynamicCard?.livingDossier ?? undefined,
         fandomDna: dynamicCard?.fandomDna ?? undefined,
-        publishedAt: dynamicCard?.publishedAt || dynamicProject?.updatedAt || dynamicProject?.createdAt || "2026-08-26T12:00:00Z",
+        publishedAt: toSafeIsoString(dynamicCard?.publishedAt || dynamicProject?.updatedAt || dynamicProject?.createdAt),
         audiencePulse: {
           follows: typeof dynamicProject?.followerCount === "number" ? dynamicProject.followerCount : 0,
           wouldWatch: typeof dynamicProject?.commitmentCounts?.would_watch === "number" ? dynamicProject.commitmentCounts.would_watch : 0,
@@ -764,7 +780,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           ],
           sourceIds: [sourceIds[0] || "source-1"],
           limitations: [dynamicCritic.limitations || "Based on multimodal audiovisual stream analysis."],
-          analyzedAt: dynamicCritic.analyzedAt || new Date().toISOString(),
+          analyzedAt: toSafeIsoString(dynamicCritic.analyzedAt, new Date().toISOString()),
           visibility: "public" as const,
         }] : [],
       };

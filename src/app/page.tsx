@@ -22,7 +22,7 @@ const selects = [
     type: "Complete demonstration card",
     reason: "Selected to show an evidence-limited project with three bounded pathways and an immutable correction history.",
     color: "yellow",
-    href: "/projects/junichiro-jackson",
+    href: "/projects/junichiro-live-project",
     status: "Published Scout Card · source-limited evidence",
   },
   {

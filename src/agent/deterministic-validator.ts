@@ -661,9 +661,15 @@ export function validateScoutProposal(
   for (const surface of publicSurfaces) {
     if (!surface.text) continue;
 
-    // A. Check for major awards and festival win/selection assertions
-    const awardPattern = /\b(sundance|cannes|oscars?|academy awards?|bafta|emmys?|golden globes?|sxsw|venice|berlin|tribeca)\b/gi;
-    const awardMatches = surface.text.match(awardPattern);
+    // A. Check for major awards and festival win/selection assertions about the project
+    // In marketContext, general festival ecosystem references are allowed; affirmative project selections/wins require evidence.
+    const affirmativePattern = /\b(selected (at|for|by)|official selection|won|winner|premiered at|screened at|nominated for|nominee|laurel|award-winning)\s+[^.!?]*\b(sundance|cannes|oscars?|academy awards?|bafta|emmys?|golden globes?|sxsw|venice|berlin|tribeca)\b/gi;
+    const bareAwardPattern = /\b(sundance|cannes|oscars?|academy awards?|bafta|emmys?|golden globes?|sxsw|venice|berlin|tribeca)\b/gi;
+
+    const isMarketContext = surface.field === "industryLens.marketContext";
+    const awardMatches = isMarketContext
+      ? surface.text.match(affirmativePattern)
+      : surface.text.match(bareAwardPattern);
     if (awardMatches) {
       for (const award of awardMatches) {
         const isSourced = proposal.evidenceLedger?.some((ev: any) => {

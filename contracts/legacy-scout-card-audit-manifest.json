@@ -1,8 +1,8 @@
 {
-  "auditTimestamp": "2026-09-07T03:08:37.691Z",
+  "auditTimestamp": "2026-09-07T05:04:12.997Z",
   "isDryRun": true,
   "totalRecordsAudited": 27,
-  "totalCandidatesFlagged": 5,
+  "totalCandidatesFlagged": 4,
   "candidates": [
     {
       "recordId": "card-junichiro-v1",
@@ -74,29 +74,6 @@
       "sourceEvidenceCount": 0
     },
     {
-      "recordId": "card-proj-1788033835868-tfn0k-v1",
-      "projectId": "proj-1788033835868-tfn0k",
-      "version": 1,
-      "sourceFile": "/Users/tarikmoody/Documents/Projects/audience-take-gemini/contracts/fixtures/junichiro-scout-brief.json",
-      "issues": [
-        {
-          "type": "synthetic_fallback",
-          "severity": "critical",
-          "description": "Cross-project Junichiro fixture substitution detected in independent project.",
-          "field": "storyContext / creatorContext"
-        }
-      ],
-      "proposedState": "require_re_verification",
-      "reversiblePointerChanges": [
-        {
-          "targetField": "projects.proj-1788033835868-tfn0k.publishedCardId",
-          "currentValue": "card-proj-1788033835868-tfn0k-v1",
-          "proposedValue": null
-        }
-      ],
-      "sourceEvidenceCount": 0
-    },
-    {
       "recordId": "card-junichiro-v1",
       "projectId": "junichiro-jackson",
       "version": 1,
@@ -121,6 +98,6 @@
     }
   ],
   "summaryByIssueType": {
-    "synthetic_fallback": 5
+    "synthetic_fallback": 4
   }
 }

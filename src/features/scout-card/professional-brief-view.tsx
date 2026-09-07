@@ -142,6 +142,7 @@ export function ProfessionalBriefView({
     : undefined;
 
   const stageClaim = supportedClaims.find((c) =>
+    c.id !== partnerClaim?.id &&
     /\b(proof of concept|pilot|development|pre-production|production|post-production|festival circuit)\b/i.test(c.statement)
   );
   const stageSource = stageClaim?.sourceIds?.[0]
@@ -371,14 +372,16 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
               <tr>
                 <th scope="row">Development Stage</th>
                 <td>
-                  {stageClaim ? (
+                  {card.storyContext.currentFormat ? (
+                    <span>{card.storyContext.currentFormat}</span>
+                  ) : stageClaim ? (
                     <strong>{stageClaim.statement}</strong>
                   ) : (
                     <UnknownPill />
                   )}
                 </td>
                 <td>
-                  {stageSource ? (
+                  {stageSource && !card.storyContext.currentFormat ? (
                     <button
                       type="button"
                       className="pro-citation-link-btn"
@@ -387,7 +390,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                       {sourcePresentation(stageSource).role} [{effectiveSourceLabels.get(stageSource.id) || "S"}]
                     </button>
                   ) : (
-                    <span className="pro-muted-note">Unconfirmed</span>
+                    <span className="pro-muted-note">{card.storyContext.currentFormat ? "Observed from submitted format" : "Unconfirmed"}</span>
                   )}
                 </td>
               </tr>
