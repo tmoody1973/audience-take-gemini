@@ -10,16 +10,17 @@
       "category": "animation",
       "medium": "proof_of_concept",
       "expectedCreators": ["Chaz Bottoms", "CBC Studios", "TeamTO"],
-      "verifiedSetting": "Chicago",
-      "disprovedSetting": "Brooklyn",
+      "verifiedSetting": "near-future Brooklyn",
+      "disprovedSetting": "Chicago",
       "verifiedFacts": [
-        "Proof-of-concept animation directed by Chaz Bottoms (CBC Studios) in co-production with TeamTO.",
-        "Set in an anime-inspired futuristic Chicago scored to Chicago hip-hop.",
+        "Proof-of-concept animation directed by Chaz Bottoms (CBC Studios) in co-production with TeamTO and Martian Blueberry with music by Coast Contra.",
+        "Set in near-future Brooklyn, following high school junior Junichiro navigating supernatural challenges.",
         "Seeking series financing for a half-hour episodic format."
       ],
       "materialUnknowns": ["SVOD vs linear broadcast exclusivity", "Final episodic season budget clearance"],
-      "conflictsOrNegations": ["Setting is Chicago, disproving hallucinated near-future Brooklyn claims."],
+      "conflictsOrNegations": ["Setting is near-future Brooklyn, disproving incorrect Chicago or alternate city claims."],
       "exactSources": [
+        "https://www.jjseries.com/",
         "https://variety.com/2026/film/news/junichiro-jackson-chaz-bottoms-teamto",
         "https://teamto.com/projects/junichiro-jackson"
       ]

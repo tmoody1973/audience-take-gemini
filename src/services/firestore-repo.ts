@@ -59,15 +59,15 @@ class InMemoryStore {
       version: 1,
       status: "published",
       whatWeKnow: [
-        "Proof-of-concept animation created by Chaz Bottoms (CBC Studios) in collaboration with TeamTO animation studio.",
-        "Combines 90s anime aesthetics (Cowboy Bebop, Samurai Champloo) with contemporary Chicago hip-hop culture.",
+        "Proof-of-concept animation created by Chaz Bottoms (CBC Studios) in collaboration with TeamTO animation studio and Martian Blueberry with music by Coast Contra.",
+        "Set in near-future Brooklyn, following high school junior Junichiro navigating supernatural challenges scored to hip-hop.",
         "Funded a successful grassroots manga universe companion with over 1,200 fan backers."
       ],
       whatWereChecking: [
         "Linear vs streaming network development exclusivity terms.",
         "Licensing status of the original hip-hop soundtrack and artist collaborations."
       ],
-      whyScouted: "A groundbreaking fusion of Japanese anime craft and Midwest urban storytelling that already has a dedicated fanbase.",
+      whyScouted: "A groundbreaking fusion of Japanese anime craft and Brooklyn urban storytelling that already has a dedicated fanbase.",
       sourceMedia: [
         {
           type: "youtube_embed",
@@ -78,12 +78,21 @@ class InMemoryStore {
       ],
       evidenceLedger: [
         {
+          id: "ev-jj-0",
+          sourceUrl: "https://www.jjseries.com/",
+          title: "Junichiro Jackson Official Series Website",
+          publisher: "Chaz Bottoms & TeamTO",
+          claimType: "observation",
+          excerpt: "Created by Chaz Bottoms, TeamTO, and Martian Blueberry with music by Coast Contra, the series follows Junichiro, an ambitious high school junior in near-future Brooklyn.",
+          verified: true
+        },
+        {
           id: "ev-jj-1",
           sourceUrl: "https://variety.com/2026/film/news/junichiro-jackson-animated-spotlight",
           title: "Variety: Chaz Bottoms Unveils Junichiro Jackson Proof of Concept",
           publisher: "Variety",
           claimType: "reported",
-          excerpt: "Director Chaz Bottoms teams with TeamTO to deliver a striking hip-hop anime pilot set in futuristic Chicago.",
+          excerpt: "Director Chaz Bottoms teams with TeamTO and Martian Blueberry to deliver a striking hip-hop anime pilot set in near-future Brooklyn with music by Coast Contra.",
           verified: true
         },
         {
@@ -132,8 +141,8 @@ class InMemoryStore {
         }
       ],
       decisionBrief: {
-        logline: "In a neon-drenched retro-future Chicago, an easygoing delivery courier must clear his name when a mysterious cybernetic package makes him the target of three rival syndicates.",
-        coreHook: "High-octane anime action scored to original boom-bap and trap beats with authentic Chicago voice acting.",
+        logline: "In a neon-drenched near-future Brooklyn, an ambitious high school junior named Junichiro must navigate supernatural challenges while balancing everyday ambitions.",
+        coreHook: "High-octane anime action scored to original hip-hop by Coast Contra set across a stylized near-future Brooklyn.",
         comparativeTitles: ["The Boondocks", "Cowboy Bebop", "Afro Samurai", "Spider-Man: Into the Spider-Verse"],
         primaryRisk: "High animation production costs necessitate strategic international studio co-production."
       },
@@ -154,11 +163,11 @@ class InMemoryStore {
       id: tc1Id,
       projectId: p1Id,
       sourceVideoUrl: "https://www.youtube.com/watch?v=s8G7425lfKs",
-      summary: "A kinetic demonstration of 2D anime timing, dynamic perspective shifts, and authentic Chicago landmarks set to a driving boom-bap rhythm.",
+      summary: "A kinetic demonstration of 2D anime timing, dynamic perspective shifts, and authentic Brooklyn landmarks set to a driving boom-bap rhythm.",
       genreAndForm: "Adult Animated Action / Cyberpunk Comedy Proof-of-Concept",
       whyItMayConnect: "Captures the sweet spot between nostalgic 90s hand-drawn anime flair and fresh urban cultural identity.",
       timestampedBeats: [
-        { timestampSeconds: 0, timestampFormatted: "0:00", label: "Skyline Establishing Hook", description: "L-Train rattling above holographic Chicago street art with heavy vinyl crackle." },
+        { timestampSeconds: 0, timestampFormatted: "0:00", label: "Skyline Establishing Hook", description: "Subway elevated train rattling above holographic Brooklyn street art with heavy vinyl crackle." },
         { timestampSeconds: 12, timestampFormatted: "0:12", label: "Courier in Motion", description: "Junichiro maneuvers through tight alleys with fluid 2D keyframing." },
         { timestampSeconds: 28, timestampFormatted: "0:28", label: "Syndicate Ambush", description: "Robotic enforcers surround the vehicle; beat drops into heavy brass bassline." },
         { timestampSeconds: 45, timestampFormatted: "0:45", label: "Climax Stunt", description: "Mid-air acrobatic dodge with perspective shift and stylized neon impact frames." }
@@ -170,19 +179,19 @@ class InMemoryStore {
         graphicsAndText: "Japanese katakana subtitles blended with retro arcade font typography."
       },
       persuasionAndEmotion: {
-        emotionalArc: "Style -> Energy -> Threat -> Exhilaration.",
-        targetPersona: "Animation fans, hip-hop heads, and young adult anime streaming subscribers.",
-        callToAction: "Demands immediate full-series greenlight to see the rest of the world."
+        emotionalArc: "Curiosity -> Kinetic Rush -> Comedic Relief -> Anticipation.",
+        targetPersona: "Anime enthusiasts, hip-hop culture fans, adult animation audiences.",
+        callToAction: "Rallies audience to demand an episodic series greenlight."
       },
       criticMatrix: {
         clarity: 9.2,
-        toneConsistency: 9.8,
-        visualOriginality: 9.9,
-        narrativeTension: 9.1
+        toneConsistency: 9.4,
+        visualOriginality: 9.5,
+        narrativeTension: 8.9
       },
-      limitations: "Sampled from the official 90-second proof of concept video.",
-      analyzedAt: "2026-08-28T10:15:00Z",
-      model: "gemini-3.7-flash"
+      limitations: "Analyzed from proof-of-concept animation clip and teaser materials.",
+      model: "gemini-2.5-pro",
+      analyzedAt: "2026-08-28T10:15:00Z"
     };
 
     const p1: Project = {
@@ -193,8 +202,8 @@ class InMemoryStore {
         originalUrl: "https://teamto.com/projects/junichiro-jackson",
         medium: "proof_of_concept",
         currentStage: "concept",
-        logline: "In a neon-drenched retro-future Chicago, an easygoing courier must clear his name when a mysterious cybernetic package makes him the target of three rival syndicates.",
-        creators: ["Chaz Bottoms", "CBC Studios", "TeamTO"]
+        logline: "In a neon-drenched near-future Brooklyn, high school junior Junichiro must navigate supernatural challenges while balancing everyday ambitions.",
+        creators: ["Chaz Bottoms", "CBC Studios", "TeamTO", "Martian Blueberry"]
       },
       publishedCardId: c1Id,
       publicationStatus: "published",
@@ -910,7 +919,10 @@ class InMemoryStore {
         logline: "An eccentric human becomes entangled in the darkly comedic, high-stakes rivalry between two theatrical vampire aristocrats.",
         coreHook: "High-octane musical numbers combined with fluid expressive 2D animation and gothic romance satire.",
         comparativeTitles: ["Hazbin Hotel", "Helluva Boss", "Castlevania", "The Nightmare Before Christmas"],
-        primaryRisk: "The full episodic budget ($1.5M - $2.0M) requires strategic co-production without diluting creator ownership."
+        primaryRisk: "The full episodic budget ($1.5M - $2.0M) requires strategic co-production without diluting creator ownership.",
+        triageSummary: "Creator-owned gothic musical animation with verified $286k pilot crowdfunding and 100% creator IP retention by Daria Cohen. Full multi-episode season ($1.5M–$2.0M) requires studio co-production partner without diluting creator rights.",
+        materialUncertainty: "Co-production studio partner terms and full episodic series financing without IP dilution.",
+        nextDiligenceStep: "Review target co-production term sheet with creator representative and evaluate pilot animatics."
       },
       industryLens: {
         marketContext: "Explosive growth in direct-to-creator independent animation with high merchandise and music streaming monetization.",
@@ -1895,9 +1907,31 @@ export const dataRepo = {
       const db = getAdminFirestore();
       if (db) {
         await db.runTransaction(async (transaction) => {
+          const projRef = db.collection("projects").doc(projectId);
+          const projSnap = await transaction.get(projRef);
+          if (!projSnap.exists) {
+            throw new Error(`Project ${projectId} not found in Firestore`);
+          }
+          const projData = projSnap.data() as any;
+          if (projData?.publishedCardId) {
+            const cardSnap = await transaction.get(db.collection("scoutCards").doc(projData.publishedCardId));
+            const currentVer = cardSnap.data()?.version || 1;
+            if (currentVer !== expectedBaseVersion) {
+              throw new Error(
+                `Concurrency conflict: current card version is ${currentVer}, expected base was ${expectedBaseVersion}`
+              );
+            }
+          }
+          const receiptRef = db.collection("webhookReceipts").doc(receipt.webhookId);
+          const receiptSnap = await transaction.get(receiptRef);
+          if (receiptSnap.exists) {
+            // Already processed idempotently
+            return;
+          }
+
           transaction.set(db.collection("scoutCards").doc(newCard.id), cleanFirestoreObject(newCard));
           transaction.set(
-            db.collection("projects").doc(projectId),
+            projRef,
             cleanFirestoreObject({
               publishedCardId: newCard.id,
               audioStale: true,
@@ -1908,7 +1942,7 @@ export const dataRepo = {
           if (monitor) {
             transaction.set(db.collection("projectMonitors").doc(monitor.id), cleanFirestoreObject(monitor), { merge: true });
           }
-          transaction.set(db.collection("webhookReceipts").doc(receipt.webhookId), cleanFirestoreObject(receipt));
+          transaction.set(receiptRef, cleanFirestoreObject(receipt));
           if (livingUpdate) {
             const updateId = `update-${Date.now()}`;
             transaction.set(db.collection("projectLivingUpdates").doc(updateId), {

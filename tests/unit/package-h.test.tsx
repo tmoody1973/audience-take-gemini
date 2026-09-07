@@ -29,30 +29,30 @@ const dummyIndustryLens: ScoutCard["industryLens"] = {
 };
 
 describe("Package H: Release Gate Verification (EI-1, EI-2, EI-3, EI-4)", () => {
-  describe("Gate EI-3: Junichiro Jackson Evidence & Chicago Setting Reconciliation", () => {
-    it("resolves proj-junichiro via slug lookup and validates unified Chicago evidence ledger", async () => {
+  describe("Gate EI-3: Junichiro Jackson Evidence & Setting Reconciliation", () => {
+    it("resolves proj-junichiro via slug lookup and validates unified Brooklyn evidence ledger", async () => {
       const project = await dataRepo.getProjectById("junichiro-jackson");
       expect(project).toBeDefined();
       expect(project?.id).toBe("proj-junichiro");
       expect(project?.identity.title).toBe("Junichiro Jackson");
 
-      // Verify the logline and hook are grounded in Chicago, not Brooklyn
-      expect(project?.identity.logline).toContain("Chicago");
-      expect(project?.identity.logline).not.toContain("Brooklyn");
+      // Verify the logline and hook are grounded in Brooklyn per jjseries.com
+      expect(project?.identity.logline).toContain("Brooklyn");
+      expect(project?.identity.logline).not.toContain("Chicago");
 
       // Verify published scout card evidence ledger
       const card = await dataRepo.getScoutCardById("card-junichiro-v1");
       expect(card).toBeDefined();
-      expect(card?.whatWeKnow.join(" ")).toContain("Chicago hip-hop culture");
-      expect(card?.whatWeKnow.join(" ")).not.toContain("Brooklyn");
+      expect(card?.whatWeKnow.join(" ")).toContain("Brooklyn");
+      expect(card?.whatWeKnow.join(" ")).not.toContain("Chicago");
 
       // Verify supporting sources
       const evidence = card?.evidenceLedger || [];
       expect(evidence.length).toBeGreaterThanOrEqual(2);
       const variety = evidence.find((e: any) => e.publisher === "Variety");
       expect(variety).toBeDefined();
-      expect(variety?.excerpt).toContain("futuristic Chicago");
-      expect(variety?.excerpt).not.toContain("Brooklyn");
+      expect(variety?.excerpt).toContain("near-future Brooklyn");
+      expect(variety?.excerpt).not.toContain("Chicago");
     });
 
     it("dynamically renders verified partners and financing in Stage & Availability Audit", () => {

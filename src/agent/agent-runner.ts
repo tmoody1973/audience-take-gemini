@@ -559,18 +559,12 @@ Output MUST strictly adhere to the following JSON structure:
 
     const hasVerifiedPrimary = Boolean(ytMeta || (fetchedText && fetchedText.length > 50 && !fetchedText.startsWith("Nominated Project:")));
     const ytDesc = ytMeta?.description ? cleanTextExcerpt(ytMeta.description.slice(0, 2000), ytMeta.title, 2000, 10) : "";
-    const projectIdentityContext = [
-      project.identity?.title ? `Title: ${project.identity.title}` : null,
-      project.identity?.creators?.length ? `Creators: ${project.identity.creators.join(", ")}` : null,
-      project.identity?.medium ? `Medium: ${project.identity.medium}` : null,
-      project.identity?.logline ? `Premise: ${project.identity.logline}` : null,
-    ].filter(Boolean).join(". ");
 
     const primaryExcerpt = ytMeta
-      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}${projectIdentityContext ? ` Verified context: ${projectIdentityContext}` : ""}`
+      ? `Primary video asset: "${ytMeta.title}" (${run.sourceUrl}) by ${ytMeta.authorName || primaryHost}.${ytDesc ? ` Description: ${ytDesc}` : ""}`
       : fetchedText && !fetchedText.startsWith("Nominated Project:")
-        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}${projectIdentityContext ? ` Verified context: ${projectIdentityContext}` : ""}`
-        : `Nominated project URL: ${run.sourceUrl}.${projectIdentityContext ? ` Verified context: ${projectIdentityContext}` : ""}`;
+        ? `Primary source documentation (${primaryHost}): ${cleanTextExcerpt(fetchedText.slice(0, 2000), proposalData.projectTitle, 2000, 10)}`
+        : `Nominated project URL: ${run.sourceUrl}.`;
 
     const primaryEvidence = {
       id: "ev-source-primary",
@@ -594,6 +588,7 @@ Output MUST strictly adhere to the following JSON structure:
           excerpt: `Nominator context: "${project.nomination.reason}"`,
           verified: false,
           isNominatorLead: true,
+          origin: "nominator" as const,
           publishedAt: null,
           retrievedAt: new Date().toISOString(),
         }

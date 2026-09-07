@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
           audience: expectedAudience,
         });
         const payload = ticket.getPayload();
-        if (expectedServiceAccount && payload?.email && payload.email !== expectedServiceAccount) {
+        if (expectedServiceAccount && (!payload?.email || payload.email !== expectedServiceAccount)) {
           return NextResponse.json(
-            { ok: false, error: `Unauthorized worker service account: expected ${expectedServiceAccount}, got ${payload.email}` },
+            { ok: false, error: `Unauthorized worker service account: expected ${expectedServiceAccount}, got ${payload?.email || "none"}` },
             { status: 403 }
           );
         }

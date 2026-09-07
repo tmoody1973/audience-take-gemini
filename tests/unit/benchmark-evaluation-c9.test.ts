@@ -70,7 +70,7 @@ describe("Package C9: Benchmark Evaluation Engine", () => {
   });
 
   describe("Adversarial Defect & Hallucination Gatekeeper Checks", () => {
-    it("fails when a candidate hallucinates near-future Brooklyn for Junichiro Jackson", () => {
+    it("fails when a candidate hallucinates Chicago or incorrect setting for Junichiro Jackson", () => {
       const junichiroCase = dataset.cases.find((c) => c.id === "case-junichiro")!;
       const hallucinatedCandidate: EvaluatedCandidate = {
         caseId: "case-junichiro",
@@ -78,16 +78,16 @@ describe("Package C9: Benchmark Evaluation Engine", () => {
         resolvedCreators: ["Chaz Bottoms"],
         factualClaims: [
           {
-            claimText: "Set in a near-future Brooklyn cyber-dystopia.",
+            claimText: "Set in a futuristic Chicago cyber-dystopia.",
             isSupported: false,
           },
         ],
         identifiedUnknowns: [],
         handledConflicts: [
           {
-            targetLoreOrRumor: "Setting is near-future Brooklyn",
+            targetLoreOrRumor: "Setting is Chicago",
             action: "falsely_accepted",
-            explanation: "Accepted Brooklyn setting.",
+            explanation: "Accepted Chicago setting.",
           },
         ],
         citedSources: [

@@ -294,7 +294,8 @@ export async function POST(req: NextRequest) {
       publisher: c.publisher || "Parallel Monitor",
       claimType: "observation",
       excerpt: c.excerpt || c.title || "Monitor observation passage.",
-      verified: true,
+      verified: false,
+      origin: "parallel" as const,
       retrievedAt: now,
     }));
 

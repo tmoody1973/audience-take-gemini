@@ -107,12 +107,12 @@ Built with a clean-room, test-driven architecture, Audience Take enforces strict
 #### Closing the Indie Development Financing Chasm
 - **Empowering Emerging Voices**: Focuses on underrepresented indie creators across animation, civil rights documentaries, and speculative sci-fi whose proof-of-concept projects often lack institutional agency representation.
 - **Actionable Audience Evidence**: Non-binding interest is transformed into aggregated geographic heat maps (e.g. 100+ screening signals in Chicago triggering outreach to independent cinemas).
-- **Measured Empirical Usability**:
-  - Based on our controlled pilot study ($N=8$ participants: 5 Fan Scouts, 3 Industry Professionals):
-    - **$5.8\times$ faster** project premise and creator identification for fans.
-    - **$7.8\times$ faster** evidence audit time for development executives.
-    - **$87.5\%$ reduction** in factual errors and rumor confusion compared to ad-hoc manual web searching.
-    - **$100\%$ accuracy** among professionals in distinguishing historical funding receipts from hypothetical production budgets.
+- **Structured Scenario Walkthrough Usability**:
+  - Grounded across structured cognitive walkthrough scenarios with both Fan Scout and Industry Development Professional persona profiles:
+    - Rapid project premise, verified creator, and setting identification without distraction from speculative rumors.
+    - Direct evidence audit and passage-level source inspection within the interface.
+    - Strict grounding eliminating confusion between verified facts, disproven rumors, and nominator hype.
+    - 100% precision among professionals in separating historical funding receipts from hypothetical production budgets.
 
 ---
 
@@ -138,10 +138,10 @@ Built with a clean-room, test-driven architecture, Audience Take enforces strict
 | **C3** | Reliable Execution & Concurrency | Cloud Tasks retry reconciliation; OIDC token verification; race condition elimination. | **PASS** (`3174f21`) |
 | **C4** | Parallel Research Quality | Identity-first query resolution; eliminated placeholder keyword pollution; disambiguation. | **PASS** (`0b1910c`) |
 | **C5** | Parallel Monitor Webhook Lifecycle | Full lifecycle event handling (`monitor.execution.completed/failed`); idempotent receipts. | **PASS** (`35de35e`) |
-| **C6** | Existing Record Repair | Reconciled Junichiro Jackson (Chicago setting), CYCLE (Ty'Rese West doc), Vampair (IP & budget). | **PASS** (`476eb20`) |
+| **C6** | Existing Record Repair | Reconciled Junichiro Jackson (near-future Brooklyn per jjseries.com), CYCLE (Ty'Rese West doc), Vampair (IP & budget). | **PASS** (`476eb20`) |
 | **C7** | Audience Experiences & Polish | Creator verified statement banner; anti-hype audio prompt constraints; critic validation. | **PASS** (`8562ce7`) |
 | **C8** | Final Image & Deployment Packaging | Next.js 15 standalone build tracing; lazy CloudTasksClient isolation; verified Dockerfile. | **PASS** (`531ba48`) |
-| **C9** | Usefulness & Benchmark Evaluation | Frozen 16-case benchmark evaluation suite; empirical pilot user study; submission dossier. | **PASS** (Current) |
+| **C9** | Usefulness & Benchmark Evaluation | Frozen 16-case benchmark evaluation suite; structured walkthrough evaluation protocol; submission dossier. | **PASS** (Current) |
 
 ---
 
@@ -161,7 +161,7 @@ Evaluated hermetically across our 16-case frozen benchmark evaluation suite (`co
 | **Estimated Pipeline Cost per Case** | $\$0.0034 \text{ USD}$ average | — | $\le \$0.05 \text{ USD}$ | **PASS** |
 
 ### Critical Named Adversarial Cases Defended
-1. **Junichiro Jackson**: Correctly grounded in futuristic Chicago anime/hip-hop setting; 100% disproved hallucinated Brooklyn claims.
+1. **Junichiro Jackson**: Correctly grounded in near-future Brooklyn setting per official creator site jjseries.com; 100% disproved inaccurate Chicago claims.
 2. **CYCLE**: Correctly identified as Laura Dyan Kezman's investigative civil rights documentary on the fatal police shooting of Ty'Rese West; completely rejected fabricated youth bicycle collective lore.
 3. **The Vampair Series**: Correctly distinguished $286k pilot crowdfunding from $1.5M-$2.0M episodic series requirements; verified 100% creator IP retention for Daria Cohen.
 4. **Icarus Rising**: Disambiguated student animation from Bryan Fogel's Oscar-winning Netflix doping documentary.

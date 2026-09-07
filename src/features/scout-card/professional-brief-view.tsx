@@ -35,12 +35,21 @@ function formatDate(value: string | undefined | null): string {
 }
 
 function relationshipLabel(card: ScoutCard): string {
-  return {
-    unresolved: "Relationship unresolved",
-    source_aligned: "Aligned by public sources",
-    creator_confirmed: "Creator confirmed",
-    disputed: "Relationship disputed",
-  }[card.identity?.relationshipStatus ?? "unresolved"];
+  if (card.identity?.relationshipStatus) {
+    return {
+      unresolved: "Relationship unresolved",
+      source_aligned: "Aligned by public sources",
+      creator_confirmed: "Creator confirmed",
+      disputed: "Relationship disputed",
+    }[card.identity.relationshipStatus] || "Aligned by public sources";
+  }
+  if (card.claimStatus === "approved" || (card.claimStatus as string) === "verified") {
+    return "Creator confirmed";
+  }
+  if (card.creatorContext?.displayName) {
+    return "Aligned by public sources";
+  }
+  return "Relationship unresolved";
 }
 
 function UnknownPill() {
@@ -77,10 +86,16 @@ export function ProfessionalBriefView({
     ? card.sourceLedger.find((source) => source.id === card.primaryWorkSourceId)
     : undefined;
 
-  const triageSummary =
+  const rawTriage =
     card.decisionBrief?.triageSummary ||
     card.storyContext.summary ||
     "Independent creative work with distinctive voice requiring commercial triage.";
+
+  const triageSummary = useMemo(() => {
+    const words = rawTriage.split(/\s+/);
+    if (words.length <= 120) return rawTriage;
+    return words.slice(0, 115).join(" ") + "...";
+  }, [rawTriage]);
 
   const materialUncertainty =
     card.decisionBrief?.materialUncertainty ||
@@ -110,9 +125,13 @@ export function ProfessionalBriefView({
     ? card.sourceLedger.find((s) => s.id === partnerClaim.sourceIds[0])
     : undefined;
 
-  const distributionClaim = supportedClaims.find((c) =>
-    /\b(sundance|festival|selection|screening|annecy|broadcast|pbs|theatrical|distribution|award)\b/i.test(c.statement)
-  );
+  const distributionClaim = supportedClaims.find((c) => {
+    const s = c.statement.toLowerCase();
+    if (s.includes("oscar nomination") || s.includes("academy award") || s.includes("nominated for an oscar")) {
+      return false;
+    }
+    return /\b(sundance|festival selection|festival premiere|festival circuit|theatrical release|streaming premiere|broadcast premiere|screening tour|distribution deal|theatrical window|licensed to|acquired by|selected for|screened at)\b/i.test(s);
+  });
   const distributionSource = distributionClaim?.sourceIds?.[0]
     ? card.sourceLedger.find((s) => s.id === distributionClaim.sourceIds[0])
     : undefined;

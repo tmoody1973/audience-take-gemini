@@ -5,19 +5,19 @@ import fs from "node:fs";
 import path from "node:path";
 
 describe("Package C6: Existing Record Repair & Truthful Grounding", () => {
-  it("verifies Junichiro Jackson is grounded in Chicago with Chaz Bottoms and TeamTO", async () => {
+  it("verifies Junichiro Jackson is grounded in near-future Brooklyn with Chaz Bottoms and TeamTO", async () => {
     const project = await dataRepo.getProjectById("proj-junichiro");
     expect(project).toBeDefined();
     expect(project?.identity.title).toBe("Junichiro Jackson");
     expect(project?.identity.creators).toContain("Chaz Bottoms");
     expect(project?.identity.creators).toContain("TeamTO");
-    expect(project?.identity.logline?.toLowerCase()).toContain("chicago");
-    expect(project?.identity.logline?.toLowerCase()).not.toContain("brooklyn");
+    expect(project?.identity.logline?.toLowerCase()).toContain("brooklyn");
+    expect(project?.identity.logline?.toLowerCase()).not.toContain("chicago");
 
     const card = await dataRepo.getScoutCardById("card-junichiro-v1");
     expect(card).toBeDefined();
-    expect(card?.decisionBrief.logline.toLowerCase()).toContain("chicago");
-    expect(card?.decisionBrief.logline.toLowerCase()).not.toContain("brooklyn");
+    expect(card?.decisionBrief.logline.toLowerCase()).toContain("brooklyn");
+    expect(card?.decisionBrief.logline.toLowerCase()).not.toContain("chicago");
   });
 
   it("verifies CYCLE contains zero bicycle collective lore and is grounded in Laura Dyan Kezman's Ty'Rese West documentary", async () => {

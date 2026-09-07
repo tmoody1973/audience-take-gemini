@@ -12,17 +12,21 @@ export const FROZEN_BENCHMARK_CANDIDATES: EvaluatedCandidate[] = [
     factualClaims: [
       {
         claimText:
-          "Proof-of-concept animation directed by Chaz Bottoms (CBC Studios) in co-production with TeamTO.",
+          "Proof-of-concept animation directed by Chaz Bottoms (CBC Studios) in co-production with TeamTO and Martian Blueberry with music by Coast Contra.",
         isSupported: true,
         citationUrls: [
+          "https://www.jjseries.com/",
           "https://variety.com/2026/film/news/junichiro-jackson-chaz-bottoms-teamto",
         ],
       },
       {
         claimText:
-          "Set in an anime-inspired futuristic Chicago scored to Chicago hip-hop.",
+          "Set in near-future Brooklyn, following high school junior Junichiro navigating supernatural challenges.",
         isSupported: true,
-        citationUrls: ["https://teamto.com/projects/junichiro-jackson"],
+        citationUrls: [
+          "https://www.jjseries.com/",
+          "https://teamto.com/projects/junichiro-jackson"
+        ],
       },
       {
         claimText:
@@ -39,13 +43,18 @@ export const FROZEN_BENCHMARK_CANDIDATES: EvaluatedCandidate[] = [
     ],
     handledConflicts: [
       {
-        targetLoreOrRumor: "Setting is near-future Brooklyn",
+        targetLoreOrRumor: "Setting is Chicago",
         action: "disproved",
         explanation:
-          "Disproved hallucinated Brooklyn setting; confirmed anime-inspired futuristic Chicago setting.",
+          "Disproved incorrect Chicago setting; confirmed near-future Brooklyn setting per official series site.",
       },
     ],
     citedSources: [
+      {
+        url: "https://www.jjseries.com/",
+        isRelevant: true,
+        isWrongProject: false,
+      },
       {
         url: "https://variety.com/2026/film/news/junichiro-jackson-chaz-bottoms-teamto",
         isRelevant: true,

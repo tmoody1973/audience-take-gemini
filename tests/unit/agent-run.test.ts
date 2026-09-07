@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { dataRepo } from "@/services/firestore-repo";
 import { executeScoutResearchRun } from "@/agent/agent-runner";
+import { parallelClient } from "@/services/parallel-client";
 import type { Project, ResearchRunState } from "@/domain";
 
 describe("Autonomous Scout Research Agent Pipeline", () => {
@@ -8,6 +9,23 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
     const projectId = `proj-test-${Date.now()}`;
     const runId = `run-test-${Date.now()}`;
     const testUrl = "https://www.youtube.com/watch?v=s8G7425lfKs";
+
+    const searchSpy = vi.spyOn(parallelClient, "search").mockResolvedValue({
+      providerStatus: "succeeded",
+      search_id: "search_mock_agent_run",
+      results: [
+        {
+          url: "https://variety.com/article-indie-animation-jj",
+          title: "Chaz Bottoms and French studio TeamTO announce Junichiro Jackson",
+          excerpts: [
+            "Chaz Bottoms and French animation studio TeamTO are collaborating on an atmospheric neo-noir anime project titled Junichiro Jackson.",
+            "Set in near-future Brooklyn, the proof-of-concept animation teaser showcases high-velocity action and urban hip-hop beats.",
+          ],
+          publish_date: "2026-01-15",
+        },
+      ],
+      warnings: [],
+    });
 
     try {
       // 1. Create a nominated project
@@ -19,7 +37,7 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
           originalUrl: testUrl,
           medium: "proof_of_concept",
           currentStage: "concept",
-          logline: "An atmospheric neo-noir anime proof of concept set in futuristic Chicago.",
+          logline: "An atmospheric neo-noir anime proof of concept set in near-future Brooklyn.",
           creators: ["Chaz Bottoms", "TeamTO"],
         },
         publishedCardId: null,
@@ -81,6 +99,7 @@ describe("Autonomous Scout Research Agent Pipeline", () => {
         expect(card?.evidenceLedger.length).toBeGreaterThan(0);
       }
     } finally {
+      searchSpy.mockRestore();
       // Clean up test records
       try {
         const { getAdminFirestore } = await import("@/lib/firebase/admin");

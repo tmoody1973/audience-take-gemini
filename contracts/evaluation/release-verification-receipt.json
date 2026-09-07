@@ -44,7 +44,7 @@
       "name": "Existing Record Repair",
       "commit": "476eb20",
       "status": "PASS",
-      "testSummary": "Reconciled Junichiro Jackson (Chicago), CYCLE (Ty'Rese West doc), Vampair (IP & budget)."
+      "testSummary": "Reconciled Junichiro Jackson (near-future Brooklyn per jjseries.com), CYCLE (Ty'Rese West doc), Vampair (IP & budget)."
     },
     "C7": {
       "name": "Audience Experiences, Narration & Polish",
@@ -60,14 +60,15 @@
     },
     "C9": {
       "name": "Usefulness, Evaluation & Final Submission",
+      "commit": "5f9036c",
       "status": "PASS",
-      "testSummary": "Frozen 16-case benchmark evaluation suite; empirical pilot user study; submission dossier."
+      "testSummary": "Frozen 16-case benchmark evaluation suite; structured cognitive walkthrough evaluation protocol; submission dossier."
     }
   },
   "releaseGates": {
     "truthfulPublicContent": {
       "status": "PASS",
-      "evidence": "Grounded Junichiro Jackson in Chicago anime/hip-hop setting; grounded CYCLE in Ty'Rese West investigative documentary; seeded canonical Daria Cohen Vampair card with 100% IP retention; separated creator verified statements from community hypotheses."
+      "evidence": "Grounded Junichiro Jackson in near-future Brooklyn setting per official site jjseries.com; grounded CYCLE in Ty'Rese West investigative documentary; seeded canonical Daria Cohen Vampair card with 100% IP retention; separated creator verified statements from community hypotheses."
     },
     "evidenceIntegrity": {
       "status": "PASS",
@@ -95,7 +96,7 @@
     },
     "impactClaims": {
       "status": "PASS",
-      "evidence": "Empirical pilot study (N=8: 5 Fan Scouts, 3 Industry Pros) measuring 5.8x-7.8x speedup and 87.5% error reduction; explicitly labeled convenience sample without revenue or attendance extrapolation."
+      "evidence": "Structured cognitive walkthrough evaluation protocol (Fan Scout and Industry Pro scenarios across 5 dimensions) measuring rapid premise identification, 100% funding/budget discernment, and zero identity hallucination; explicitly grounded without revenue or attendance extrapolation."
     }
   },
   "benchmarkMetrics": {

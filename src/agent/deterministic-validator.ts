@@ -194,6 +194,15 @@ export function checkMediumConcordance(
   return { concordant: true };
 }
 
+export function isNominatorEvidence(ev: any): boolean {
+  if (!ev) return false;
+  if (ev.isNominatorLead === true) return true;
+  if (ev.origin === "nominator") return true;
+  if (typeof ev.id === "string" && (ev.id === "ev-nominator" || ev.id.startsWith("ev-nominator-") || ev.id.startsWith("ev-nominator"))) return true;
+  if (typeof ev.publisher === "string" && ev.publisher.trim().toLowerCase() === "nominator") return true;
+  return false;
+}
+
 export function checkHypeAndHallucinations(
   text: string,
   evidenceLedger?: EvidenceItem[]
@@ -213,7 +222,7 @@ export function checkHypeAndHallucinations(
       // Check if evidenceLedger has verified trade coverage supporting this buyer report without negation
       const isSourcedInEvidence = Boolean(
         evidenceLedger?.some((ev) => {
-          if (!ev.verified || (ev as any).isNominatorLead || ev.id === "ev-nominator" || ev.claimType === "unresolved") {
+          if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") {
             return false;
           }
           const passage = `${ev.title} ${ev.excerpt} ${ev.publisher}`.toLowerCase();
@@ -258,7 +267,7 @@ export function checkCitationCoverage(
 ): { sufficientCoverage: boolean; ungroundedClaims: string[]; groundedClaims: string[] } {
   // Exclude nominator leads and unresolved placeholders from ever grounding claims
   const nonNominatorEvidence = (evidenceLedger || []).filter(
-    (ev) => !(ev as any).isNominatorLead && ev.id !== "ev-nominator" && ev.claimType !== "unresolved"
+    (ev) => !isNominatorEvidence(ev) && ev.claimType !== "unresolved"
   );
 
   if (nonNominatorEvidence.length === 0) {
@@ -404,6 +413,8 @@ function sanitizeRawProposal(raw: any): any {
         supportingClaimIds: Array.isArray(item.supportingClaimIds)
           ? item.supportingClaimIds.map((c: any) => String(c)).slice(0, 20)
           : undefined,
+        isNominatorLead: item.isNominatorLead === true || isNominatorEvidence(item),
+        origin: (item.origin as any) || (isNominatorEvidence(item) ? "nominator" : undefined),
       });
     }
     clone.evidenceLedger = validItems;

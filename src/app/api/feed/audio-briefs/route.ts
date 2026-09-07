@@ -22,9 +22,9 @@ const FALLBACK_ITEMS: FeedItemData[] = [
     audioId: "card-junichiro-v1",
     pubDate: "Fri, 28 Aug 2026 10:15:00 GMT",
     description:
-      "In a neon-drenched retro-future Chicago, an easygoing courier must clear his name when a mysterious cybernetic package makes him the target of three rival syndicates. High-octane anime action scored to original boom-bap and trap beats with authentic Chicago voice acting.",
+      "In a neon-drenched near-future Brooklyn, an ambitious high school junior named Junichiro must navigate supernatural challenges while balancing everyday ambitions. High-octane anime action scored to original hip-hop by Coast Contra.",
     summary:
-      "High-octane anime action scored to original boom-bap and trap beats with authentic Chicago voice acting.",
+      "High-octane anime action scored to original hip-hop by Coast Contra set across a stylized near-future Brooklyn.",
     duration: 180,
   },
   {

@@ -5,7 +5,7 @@
   "projectId": "junichiro-jackson",
   "slug": "junichiro-jackson",
   "title": "Junichiro Jackson",
-  "hook": "A grief-haunted fighter and his partner cross a monster-ridden near-future Chicago.",
+  "hook": "A grief-haunted fighter and his partner cross a monster-ridden near-future Brooklyn.",
   "projectType": "series",
   "submissionLabel": "Fan nomination — unclaimed by creator",
   "claimStatus": "unclaimed",
@@ -27,11 +27,11 @@
     "accessibleFallback": "Open the submitted source on YouTube if the embedded player is unavailable."
   },
   "storyContext": {
-    "summary": "The submitted material presents a genre story centered on a fighter, his partner, and a dangerous near-future Chicago setting.",
-    "storyworld": "A near-future Chicago where supernatural danger intersects with action, grief, and a hip-hop-influenced visual identity.",
+    "summary": "The submitted material presents a genre story centered on a fighter, his partner, and a dangerous near-future Brooklyn setting.",
+    "storyworld": "A near-future Brooklyn where supernatural danger intersects with action, grief, and a hip-hop-influenced visual identity.",
     "themes": ["grief", "partnership", "survival"],
     "currentFormat": "Public concept video submitted for scouting",
-    "audienceHooks": ["creator-led animation", "supernatural action", "Chicago storyworld"],
+    "audienceHooks": ["creator-led animation", "supernatural action", "Brooklyn storyworld"],
     "claimIds": ["claim-project-world"]
   },
   "creatorContext": {
@@ -46,7 +46,7 @@
   "evidenceClaims": [
     {
       "id": "claim-project-world",
-      "statement": "The submitted material presents a near-future Chicago storyworld combining hip-hop, anime-influenced imagery, and supernatural horror.",
+      "statement": "The submitted material presents a near-future Brooklyn storyworld combining hip-hop, anime-influenced imagery, and supernatural horror.",
       "status": "qualified",
       "sourceIds": ["source-youtube-trailer"],
       "qualification": "This characterization is based on the submitted public video and should not be read as creator-approved positioning."
@@ -65,7 +65,7 @@
       "crossFormat": false,
       "crossFormatClaimIds": [],
       "audience": "Animation, manga, hip-hop, and psychological-horror audiences",
-      "rationale": "A serialized format could test whether the Chicago storyworld and recurring relationships can sustain episodic development.",
+      "rationale": "A serialized format could test whether the Brooklyn storyworld and recurring relationships can sustain episodic development.",
       "supportingClaimIds": ["claim-project-world"],
       "comparableSourceIds": [],
       "strengths": ["The submitted material presents a distinctive cultural and genre combination."],

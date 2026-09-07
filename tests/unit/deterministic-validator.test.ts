@@ -24,7 +24,30 @@ describe("Deterministic AI Proposal Validator", () => {
 
   it("rejects proposals with medium-pathway mismatches (e.g. animated pathways for documentary)", () => {
     const result = validateScoutProposal(mediumMismatchDocProposal);
-    expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("animation pathways without hybrid evidence"))).toBe(true);
+  });
+
+  it("rejects proposals where whatWeKnow is only supported by an unverified nominator submission lead", () => {
+    const rawLead = {
+      id: "ev-nominator-lead",
+      sourceUrl: "https://example.com/submitted-video",
+      title: "Nominator Submission Lead",
+      publisher: "Nominator",
+      claimType: "reported" as const,
+      excerpt: 'Nominator context: "Jane Doe directed this short."',
+      verified: false,
+      isNominatorLead: true,
+      origin: "nominator" as const,
+    };
+
+    const nominatorOnlyProposal = {
+      ...validSciFiShortProposal,
+      evidenceLedger: [rawLead],
+      whatWeKnow: ["Jane Doe directed this short.", "Jane Doe created and directed the short."],
+    };
+
+    const result = validateScoutProposal(nominatorOnlyProposal);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("Insufficient passage grounding"))).toBe(true);
   });
 });

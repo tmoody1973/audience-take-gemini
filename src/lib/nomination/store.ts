@@ -318,9 +318,16 @@ export function createFirestoreNominationStore(database: Firestore): NominationS
           nominationId: d.nominationId || "",
           attempt: d.dispatch?.attempt || d.attempt || 1,
           dispatchState: (d.dispatch?.state as "pending" | "retryable_failed") || "pending",
-          failedAt: d.dispatch?.failedAt
-            ? new Date(d.dispatch.failedAt.toDate ? d.dispatch.failedAt.toDate() : d.dispatch.failedAt).toISOString()
-            : undefined,
+          failedAt: (() => {
+            if (!d.dispatch?.failedAt) return undefined;
+            try {
+              const raw = typeof d.dispatch.failedAt.toDate === "function" ? d.dispatch.failedAt.toDate() : d.dispatch.failedAt;
+              const dt = new Date(raw);
+              return isNaN(dt.getTime()) ? undefined : dt.toISOString();
+            } catch {
+              return undefined;
+            }
+          })(),
           sourceUrl: d.sourceUrl,
         };
       });

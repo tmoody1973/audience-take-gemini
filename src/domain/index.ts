@@ -59,6 +59,7 @@ export interface EvidenceItem {
   retrievedAt?: string;
   supportingClaimIds?: string[];
   isNominatorLead?: boolean;
+  origin?: "nominator" | "primary" | "parallel" | "community" | "creator";
 }
 
 export interface BoundedExperiment {

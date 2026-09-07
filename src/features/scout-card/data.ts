@@ -35,7 +35,7 @@ const pathwaySchema = z.object({
   strategyKind: z.enum(["development", "distribution", "audience", "financing", "education", "adaptation"]).optional(),
   proposedMedium: z.enum(["documentary", "live_action", "animation", "hybrid", "unknown"]).optional(),
   crossFormat: z.boolean().optional(), crossFormatClaimIds: stringList.optional(),
-  supportingClaimIds: stringList.min(1), comparableSourceIds: stringList, strengths: stringList.min(1), risks: stringList.min(1),
+  supportingClaimIds: stringList, comparableSourceIds: stringList, strengths: stringList.min(1), risks: stringList.min(1),
   openQuestions: stringList.min(1), confidence: z.enum(["low", "medium", "high"]), nextExperiment: nextExperimentSchema,
   prerequisites: stringList.optional(), owner: text.optional(), blockers: stringList.optional(),
 });
@@ -593,12 +593,6 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           if (claimTokens.some((tok) => pwTokens.includes(tok))) {
             pathwayClaimIds.push(claim.id);
           }
-        }
-        if (pathwayClaimIds.length === 0 && evidenceClaims[0]) {
-          pathwayClaimIds.push(evidenceClaims[0].id);
-        }
-        if (pathwayClaimIds.length === 0) {
-          pathwayClaimIds.push(`claim-pathway-${idx + 1}`);
         }
 
         const comparableSourceIds = findSupportingSourceIds(pw.title, sourceLedgerEntries);
