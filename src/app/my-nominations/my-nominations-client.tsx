@@ -19,7 +19,7 @@ const DEMO_NOMINATIONS: UserNominationItem[] = [
     mediaUrl: "https://www.youtube.com/watch?v=M2djoKmnOTY",
     submissionType: "fan",
     whyItShouldGrow:
-      "A visionary blend of occult afro-surrealism, 90s boom-bap rhythm, and kinetic 2D animation set in near-future Brooklyn. Has massive breakout fandom potential.",
+      "A visionary blend of occult afro-surrealism, 90s boom-bap rhythm, and kinetic 2D animation set in near-future Chicago. Has massive breakout fandom potential.",
     suggestedFormat: "Serialized Adult Animated Series",
     audienceFit: "Adult Swim & Prime Video adult animation viewers, hip-hop culture fans",
     supportingUrls: [

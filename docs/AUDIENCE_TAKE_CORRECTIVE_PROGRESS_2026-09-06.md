@@ -102,4 +102,17 @@
   - `npx vitest run tests/unit/reliability-r*.test.ts tests/unit/evidence-integrity-c2.test.ts tests/unit/reliable-execution-c3.test.ts tests/unit/parallel-research-quality-c4.test.ts tests/unit/parallel-monitor-c5.test.ts`: **12 files passed, 71/71 tests passed**.
   - `npx tsc --noEmit`: **0 errors**.
 
-### C6 — Existing Record Repair: NEXT UP
+### C6 — Existing Record Repair: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. `contracts/c6-correction-manifest.json`: Created a dry-run correction manifest covering Junichiro Jackson, CYCLE, and The Vampair Series with verified source basis, proposed modifications, affected artifacts, and non-destructive rollback instructions.
+  2. Junichiro Jackson Grounding (`contracts/fixtures/junichiro-card.json`, `src/features/scout-card/fixtures/junichiro-card.json`, `contracts/fixtures/junichiro-card-fallback.json`, `contracts/fixtures/junichiro-nomination.json`, `src/app/my-nominations/my-nominations-client.tsx`): Reconciled all setting and storyworld references from hallucinated "near-future Brooklyn" to anime-inspired futuristic Chicago scored to Chicago hip-hop; retained creator attribution to Chaz Bottoms (CBC Studios) and co-producer TeamTO.
+  3. *CYCLE* Grounding (`src/services/firestore-repo.ts`): Replaced fabricated bicycle collective / youth mechanics lore with Laura Dyan Kezman's verified investigative documentary on the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, WI. Grounded in reporting from Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin, with civic town hall and public media screening pathways.
+  4. *The Vampair Series* Canonical Seed (`src/services/firestore-repo.ts`, `src/features/scout-card/data.ts`): Added canonical Project (`proj-vampair`) and Scout Card (`card-vampair-v1`) by creator Daria Cohen. Distinguished $286k pilot crowdfunding from the $1.5M–$2.0M full episodic series budget, and highlighted 100% creator IP retention. Added Vampair to `FALLBACK_RELATED_PROJECTS`.
+  5. Test Mock & Contract Sync (`src/app/api/webhooks/parallel/route.test.ts`, `src/lib/social/store.test.ts`): Fixed route.test.ts mock to support C5's `atomicPublishMonitorCardUpdate` returning updated project; synced `store.test.ts` with `socialCounterFields` containing `cities: "cityCounts"`.
+- **Verification Commands Executed**:
+  - `npx vitest run tests/unit/existing-records-c6.test.ts`: **5/5 tests passed**.
+  - `npx vitest run src/lib/social/store.test.ts src/app/api/webhooks/parallel/route.test.ts`: **2 files, 14/14 tests passed**.
+  - `npx vitest run tests/unit/`: **42 test suites passed, 207/208 tests passed (1 skipped)**.
+  - `npx tsc --noEmit`: **0 errors**.
+
+### C7 — Audience Experiences, Narration Truthfulness & Polish: NEXT UP

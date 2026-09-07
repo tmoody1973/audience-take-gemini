@@ -1,0 +1,56 @@
+{
+  "manifestVersion": "1.0.0",
+  "generatedAt": "2026-09-07T00:40:00.000Z",
+  "isDryRun": true,
+  "description": "Package C6: Dry-Run Correction Manifest for Public and Seeded Records",
+  "corrections": [
+    {
+      "projectId": "proj-junichiro",
+      "slug": "junichiro-jackson",
+      "targetRecord": "card-junichiro-v1",
+      "inaccurateField": "storyContext.storyworld, storyContext.hook, whatWeKnow",
+      "oldBasis": "Early unverified prompt output hallucinated 'near-future Brooklyn' as the setting.",
+      "newSourceBasis": "Variety announcement ('Chaz Bottoms Unveils Junichiro Jackson Proof of Concept') and TeamTO studio release confirm the setting is an anime-inspired futuristic Chicago scored to Chicago hip-hop.",
+      "proposedChange": "Reconcile all setting and storyworld references from Brooklyn to Chicago; retain creator attribution to Chaz Bottoms (CBC Studios) and co-producer TeamTO; clarify actual stage (pilot complete, seeking series financing) and linear vs SVOD development uncertainty.",
+      "dependentArtifacts": [
+        "contracts/fixtures/junichiro-card.json",
+        "src/features/scout-card/fixtures/junichiro-card.json",
+        "contracts/fixtures/junichiro-card-fallback.json",
+        "contracts/fixtures/junichiro-nomination.json",
+        "src/app/my-nominations/my-nominations-client.tsx",
+        "audio-brief-junichiro-v1"
+      ],
+      "rollbackMethod": "Revert card JSON fixtures to git commit 35de35e or update publishedCardId pointer in Firestore."
+    },
+    {
+      "projectId": "proj-cycle",
+      "slug": "cycle",
+      "targetRecord": "card-cycle-v1",
+      "inaccurateField": "identity.logline, whatWeKnow, decisionBrief, evidenceLedger",
+      "oldBasis": "Title-word association hallucinated a bicycle collective repairing discarded bicycles in Milwaukee.",
+      "newSourceBasis": "Verified reporting from Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin confirming CYCLE is a documentary directed by Laura Dyan Kezman (Lion Art Media) investigating the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin.",
+      "proposedChange": "Replace all bicycle collective summaries with verified documentary details: Director Laura Dyan Kezman, producers Vianca Fuster & Michelle Craig, subject Ty'Rese West, investigative police accountability focus, and community impact screening pathways.",
+      "dependentArtifacts": [
+        "src/services/firestore-repo.ts (proj-cycle, card-cycle-v1)",
+        "src/features/scout-card/data.ts (FALLBACK_RELATED_PROJECTS)",
+        "audio-brief-cycle-v1"
+      ],
+      "rollbackMethod": "Revert firestore-repo.ts seed records or bump card version to card-cycle-v2 with immutable historical preservation of v1."
+    },
+    {
+      "projectId": "proj-vampair",
+      "slug": "vampair",
+      "targetRecord": "card-vampair-v1",
+      "inaccurateField": "Missing canonical seed record in dataRepo; conflation of pilot crowdfunding with full series budget",
+      "oldBasis": "Vampair existed in YouTube comment analysis tests and client components, but had no canonical Scout Card in dataRepo.",
+      "newSourceBasis": "Kickstarter & Indiegogo campaigns ($286,000+ raised for 11-minute musical pilot) and Animation Magazine reporting on Daria Cohen's independent gothic musical series.",
+      "proposedChange": "Seed canonical Project ('proj-vampair') and Scout Card ('card-vampair-v1') with creator Daria Cohen; explicitly distinguish the $286k pilot campaign funding from the $1.5M - $2M full episodic series budget; verify 100% creator IP retention.",
+      "dependentArtifacts": [
+        "src/services/firestore-repo.ts",
+        "src/features/scout-card/data.ts (FALLBACK_RELATED_PROJECTS)",
+        "src/app/page.tsx"
+      ],
+      "rollbackMethod": "Remove p6/c6 from seedInitialData in firestore-repo.ts."
+    }
+  ]
+}

@@ -388,7 +388,7 @@ class InMemoryStore {
     };
 
     // ---------------------------------------------------------
-    // Project 3: CYCLE (Milwaukee Community & Cycling Documentary)
+    // Project 3: CYCLE (Investigative Documentary)
     // ---------------------------------------------------------
     const p3Id = "proj-cycle";
     const c3Id = "card-cycle-v1";
@@ -399,15 +399,15 @@ class InMemoryStore {
       version: 1,
       status: "published",
       whatWeKnow: [
-        "Feature documentary by Lion Art Media exploring Milwaukee's vibrant cycling culture, youth mechanics, and urban transformation.",
-        "Features local interviews broadcast and covered by PBS Wisconsin, WUWM 89.7, and Racine County Eye.",
-        "Captures grassroots bike co-ops repairing bicycles for underserved neighborhood youth."
+        "Feature documentary directed by Laura Dyan Kezman (Lion Art Media) with producers Vianca Fuster and Michelle Craig.",
+        "Investigates the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, and his family's pursuit of accountability.",
+        "Extensively reported and cited by Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin."
       ],
       whatWereChecking: [
         "Midwest regional film festival tour premiere dates (Milwaukee Film Festival, Beloit International Film Festival).",
-        "Public screening licensing for Midwest urban planning initiatives."
+        "Public screening licenses for Wisconsin civic impact and community justice forums."
       ],
-      whyScouted: "An uplifting, visually dynamic portrait of Midwestern community resilience built through two wheels and neighborhood solidarity.",
+      whyScouted: "A rigorous, empathetic investigative documentary centering family grief, systemic transparency, and community-led civil rights advocacy in southeastern Wisconsin.",
       sourceMedia: [
         {
           type: "youtube_embed",
@@ -420,64 +420,73 @@ class InMemoryStore {
         {
           id: "ev-cy-1",
           sourceUrl: "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
-          title: "WUWM 89.7: Milwaukee Cycling Culture Takes Center Stage in CYCLE",
+          title: "WUWM 89.7: Independent Documentary CYCLE Explores Justice and Accountability in Racine County",
           publisher: "WUWM Milwaukee NPR",
           claimType: "reported",
-          excerpt: "Lion Art Media showcases how local bicycle collectives are bridging neighborhood divides across Milwaukee.",
+          excerpt: "Director Laura Dyan Kezman and Lion Art Media chronicle the aftermath of Ty'Rese West's death and a community demanding systemic reform.",
+          verified: true
+        },
+        {
+          id: "ev-cy-2",
+          sourceUrl: "https://racinecountyeye.com/cycle-documentary-investigation",
+          title: "Racine County Eye: Investigative Documentary Examines Mount Pleasant Police Shooting",
+          publisher: "Racine County Eye",
+          claimType: "reported",
+          excerpt: "CYCLE brings extensive local investigative reporting into focus through the lived experience of the West family.",
           verified: true
         }
       ],
       pathways: [
         {
+          title: "Civic Impact & Community Hall Screenings",
+          mediumFitRationale: "Investigative social justice documentaries achieve deepest impact through community forums, civil rights symposiums, and university campus tours.",
+          targetAudience: "Community organizers, civil rights advocates, legal scholars, and affected families.",
+          risksAndUncertainties: ["Community outreach coordination and sensitive topic moderation."],
+          nextBoundedExperiment: {
+            name: "Wisconsin Civic Forum Screening Tour",
+            description: "Host 4 moderated community screenings across Racine, Kenosha, and Milwaukee with Q&A panels.",
+            successMetric: "Over 400 attendees across 4 community venues."
+          }
+        },
+        {
           title: "Regional Public Broadcast & PBS Feature",
-          mediumFitRationale: "Midwest public television networks have dedicated slots for regional nonfiction highlighting community renewal.",
-          targetAudience: "Midwest residents, urban cyclists, and public television subscribers.",
-          risksAndUncertainties: ["Navigating regional broadcast syndication carriage."],
+          mediumFitRationale: "Midwest public television networks have dedicated slots (PBS Wisconsin, POV) for rigorous regional investigative journalism.",
+          targetAudience: "Public television subscribers, investigative journalism supporters, and regional civic leaders.",
+          risksAndUncertainties: ["Navigating public broadcast programming standards and legal clearance."],
           nextBoundedExperiment: {
             name: "PBS Wisconsin Programming Submission",
             description: "Submit 58-minute broadcast master to PBS Wisconsin acquisition panel.",
-            successMetric: "Midwest broadcast premiere slot confirmed."
+            successMetric: "Broadcast premiere slot confirmed with educational companion guide."
           }
         },
         {
-          title: "Civic Impact & Urban Planning Tour",
-          mediumFitRationale: "Screening at city hall planning summits, transit conferences, and community centers mobilizes bike infrastructure advocacy.",
-          targetAudience: "Urban planners, transit advocates, and community leaders.",
-          risksAndUncertainties: ["Coordination with municipal event schedules."],
+          title: "Arthouse & Regional Festival Circuit",
+          mediumFitRationale: "Premiering at Midwest festivals (Milwaukee Film Festival, Beloit) builds critical acclaim before national impact distribution.",
+          targetAudience: "Independent documentary cinephiles, festival programmers, and journalists.",
+          risksAndUncertainties: ["Festival submission timing and premiere exclusivity constraints."],
           nextBoundedExperiment: {
-            name: "Midwest Bike Summit Screening",
-            description: "Host keynote screening at annual regional bicycle advocacy conference.",
-            successMetric: "Over 300 advocacy leaders in attendance."
-          }
-        },
-        {
-          title: "Micro-Budget Nonfiction Arthouse Release",
-          mediumFitRationale: "Partnering with independent cinemas like Milwaukee's Oriental Theatre for event-driven community screenings.",
-          targetAudience: "Independent film enthusiasts and local cultural patrons.",
-          risksAndUncertainties: ["Local marketing reach and seat fill rates."],
-          nextBoundedExperiment: {
-            name: "Oriental Theatre 3-Night Premiere Run",
-            description: "Launch ticket pre-sales for 3 evening screening events.",
-            successMetric: "Sold out opening night auditorium."
+            name: "Milwaukee Film Festival Premiere Outreach",
+            description: "Submit rough cut to festival programmers for Cream City Cinema centerpiece consideration.",
+            successMetric: "Official festival selection."
           }
         }
       ],
       decisionBrief: {
-        logline: "In Milwaukee, a dedicated network of youth mechanics, urban riders, and community organizers rebuild discarded bicycles to heal neighborhood divides.",
-        coreHook: "Fast-paced urban cinematography paired with heartfelt personal transformations.",
-        comparativeTitles: ["Wudang", "Breaking Away", "Bikes vs Cars"],
-        primaryRisk: "Hyper-local focus requires broader universal themes for national reach."
+        logline: "An investigative documentary examining the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, centering his family's pursuit of accountability and systemic reform.",
+        coreHook: "Intimate family testimony paired with rigorous investigative reporting and community-led accountability.",
+        comparativeTitles: ["13th", "Strong Island", "3 1/2 Minutes, Ten Bullets"],
+        primaryRisk: "Sensitive real-world legal subject matter requires rigorous factual verification and institutional legal review."
       },
       industryLens: {
-        marketContext: "Growing interest in hyper-local community documentary with strong regional corporate sponsorship potential.",
-        comparables: ["Bikes vs Cars", "Pedal the World"],
-        realisticConstraints: "Sponsorship from cycling manufacturers and regional civic foundations offsets production costs."
+        marketContext: "Sustained national relevance for localized investigative nonfiction; philanthropic grant funding potential from documentary funds (Field of Vision, Sundance Impact).",
+        comparables: ["Strong Island (Netflix / Yance Ford)", "The Sentence (HBO / Rudy Valdez)"],
+        realisticConstraints: "Impact distribution model combined with public media licensing provides sustainable pathway without relying on commercial theatrical box office."
       },
       trailerCriticId: null,
       versionProvenance: {
         generatedAt: "2026-08-28T10:00:00Z",
         model: "gemini-2.5-pro",
-        changeReason: "Stage 5 documentary pathway recovery applied"
+        changeReason: "Stage 5 documentary pathway recovery applied; verified reporting basis updated"
       }
     };
 
@@ -485,12 +494,12 @@ class InMemoryStore {
       id: p3Id,
       identity: {
         title: "CYCLE",
-        normalizedUrl: "https://lionart.media/cycle/Trailer",
-        originalUrl: "https://lionart.media/cycle/Trailer",
+        normalizedUrl: "https://lionart.media/cycle",
+        originalUrl: "https://lionart.media/cycle",
         medium: "documentary",
         currentStage: "production",
-        logline: "In Milwaukee, a dedicated network of youth mechanics and urban riders rebuild discarded bicycles to heal neighborhood divides.",
-        creators: ["Lion Art Media", "Milwaukee Bike Collective"]
+        logline: "An investigative documentary examining the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, centering his family's pursuit of accountability and systemic reform.",
+        creators: ["Laura Dyan Kezman", "Lion Art Media", "Vianca Fuster", "Michelle Craig"]
       },
       publishedCardId: c3Id,
       publicationStatus: "published",
@@ -498,8 +507,8 @@ class InMemoryStore {
       nomination: {
         submittedByUid: "user-fan-103",
         nominatorRole: "fan",
-        reason: "Filmed right here in Milwaukee! The stories of these youth building their own bikes will make you cry and cheer.",
-        initialLinks: ["https://lionart.media/cycle/Trailer", "https://youtube.com/watch?v=k8bM9qaPXLU"],
+        reason: "Laura Dyan Kezman and Lion Art Media are telling Ty'Rese West's story with profound care, rigorous reporting, and deep respect for the family.",
+        initialLinks: ["https://lionart.media/cycle", "https://youtube.com/watch?v=k8bM9qaPXLU"],
         createdAt: "2026-08-28T09:50:00Z"
       },
       creatorClaim: {
@@ -511,7 +520,7 @@ class InMemoryStore {
         cityDemandCount: 160,
         backCount: 142,
         pathwayVotes: [210, 120, 85],
-        cities: { "Milwaukee": 110, "Madison": 28, "Chicago": 22 }
+        cities: { "Milwaukee": 110, "Racine": 45, "Madison": 28, "Chicago": 22 }
       },
       createdAt: "2026-08-28T09:50:00Z",
       updatedAt: "2026-08-28T10:25:00Z"
@@ -813,6 +822,145 @@ class InMemoryStore {
       updatedAt: "2026-08-28T10:30:00Z"
     };
 
+    // ---------------------------------------------------------
+    // Project 6: The Vampair Series (Indie Animated Musical)
+    // ---------------------------------------------------------
+    const p6Id = "proj-vampair";
+    const c6Id = "card-vampair-v1";
+
+    const p6Card: ScoutCard = {
+      id: c6Id,
+      projectId: p6Id,
+      version: 1,
+      status: "published",
+      whatWeKnow: [
+        "Independent gothic animated musical franchise created, directed, and designed by Daria Cohen.",
+        "Successfully raised over $286,000 across Kickstarter and Indiegogo specifically to finance the 11-minute musical pilot episode.",
+        "Daria Cohen retains 100% intellectual property ownership and creative control across all narrative and musical assets."
+      ],
+      whatWereChecking: [
+        "Co-production studio partnership model for the full $1.5M - $2.0M multi-episode episodic series budget.",
+        "Original voice cast contracts and musical soundtrack distribution agreements."
+      ],
+      whyScouted: "A powerhouse creator-owned gothic animated musical with proven grassroots crowdfunding validation ($286k pilot) and an intensely dedicated global fanbase.",
+      sourceMedia: [
+        {
+          type: "youtube_embed",
+          url: "https://www.youtube.com/watch?v=qPq8E4LdCqE",
+          verified: true,
+          caption: "The Vampair Series — Official Pilot Teaser"
+        }
+      ],
+      evidenceLedger: [
+        {
+          id: "ev-va-1",
+          sourceUrl: "https://www.kickstarter.com/projects/dariacohen/the-vampair-series-pilot",
+          title: "Kickstarter: The Vampair Series — Official 11-Minute Musical Pilot",
+          publisher: "Kickstarter",
+          claimType: "observation",
+          excerpt: "$286,400 raised from 4,100+ backers to fully fund the independent animated pilot episode.",
+          verified: true
+        },
+        {
+          id: "ev-va-2",
+          sourceUrl: "https://www.animationmagazine.net/2025/daria-cohen-vampair-breakout",
+          title: "Animation Magazine: Indie Animator Daria Cohen Explores New Frontiers in Gothic Musicals",
+          publisher: "Animation Magazine",
+          claimType: "reported",
+          excerpt: "Daria Cohen's viral animated shorts transition into an ambitious episodic narrative while maintaining 100% creator IP retention.",
+          verified: true
+        }
+      ],
+      pathways: [
+        {
+          title: "Creator-Owned Studio Co-Production",
+          mediumFitRationale: "Partnering with specialized independent animation studios (e.g., Glitch, SpindleHorse) allows scaling to full episodic quality while retaining IP ownership.",
+          targetAudience: "Global indie animation enthusiasts, gothic subculture fans, and musical theatre lovers.",
+          risksAndUncertainties: ["Negotiating co-production terms that preserve creator final cut and merchandise rights."],
+          nextBoundedExperiment: {
+            name: "Studio Co-Production Pitch Deck Review",
+            description: "Present episodic production schedule and pilot metrics to 3 target independent animation studios.",
+            successMetric: "At least 1 formal co-production term sheet with creator IP retention."
+          }
+        },
+        {
+          title: "Direct-to-Consumer Episodic Subscription (Patreon / BackerKit)",
+          mediumFitRationale: "With an existing 4,000+ crowdfunder base, a dedicated creator subscription model can sustain episode-by-episode production autonomously.",
+          targetAudience: "Die-hard community supporters and animation art collectors.",
+          risksAndUncertainties: ["Maintaining steady episode delivery intervals to prevent backer churn."],
+          nextBoundedExperiment: {
+            name: "Episodic Backer Tier Conversion Test",
+            description: "Launch recurring patron tiers offering behind-the-scenes animatics and voice-acting commentary.",
+            successMetric: "Reach $25,000/month recurring production commitments."
+          }
+        },
+        {
+          title: "Non-Exclusive SVOD Windowing",
+          mediumFitRationale: "Releasing episodes first on YouTube for community reach, followed by curated high-definition streaming platforms.",
+          targetAudience: "Streaming audiences looking for adult animation beyond traditional broadcast comedy.",
+          risksAndUncertainties: ["Platform windowing exclusivity conflicts."],
+          nextBoundedExperiment: {
+            name: "Digital Festival Premiere Package",
+            description: "Submit completed pilot to Annecy MIFA and Ottawa International Animation Festival.",
+            successMetric: "Festival selection in indie episodic showcase category."
+          }
+        }
+      ],
+      decisionBrief: {
+        logline: "An eccentric human becomes entangled in the darkly comedic, high-stakes rivalry between two theatrical vampire aristocrats.",
+        coreHook: "High-octane musical numbers combined with fluid expressive 2D animation and gothic romance satire.",
+        comparativeTitles: ["Hazbin Hotel", "Helluva Boss", "Castlevania", "The Nightmare Before Christmas"],
+        primaryRisk: "The full episodic budget ($1.5M - $2.0M) requires strategic co-production without diluting creator ownership."
+      },
+      industryLens: {
+        marketContext: "Explosive growth in direct-to-creator independent animation with high merchandise and music streaming monetization.",
+        comparables: ["Hazbin Hotel ($2M pilot to Amazon series)", "Lackadaisy ($2M BackerKit campaign)"],
+        realisticConstraints: "Pilot was funded at $286k; full series will require phased milestone financing or an indie studio co-production partner."
+      },
+      trailerCriticId: null,
+      versionProvenance: {
+        generatedAt: "2026-08-28T10:30:00Z",
+        model: "gemini-2.5-pro",
+        changeReason: "Initial Scout Card publication with verified funding and IP structure"
+      }
+    };
+
+    const p6: Project = {
+      id: p6Id,
+      identity: {
+        title: "The Vampair Series",
+        normalizedUrl: "https://youtube.com/c/DariaCohen",
+        originalUrl: "https://youtube.com/c/DariaCohen",
+        medium: "series",
+        currentStage: "crowdfunding",
+        logline: "An eccentric human becomes entangled in the darkly comedic, high-stakes rivalry between two theatrical vampire aristocrats.",
+        creators: ["Daria Cohen"]
+      },
+      publishedCardId: c6Id,
+      publicationStatus: "published",
+      latestCardVersionId: c6Id,
+      nomination: {
+        submittedByUid: "user-fan-301",
+        nominatorRole: "fan",
+        reason: "Daria Cohen's Vampair musical animation has over 100 million views on YouTube and raised $286k for the pilot. It represents the future of independent creator-owned animation.",
+        initialLinks: ["https://youtube.com/c/DariaCohen", "https://kickstarter.com/projects/dariacohen/the-vampair-series-pilot"],
+        createdAt: "2026-08-28T10:00:00Z"
+      },
+      creatorClaim: {
+        status: "unclaimed"
+      },
+      metrics: {
+        watchCount: 520,
+        payCount: 240,
+        cityDemandCount: 180,
+        backCount: 215,
+        pathwayVotes: [310, 180, 110],
+        cities: { "Los Angeles": 65, "New York": 52, "London": 34, "Toronto": 28 }
+      },
+      createdAt: "2026-08-28T10:00:00Z",
+      updatedAt: "2026-08-28T10:45:00Z"
+    };
+
     // Store All Projects
     this.projects.set(p1Id, p1);
     this.scoutCards.set(c1Id, p1Card);
@@ -831,6 +979,9 @@ class InMemoryStore {
 
     this.projects.set(p5Id, p5);
     this.scoutCards.set(c5Id, p5Card);
+
+    this.projects.set(p6Id, p6);
+    this.scoutCards.set(c6Id, p6Card);
   }
 }
 

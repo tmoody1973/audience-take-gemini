@@ -864,6 +864,14 @@ export const FALLBACK_RELATED_PROJECTS: RelatedScoutProject[] = [
     sharedThemes: ["investigative", "justice", "community resilience"],
     thumbnailUrl: "https://img.youtube.com/vi/k8bM9qaPXLU/hqdefault.jpg",
   },
+  {
+    slug: "vampair",
+    title: "The Vampair Series",
+    hook: "An indie animated gothic musical following a human drawn into the surreal, intoxicating orbit of two warring vampire lords.",
+    projectType: "series",
+    sharedThemes: ["gothic animation", "musical", "dark comedy"],
+    thumbnailUrl: "https://img.youtube.com/vi/qPq8E4LdCqE/hqdefault.jpg",
+  },
 ];
 
 export async function getRelatedScoutProjects(currentCard: ScoutCard): Promise<RelatedScoutProject[]> {

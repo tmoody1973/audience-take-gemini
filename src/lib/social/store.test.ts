@@ -52,6 +52,7 @@ describe("native social contracts", () => {
       votes: "pathwayVoteCounts",
       takes: "takeCount",
       replies: "replyCount",
+      cities: "cityCounts",
     });
     expect(socialCounterFields(true)).toEqual({
       follower: "demoFollowerCount",
@@ -59,6 +60,7 @@ describe("native social contracts", () => {
       votes: "demoPathwayVoteCounts",
       takes: "demoTakeCount",
       replies: "demoReplyCount",
+      cities: "demoCityCounts",
     });
   });
 });

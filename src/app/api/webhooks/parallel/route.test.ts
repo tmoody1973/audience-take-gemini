@@ -97,6 +97,11 @@ vi.mock("@/services/firestore-repo", () => ({
     saveProjectMonitor: vi.fn(),
     recordWebhookReceipt: vi.fn(),
     hasWebhookReceipt: vi.fn(),
+    atomicPublishMonitorCardUpdate: vi.fn().mockImplementation(async ({ newCard }) => ({
+      ok: true,
+      newCardVersion: newCard.version,
+      project: { ...mockProject, publishedCardId: newCard.id, updatedAt: "2026-08-15T12:00:00Z" },
+    })),
   },
 }));
 
@@ -154,13 +159,16 @@ describe("Parallel Webhook Handler (POST /api/webhooks/parallel)", () => {
     expect(body.projectId).toBe("proj-parallel-hook");
     expect(body.cardVersion).toBe(2);
 
-    expect(dataRepo.publishScoutCard).toHaveBeenCalledWith(
+    expect(dataRepo.atomicPublishMonitorCardUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "card-proj-parallel-hook-v2",
-        version: 2,
+        projectId: "proj-parallel-hook",
+        expectedBaseVersion: 1,
+        newCard: expect.objectContaining({
+          id: "card-proj-parallel-hook-v2",
+          version: 2,
+        }),
       })
     );
-    expect(dataRepo.createProject).toHaveBeenCalled();
   });
 
   it("enforces HMAC signature verification when PARALLEL_WEBHOOK_SECRET is set", async () => {
