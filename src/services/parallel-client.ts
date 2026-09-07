@@ -93,11 +93,24 @@ export class ParallelSearchClient {
     }
 
     const cleanObjective = (options.objective || "Research screen project").slice(0, 800);
-    const rawQueries = options.search_queries || [];
-    const uniqueQueries = [...new Set(rawQueries.map((q) => q.trim()).filter((q) => q.length >= 2 && q.length <= 120))];
+    const sanitizeQuery = (q: string): string =>
+      q.replace(/project under research/gi, "")
+       .replace(/investigating/gi, "")
+       .replace(/\s+/g, " ")
+       .trim();
 
-    if (uniqueQueries.length < 2) {
-      uniqueQueries.push(`${cleanObjective.slice(0, 60)} film series`);
+    const rawQueries = options.search_queries || [];
+    const uniqueQueries = [
+      ...new Set(
+        rawQueries
+          .map(sanitizeQuery)
+          .filter((q) => q.length >= 2 && q.length <= 120)
+      ),
+    ];
+
+    if (uniqueQueries.length === 0) {
+      const fallbackTerm = sanitizeQuery(cleanObjective).slice(0, 60);
+      uniqueQueries.push(fallbackTerm.length >= 3 ? fallbackTerm : "independent screen storytelling official");
     }
     const search_queries = uniqueQueries.slice(0, 3);
 

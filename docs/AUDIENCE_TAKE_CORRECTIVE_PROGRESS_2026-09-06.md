@@ -14,7 +14,7 @@
 | **C1** | Truthful Surfaces | Eliminate fake city fallback, auto-outreach claims, false confidentiality | COMPLETED | Local & Staged |
 | **C2** | Evidence & Publication Integrity | Provenance separation (nominator vs source), negation handling, full-surface gates | COMPLETED | Local & Adversarial |
 | **C3** | Reliable Execution | Unexpired lease ownership, stale-worker defense, durable dispatch recovery | COMPLETED | Local & Firestore Emulator |
-| **C4** | Parallel Research Quality | Identity-first resolution, eliminate placeholder queries, bounded receipts | PENDING | Local & Parallel Provider |
+| **C4** | Parallel Research Quality | Identity-first resolution, eliminate placeholder queries, bounded receipts | COMPLETED | Local & Parallel Provider |
 | **C5** | Parallel Monitor Repair | Lifecycle event alignment, HMAC signature, deduplication, versioned updates | PENDING | Local & Provider Webhook |
 | **C6** | Existing Record Repair | Correction manifest for Junichiro, Vampair, CYCLE; reversible versioning | PENDING | Local & Production Dry-Run |
 | **C7** | Purposeful Product Experience | Separated Fan/Pro journeys, grounded audio narration, responsive/a11y check | PENDING | Local & Chrome DevTools |
@@ -80,8 +80,14 @@
   5. `src/lib/nomination/store.ts` & `src/lib/nomination/reconciler.ts`: Added `getPendingOrRetryableRuns`, `markTerminalDispatchFailure`, and `recordDispatchRetry` to `NominationStore`. Implemented `reconcilePendingDispatches` to boundedly recover `retryable_failed` nomination intents up to `maxAttempts` (default 3), transitioning to `dispatched` on success or `failed_terminal` with `retryEligible: false` upon retry exhaustion.
   6. `src/app/tasks/research/route.ts` & `src/app/tasks/trailer-critic/route.ts`: Enforced OIDC token verification whenever `AGENT_SERVICE_AUDIENCE` is configured or in production, and validated `CLOUD_TASKS_SERVICE_ACCOUNT` identity when specified.
   7. `src/app/api/agent/run/route.ts`: Routed user retries through the Cloud Tasks dispatcher when configured, preventing long synchronous work on web requests.
+### C4 — Parallel Research Quality & Identity-First Resolution: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. `src/agent/agent-runner.ts`: Nominations initialize `project.identity.title` as `"Project under research"`. In Step 2, queries previously checked only `!startsWith("investigating")`, causing `"Project under research"` to be sent as literal search terms (e.g. `"Project under research development financing production budget"`). Implemented `isPlaceholderTitle()` and identity-first title resolution using clean YouTube titles, URL path slugs, and creator hints. If title is unresolved, objectives and queries are framed specifically around identity and disambiguation without placeholder terms.
+  2. `src/services/parallel-client.ts`: When fewer than 2 queries were provided, `parallel-client.ts` previously concatenated `${cleanObjective} film series` to the queries, polluting searches with raw prompt instructions. Removed artificial concatenation and added query sanitization to strip placeholder tokens.
+  3. `src/agent/question-ledger.ts`: In `planNextResearchStep`, sanitized `projectTitle` so placeholder text never enters follow-up queries or objectives.
 - **Verification Commands Executed**:
-  - `npx vitest run tests/unit/reliable-execution-c3.test.ts`: **7/7 tests passed**.
-  - `tests/unit/reliability-r*.test.ts`: **8 files passed, 43/43 tests passed**.
+  - `npx vitest run tests/unit/parallel-research-quality-c4.test.ts`: **5/5 tests passed**.
+  - `npx vitest run tests/unit/reliable-execution-c3.test.ts tests/unit/parallel-research-quality-c4.test.ts tests/unit/reliability-r*.test.ts`: **10 files passed, 55/55 tests passed**.
   - `npx tsc --noEmit`: **0 errors**.
+
 

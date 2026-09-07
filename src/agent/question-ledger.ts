@@ -193,15 +193,26 @@ export function planNextResearchStep(
     return { shouldSearch: false };
   }
 
+  const cleanTitle =
+    projectTitle &&
+    !projectTitle.toLowerCase().includes("project under research") &&
+    !projectTitle.toLowerCase().startsWith("investigating") &&
+    !projectTitle.toLowerCase().includes("unknown") &&
+    !projectTitle.toLowerCase().includes("untitled")
+      ? projectTitle.trim()
+      : "";
+
+  const titlePrefix = cleanTitle ? `"${cleanTitle}" ` : "";
+
   // Priority 1: Unresolved Rights (especially if festival selection is known but rights are unconfirmed)
   if (ledger.rights.status === "unknown") {
     return {
       shouldSearch: true,
       targetQuestion: "rights",
-      objective: `Investigate underlying rights, chain-of-title, sales agent, or commercial distribution for "${projectTitle}"`,
+      objective: `Investigate underlying rights, chain-of-title, sales agent, or commercial distribution${cleanTitle ? ` for "${cleanTitle}"` : ""}`,
       queries: [
-        `${projectTitle} distribution rights worldwide sales agent acquisition`,
-        `${projectTitle} chain of title rights unencumbered`,
+        `${titlePrefix}distribution rights worldwide sales agent acquisition`.trim(),
+        `${titlePrefix}chain of title rights unencumbered`.trim(),
       ],
     };
   }
@@ -211,10 +222,10 @@ export function planNextResearchStep(
     return {
       shouldSearch: true,
       targetQuestion: "financing",
-      objective: `Investigate financing partners, production grants, or budget backing for "${projectTitle}"`,
+      objective: `Investigate financing partners, production grants, or budget backing${cleanTitle ? ` for "${cleanTitle}"` : ""}`,
       queries: [
-        `${projectTitle} financing budget grant funding`,
-        `${projectTitle} co-production partners investor`,
+        `${titlePrefix}financing budget grant funding`.trim(),
+        `${titlePrefix}co-production partners investor`.trim(),
       ],
     };
   }
@@ -224,9 +235,9 @@ export function planNextResearchStep(
     return {
       shouldSearch: true,
       targetQuestion: "attached_organizations",
-      objective: `Investigate production company and studio attachments for "${projectTitle}"`,
+      objective: `Investigate production company and studio attachments${cleanTitle ? ` for "${cleanTitle}"` : ""}`,
       queries: [
-        `${projectTitle} production company studio producers`,
+        `${titlePrefix}production company studio producers`.trim(),
       ],
     };
   }

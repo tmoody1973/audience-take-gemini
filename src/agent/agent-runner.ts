@@ -160,29 +160,77 @@ export async function executeScoutResearchRun(
 
     await logStep("fetching", `Invoking Parallel Search API for real-time web discovery and trade citations...`, 40, "in_progress");
 
-    const cleanNominatedTitle = project.identity.title && !project.identity.title.toLowerCase().startsWith("investigating")
-      ? project.identity.title.trim()
-      : null;
-    const cleanYtTitle = ytMeta?.title
-      ? ytMeta.title.replace(/\s*[-:|]\s*(official\s*)?(trailer|teaser|pilot|clip|promo|video).*$/i, "").replace(/\s+in:\s+.*$/i, "").replace(/[\(\)\[\]]/g, " ").trim()
-      : null;
-    const dynamicProjectTitle = cleanNominatedTitle || cleanYtTitle || project.nomination.reason.slice(0, 60);
+    // Identity-first title resolution: Never allow placeholders to become research terms
+    const isPlaceholder = (t?: string | null): boolean => {
+      if (!t) return true;
+      const lower = t.trim().toLowerCase();
+      return (
+        !lower ||
+        lower === "project under research" ||
+        lower.startsWith("project under research") ||
+        lower.startsWith("investigating") ||
+        lower === "untitled" ||
+        lower === "unknown" ||
+        lower === "unknown title" ||
+        lower === "pending research"
+      );
+    };
+
+    let resolvedTitle: string | null = null;
+    if (!isPlaceholder(project.identity?.title)) {
+      resolvedTitle = project.identity.title.trim();
+    } else if (ytMeta?.title) {
+      resolvedTitle = ytMeta.title
+        .replace(/\s*[-:|]\s*(official\s*)?(trailer|teaser|pilot|clip|promo|video|episode|part\s*\d+).*$/i, "")
+        .replace(/\s+in:\s+.*$/i, "")
+        .replace(/[\(\)\[\]]/g, " ")
+        .trim();
+    }
+
+    // If still unresolved, attempt slug extraction from nomination source URL
+    if (isPlaceholder(resolvedTitle)) {
+      try {
+        const u = new URL(run.sourceUrl);
+        const pathSegments = u.pathname.split("/").filter(Boolean);
+        if (pathSegments.length > 0) {
+          const last = pathSegments[pathSegments.length - 1];
+          const cleanSlug = last.replace(/\.[a-z0-9]+$/i, "").replace(/^proj-/, "").replace(/[-_]/g, " ").trim();
+          if (cleanSlug.length >= 3 && !/^\d+$/.test(cleanSlug)) {
+            resolvedTitle = cleanSlug.charAt(0).toUpperCase() + cleanSlug.slice(1);
+          }
+        }
+      } catch {}
+    }
+
+    const dynamicProjectTitle = !isPlaceholder(resolvedTitle) ? resolvedTitle! : "";
+    const creatorHint = project.identity?.creators?.[0] || ytMeta?.authorName || "";
 
     // Round 1: Targeted queries on development stage, financing, production partners, rights & reception
     searchRequestsCount += 1;
+    const search_queries = dynamicProjectTitle
+      ? [
+          `${dynamicProjectTitle} ${creatorHint ? creatorHint + " " : ""}development financing production budget`.trim(),
+          `${dynamicProjectTitle} production company festival distribution rights`.trim(),
+          `${dynamicProjectTitle} reviews reception festival premiere`.trim(),
+        ]
+      : [
+          `"${run.sourceUrl}" film creator production`.trim(),
+          `independent film screening festival distribution rights`.trim(),
+        ];
+
+    const searchObjective = dynamicProjectTitle
+      ? `Find public details, financing announcements, production partners, distribution or festival rights, and critical reception for "${dynamicProjectTitle}" or ${run.sourceUrl}`
+      : `Find identity, title, creator, format, and overview for the screen project at ${run.sourceUrl}`;
+
     const parallelResults = await parallelClient.search({
-      objective: `Find public details, financing announcements, production partners, distribution or festival rights, and critical reception for "${dynamicProjectTitle}" or ${run.sourceUrl}`,
-      search_queries: [
-        `${dynamicProjectTitle} development financing production budget`,
-        `${dynamicProjectTitle} production company festival distribution rights`,
-        `${dynamicProjectTitle} reviews reception festival premiere`,
-      ],
+      objective: searchObjective,
+      search_queries,
       mode: "fast",
     });
 
     searchReceipts.push({
       id: parallelResults.search_id,
-      queryCount: 3,
+      queryCount: search_queries.length,
       resultsCount: parallelResults.results.length,
     });
 
