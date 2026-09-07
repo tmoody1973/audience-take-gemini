@@ -126,4 +126,16 @@
   - `npx vitest run tests/unit/package-e.test.tsx tests/unit/fan-improvements/`: **9 files, 35/35 tests passed**.
   - `npx tsc --noEmit`: **0 errors**.
 
-### C8 — Final Image & Deployment Verification: NEXT UP
+### C8 — Final Image & Deployment Verification: COMPLETED
+- **Root Causes Identified & Repaired**:
+  1. *Standalone Container Asset Configuration* (`Dockerfile`, `next.config.ts`): Traced and verified production standalone build (`output: "standalone"`). Verified that `.next/standalone/node_modules/@google-cloud/tasks` and its transitive dependencies (`google-gax`, `@grpc/grpc-js`) resolve cleanly and instantiate `CloudTasksClient` directly from standalone node runtime without host dependency coupling.
+  2. *URL Validation Lazy Client Isolation* (`src/app/api/nominations/handler.ts`, `src/lib/tasks/cloud-tasks.ts`): Confirmed that nomination URL intake, rate limiting, and SSRF filtering fail closed without constructing or loading the Cloud Tasks client, ensuring unauthenticated or malicious URL probes consume zero Cloud Tasks resources or client memory.
+  3. *Dual Dispatcher Paths* (`src/lib/tasks/cloud-tasks.ts`): Verified both research task dispatcher (`createCloudTasksResearchDispatcher`) and trailer critic task dispatcher (`createCloudTasksTrailerCriticDispatcher`) create deterministic, collision-resistant, OIDC-authenticated task requests with stripped sensitive metadata.
+  4. *Canonical vs. Legacy Routes*: Verified that canonical `/api/nominations` and legacy `/api/nominate` export the unified, hardened `handleNominationPost` handler.
+- **Verification Commands Executed**:
+  - `npm run build`: **Compiled successfully in 3.9s, 26 static pages generated, 0 errors**.
+  - `node -e "const { CloudTasksClient } = require('./node_modules/@google-cloud/tasks'); ..."` in `.next/standalone`: **Successfully constructed CloudTasksClient**.
+  - `npx vitest run tests/unit/cloud-tasks-packaging-c8.test.ts`: **6/6 tests passed**.
+  - `npx tsc --noEmit`: **0 errors**.
+
+### C9 — Demonstration of Usefulness, Evaluation & Final Submission: NEXT UP
