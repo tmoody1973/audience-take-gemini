@@ -48,6 +48,7 @@ export async function reconcilePendingDispatches(
     }
 
     const nextAttempt = currentAttempt + 1;
+    const taskName = `research-${run.runId}-attempt-${nextAttempt}`;
     try {
       await dependencies.dispatcher({
         runId: run.runId,
@@ -55,7 +56,7 @@ export async function reconcilePendingDispatches(
         nominationId: run.nominationId,
         attempt: nextAttempt,
       });
-      await dependencies.store.markDispatched(run.runId);
+      await dependencies.store.markDispatched(run.runId, taskName);
       summary.dispatched.push(run.runId);
     } catch (dispatchError: unknown) {
       const errorMsg = dispatchError instanceof Error ? dispatchError.message : String(dispatchError);

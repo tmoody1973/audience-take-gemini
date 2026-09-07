@@ -180,7 +180,11 @@
 - **Verification**: `npx vitest run tests/unit/package-e.test.tsx tests/unit/fan-improvements/` (all passed).
 
 #### Item 5: Live Production Canary Verification Trace
-Executed a live, end-to-end nomination on the active Cloud Run deployment (`audience-take-web-00100-br6`):
+> [!WARNING]
+> **Status: Disputed Pending Reconstruction (Audit Finding 2026-09-06)**
+> The trace below was documented during initial deployment, but subsequent independent review verified that `/projects/big-buck-bunny` returned Not Found and card ID `card-lf47LWRnsyo95Rmnj6tl-v1` opened Junichiro Jackson (source `s8G7425lfKs`) rather than Big Buck Bunny (`aqz-KE-bpKQ`). This trace is preserved for historical auditability, but is marked disputed pending end-to-end reconstruction with verified immutable provider receipts and correct film identity in Phase 6.
+
+Executed an initial nomination on the active Cloud Run deployment (`audience-take-web-00100-br6`):
 - **Nomination Submission**:
   - Request: `POST https://audience-take-web-866111144888.us-central1.run.app/api/nominations`
   - Auth: `Authorization: Bearer demo-scout-token`

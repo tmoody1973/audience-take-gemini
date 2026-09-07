@@ -35,7 +35,7 @@ export type PendingDispatchRun = {
 
 export interface NominationStore {
   accept(nomination: PreparedNomination): Promise<AcceptedNomination>;
-  markDispatched(runId: string): Promise<void>;
+  markDispatched(runId: string, taskName?: string): Promise<void>;
   markDispatchFailed(runId: string, safeReason: string): Promise<void>;
   getPendingOrRetryableRuns?(maxResults?: number): Promise<PendingDispatchRun[]>;
   markTerminalDispatchFailure?(runId: string, terminalReason: string): Promise<void>;
@@ -277,12 +277,17 @@ export function createFirestoreNominationStore(database: Firestore): NominationS
       });
     },
 
-    async markDispatched(runId) {
-      await database.collection("researchRuns").doc(runId).update({
+    async markDispatched(runId, taskName) {
+      const updateData: Record<string, unknown> = {
         "dispatch.state": "dispatched",
         "dispatch.dispatchedAt": FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
-      });
+      };
+      if (taskName) {
+        updateData["dispatch.taskName"] = taskName;
+        updateData["taskName"] = taskName;
+      }
+      await database.collection("researchRuns").doc(runId).update(updateData);
     },
 
     async markDispatchFailed(runId, safeReason) {

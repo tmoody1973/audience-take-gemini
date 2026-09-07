@@ -1,9 +1,32 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST, GET } from "@/app/api/tasks/reconcile/route";
 import { NextRequest } from "next/server";
 
-describe("POST /api/tasks/reconcile", () => {
-  it("executes reconciliation and returns 200 with summary", async () => {
+vi.mock("@/lib/firebase/admin", () => ({
+  getAdminFirestore: () => ({
+    collection: () => ({
+      where: () => ({
+        limit: () => ({
+          get: async () => ({ docs: [] }),
+        }),
+      }),
+      doc: () => ({
+        update: async () => {},
+      }),
+    }),
+  }),
+}));
+
+vi.mock("@/lib/tasks/cloud-tasks", () => ({
+  createCloudTasksResearchDispatcher: () => async () => {},
+}));
+
+describe("/api/tasks/reconcile Route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("executes reconciliation on POST and returns 200 with summary", async () => {
     const req = new NextRequest("http://localhost:3000/api/tasks/reconcile", {
       method: "POST",
     });
@@ -18,13 +41,11 @@ describe("POST /api/tasks/reconcile", () => {
     expect(Array.isArray(data.summary.retriedLater)).toBe(true);
   });
 
-  it("handles GET identically to POST for cron ping compatibility", async () => {
-    const req = new NextRequest("http://localhost:3000/api/tasks/reconcile", {
-      method: "GET",
-    });
-    const res = await GET(req);
-    expect(res.status).toBe(200);
+  it("rejects GET with 405 Method Not Allowed to protect against mutating GET pings", async () => {
+    const res = await GET();
+    expect(res.status).toBe(405);
     const data = await res.json();
-    expect(data.ok).toBe(true);
+    expect(data.ok).toBe(false);
+    expect(data.error).toMatch(/Method Not Allowed/i);
   });
 });

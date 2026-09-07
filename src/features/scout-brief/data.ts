@@ -3,6 +3,7 @@ import type { ScoutBrief } from "./types";
 import { ScoutBriefSchema } from "./schema";
 import { scoutBriefStore } from "@/services/scout-brief/store";
 import { generateAndPublishScoutBrief } from "@/services/scout-brief/service";
+import { validateScoutBriefTranscript } from "@/services/scout-brief/script-builder";
 
 /**
  * Server-side loader for the Scout Brief attached to a specific Scout Card version and audience variant.
@@ -19,11 +20,18 @@ export async function loadScoutBriefForCard(
     if (existing) {
       const parsed = ScoutBriefSchema.safeParse(existing);
       if (parsed.success) {
-        return parsed.data as ScoutBrief;
+        const briefData = parsed.data as ScoutBrief;
+        if (briefData.transcript) {
+          const val = validateScoutBriefTranscript(briefData.transcript, card, 20, 600);
+          if (val.valid) {
+            return briefData;
+          }
+          console.warn(`[ScoutBrief] Existing brief ${briefData.artifactId} is stale or violates transcript constraints; regenerating:`, val.errors);
+        }
       }
     }
 
-    // 2. Generate on-demand if missing (deterministic generation)
+    // 2. Generate on-demand if missing or stale (deterministic generation)
     const generated = await generateAndPublishScoutBrief(card, 1, variant);
     const parsed = ScoutBriefSchema.safeParse(generated);
     if (parsed.success) {

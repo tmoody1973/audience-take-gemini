@@ -650,6 +650,58 @@ export function validateScoutProposal(
     }
   }
 
+  // Step 5b: Cross-Surface Factual Assertion Grounding Check
+  const publicSurfaces: Array<{ field: string; text: string }> = [
+    { field: "whyScouted", text: proposal.whyScouted || "" },
+    { field: "decisionBrief.logline", text: proposal.decisionBrief?.logline || "" },
+    { field: "decisionBrief.triageSummary", text: proposal.decisionBrief?.triageSummary || "" },
+    { field: "industryLens.marketContext", text: proposal.industryLens?.marketContext || "" },
+  ];
+
+  for (const surface of publicSurfaces) {
+    if (!surface.text) continue;
+
+    // A. Check for major awards and festival win/selection assertions
+    const awardPattern = /\b(sundance|cannes|oscars?|academy awards?|bafta|emmys?|golden globes?|sxsw|venice|berlin|tribeca)\b/gi;
+    const awardMatches = surface.text.match(awardPattern);
+    if (awardMatches) {
+      for (const award of awardMatches) {
+        const isSourced = proposal.evidenceLedger?.some((ev: any) => {
+          if (!ev.verified || isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
+          const evText = `${ev.title || ""} ${ev.excerpt || ""} ${ev.publisher || ""}`.toLowerCase();
+          return evText.includes(award.toLowerCase());
+        });
+        if (!isSourced) {
+          errors.push(
+            `Ungrounded award or festival claim in ${surface.field}: "${award}" is not attested by verified evidence in evidenceLedger.`
+          );
+        }
+      }
+    }
+
+    // B. Check for ungrounded buyer acquisition or commercial market hype
+    const hypeCheck = checkHypeAndHallucinations(surface.text, proposal.evidenceLedger);
+    if (!hypeCheck.clean) {
+      for (const m of hypeCheck.matches) {
+        errors.push(`Ungrounded acquisition or market hype in ${surface.field}: "${m}".`);
+      }
+    }
+  }
+
+  // Also check pathways for ungrounded buyer acquisitions or awards
+  if (Array.isArray(proposal.pathways)) {
+    for (let i = 0; i < proposal.pathways.length; i++) {
+      const p = proposal.pathways[i];
+      const pText = `${p.title || ""} ${p.mediumFitRationale || ""} ${p.targetAudience || ""}`;
+      const hype = checkHypeAndHallucinations(pText, proposal.evidenceLedger);
+      if (!hype.clean) {
+        for (const m of hype.matches) {
+          errors.push(`Ungrounded acquisition or market hype in pathway[${i}]: "${m}".`);
+        }
+      }
+    }
+  }
+
   // Determine if valid or failed
   if (errors.length > 0) {
     return {

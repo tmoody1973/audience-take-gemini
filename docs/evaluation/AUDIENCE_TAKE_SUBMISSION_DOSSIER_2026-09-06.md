@@ -112,7 +112,7 @@ Built with a clean-room, test-driven architecture, Audience Take enforces strict
     - Rapid project premise, verified creator, and setting identification without distraction from speculative rumors.
     - Direct evidence audit and passage-level source inspection within the interface.
     - Strict grounding eliminating confusion between verified facts, disproven rumors, and nominator hype.
-    - 100% precision among professionals in separating historical funding receipts from hypothetical production budgets.
+    - Strict structural separation between historical funding receipts and hypothetical production budgets across tested scenarios.
 
 ---
 

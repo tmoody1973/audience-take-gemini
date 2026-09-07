@@ -205,19 +205,18 @@ STRICT INVARIANTS:
         `Current Stage: ${project.identity.currentStage || "in production"}`,
         project.identity.creators?.length ? `Creators: ${project.identity.creators.join(", ")}` : "",
         project.identity.logline ? `Verified Logline: "${project.identity.logline}"` : "",
-        project.nomination?.reason ? `Nominator Context: "${project.nomination.reason}"` : "",
         ytMeta?.authorName ? `Channel / Publisher: ${ytMeta.authorName}` : "",
       ].filter(Boolean);
 
       const prompt = `
-Analyze this screen trailer using Gemini multimodal video understanding: ${videoUrl}
+Analyze this screen trailer using Gemini contextual video understanding: ${videoUrl}
 
 <verified_project_context>
 ${contextLines.join("\n")}
 </verified_project_context>
 
 IMPORTANT EVALUATION DIRECTIVES:
-1. Ground your craft analysis in the verified project medium and genre described above (e.g. if independent 2D animation or sci-fi comedy, evaluate animation craft, character acting, vocal performance, sound foley, and comedic timing; do not hallucinate live-action actors or an unrelated dramatic genre).
+1. Ground your craft analysis strictly in the verified project medium and genre described above. If direct video stream bytes are unattached, perform contextual craft analysis and explicitly state in "limitations" that analysis is grounded in verified metadata rather than direct frame inspection.
 2. Deconstruct timestamped narrative & audiovisual beats (e.g. 0:00, 0:15, 0:30) observing actual visual progression and audio cues.
 3. Assess pacing, tone consistency, and audience connectivity honestly without empty hype.
 

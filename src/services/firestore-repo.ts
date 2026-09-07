@@ -1035,7 +1035,8 @@ export const dataRepo = {
       if (
         proj.id === id ||
         proj.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") === id ||
-        (proj.id === "proj-junichiro" && (id === "junichiro-jackson" || id === "junichiro-live-project"))
+        (proj.id === "proj-junichiro" && (id === "junichiro-jackson" || id === "junichiro-live-project")) ||
+        (proj.id === "proj-vampair" && (id === "proj-1788033835868-tfn0k" || id === "the-vampair-series" || id === "vampair"))
       ) {
         return proj;
       }
@@ -1887,21 +1888,18 @@ export const dataRepo = {
     }
 
     const now = new Date().toISOString();
-    project.publishedCardId = newCard.id;
-    project.audioStale = true;
-    project.updatedAt = now;
-
     const monitor = await this.getProjectMonitorById(monitorId);
-    if (monitor) {
-      monitor.lastCheckedAt = now;
-      monitor.lastEventAt = now;
-      monitor.lastSuccessfulCheckAt = now;
-      monitor.lastMaterialChangeAt = now;
-      monitor.lastExecutionResult = "detected_change";
-      if (monitorUpdates) {
-        Object.assign(monitor, monitorUpdates);
-      }
-    }
+    const updatedMonitor: ProjectMonitor | undefined = monitor
+      ? {
+          ...monitor,
+          lastCheckedAt: now,
+          lastEventAt: now,
+          lastSuccessfulCheckAt: now,
+          lastMaterialChangeAt: now,
+          lastExecutionResult: "detected_change",
+          ...(monitorUpdates || {}),
+        }
+      : undefined;
 
     try {
       const db = getAdminFirestore();
@@ -1939,8 +1937,8 @@ export const dataRepo = {
             }),
             { merge: true }
           );
-          if (monitor) {
-            transaction.set(db.collection("projectMonitors").doc(monitor.id), cleanFirestoreObject(monitor), { merge: true });
+          if (updatedMonitor) {
+            transaction.set(db.collection("projectMonitors").doc(updatedMonitor.id), cleanFirestoreObject(updatedMonitor), { merge: true });
           }
           transaction.set(receiptRef, cleanFirestoreObject(receipt));
           if (livingUpdate) {
@@ -1959,15 +1957,18 @@ export const dataRepo = {
         });
       }
     } catch (err) {
-      if (process.env.NODE_ENV === "production") {
-        throw new Error(`Database error in atomicPublishMonitorCardUpdate: ${err instanceof Error ? err.message : String(err)}`);
-      }
+      throw new Error(`Database error in atomicPublishMonitorCardUpdate: ${err instanceof Error ? err.message : String(err)}`);
     }
+
+    // Only mutate in-memory store AFTER transaction has successfully committed
+    project.publishedCardId = newCard.id;
+    project.audioStale = true;
+    project.updatedAt = now;
 
     store.scoutCards.set(newCard.id, newCard);
     store.projects.set(projectId, project);
-    if (monitor) {
-      store.projectMonitors.set(monitor.id, monitor);
+    if (updatedMonitor) {
+      store.projectMonitors.set(updatedMonitor.id, updatedMonitor);
     }
     store.webhookReceipts.set(receipt.webhookId, receipt);
 

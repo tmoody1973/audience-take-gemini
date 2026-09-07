@@ -88,16 +88,16 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 | Evaluation Dimension | Traditional Ad-Hoc Baseline | Audience Take Target Criteria | Evaluation Rubric / Success Standard |
 |---|---|---|---|
 | **D1: Identity & Premise Retrieval** | Multi-tab search across YouTube, Twitter, and fandom wikis; susceptible to conflating similarly-named works or outdated pitch logs. | Single-surface Scout Card displays creator, verified medium, setting, and logline immediately. | **Pass**: Core premise and creators identified in under 45 seconds with zero identity hallucination. |
-| **D2: Source Provenance & Evidence Ledger** | Uncited claims on social media; press releases often mixed with creator wish-lists. | Every material claim anchored to passage-level citations classified by publisher tier (Trade, Primary, Secondary). | **Pass**: Participant can verify exact source passage for any material commercial claim directly in UI. |
-| **D3: Rumor & Hype Neutralization** | Fan speculation and unverified rumors frequently circulate as fact (e.g., mistaken setting, unconfirmed distributor). | Explicit negation of disproven rumors and isolation of nominator claims from verified facts. | **Pass**: User correctly distinguishes verified facts from ungrounded nominator submissions or disproven rumors. |
-| **D4: Funding vs. Scenario Modeling Delineation** | Crowdfunding totals routinely confused with full series production budgets; speculative target figures quoted as real capital. | Clear visual separation between reported historical funding and exploratory physical production scenarios. | **Pass**: 100% of participants correctly identify hypothetical models as uncommitted scenario planning. |
+| **D2: Source Provenance & Evidence Ledger** | Uncited claims on social media; press releases often mixed with creator wish-lists. | Every material claim anchored to passage-level citations classified by publisher tier (Trade, Primary, Secondary). | **Pass**: Evaluator can verify exact source passage for any material commercial claim directly in UI. |
+| **D3: Rumor & Hype Neutralization** | Fan speculation and unverified rumors frequently circulate as fact (e.g., mistaken setting, unconfirmed distributor). | Explicit negation of disproven rumors and isolation of nominator claims from verified facts. | **Pass**: Evaluator correctly distinguishes verified facts from ungrounded nominator submissions or disproven rumors. |
+| **D4: Funding vs. Scenario Modeling Delineation** | Crowdfunding totals routinely confused with full series production budgets; speculative target figures quoted as real capital. | Clear visual separation between reported historical funding and exploratory physical production scenarios. | **Pass**: Evaluator verifies clear visual and semantic separation between historical funding and hypothetical production models. |
 | **D5: Community Engagement & Export Utility** | Ad-hoc links shared into Discord or Slack with broken embeds or missing context. | High-contrast trading card PNG exporter with metadata, plus local city screening demand signals. | **Pass**: Clean visual export rendered with correct metadata in one click; city demand captured reliably. |
 
 ---
 
-## 6. Cognitive Walkthrough Persona Profiles
+## 6. Cognitive Walkthrough Scenario Profiles
 
-### Fan Scout Walkthrough Profiles
+### Fan Scout Scenario Profiles
 
 #### Profile FS-01: Independent Animation Enthusiast
 - **Focus Project**: *Junichiro Jackson* (Created by Chaz Bottoms, TeamTO, and Martian Blueberry)
@@ -106,7 +106,7 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 - **Task F3 (Rumor Discernment)**: Confirmed near-future Brooklyn setting; recognized that earlier mentions of Chicago were inaccurate rumors disproved by the official series launch.
 - **Task F4 (Community Action)**: Explored Episodic Series development pathway and reviewed community interest signals.
 - **Task F5 (Uncertainty)**: Recognized linear broadcast vs. SVOD streaming rights as an open unknown documented in "What We're Checking".
-- **Walkthrough Finding**: "Having the official creator link and explicit Brooklyn setting verification stops the usual Reddit/Discord arguments about where the series actually takes place."
+- **Design & Usability Observation**: Official creator links and explicit Brooklyn setting verification prevent common community confusion regarding project setting.
 
 #### Profile FS-02: Indie Sci-Fi Buff & Backer
 - **Focus Project**: *The Vampair Series* (Created & directed by Daria Cohen)
@@ -115,7 +115,7 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 - **Task F3 (Rumor Discernment)**: Recognized that the $286k raised was for the pilot only, not a completed full-season studio greenlight.
 - **Task F4 (Community Action)**: Registered screening demand interest; exported scout trading card preview for social sharing.
 - **Task F5 (Uncertainty)**: Identified full-season co-production packaging terms as the key outstanding unknown.
-- **Walkthrough Finding**: "The trading card export gives a fandom a concrete badge to share instead of just a raw YouTube link with no context."
+- **Design & Usability Observation**: The trading card export gives community members an accurate, bounded visual asset to share instead of uncontextualized raw links.
 
 #### Profile FS-03: Regional Arts & Documentary Organizer
 - **Focus Project**: *CYCLE* (Directed by Laura Dyan Kezman, Lion Art Media)
@@ -124,7 +124,7 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 - **Task F3 (Rumor Discernment)**: Confirmed complete absence of fabricated bicycle club lore; recognized rigorous investigative journalism framework.
 - **Task F4 (Community Action)**: Reviewed Civic Town Hall screening pathway and regional screening demand meters.
 - **Task F5 (Uncertainty)**: Identified regional broadcast window terms as an active unknown.
-- **Walkthrough Finding**: "For an intensely serious local investigative film like CYCLE, keeping fabricated AI nonsense completely out of the card is essential."
+- **Design & Usability Observation**: Strict claim grounding and elimination of hallucinated lore preserves journalistic integrity for serious civic documentary subjects.
 
 #### Profile FS-04: Digital Animation Community Moderator
 - **Focus Project**: *Signal in the Pines* (16mm analog sci-fi short)
@@ -136,7 +136,7 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 
 ---
 
-### Industry Professional Walkthrough Profiles
+### Industry Professional Scenario Profiles
 
 #### Profile PRO-01: Development Coordinator (Indie Production Co.)
 - **Focus Project**: *Junichiro Jackson*
@@ -144,7 +144,7 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 - **Task P2 (Evidence Audit)**: Audited Variety trade coverage and official series release documentation directly in the passage ledger.
 - **Task P3 (Funding vs. Budget)**: Immediately distinguished secured pilot funding from hypothetical $1.5M episodic series financial scenarios.
 - **Task P4 (Diligence Triage)**: Exported professional diligence memo; flagged domestic SVOD windowing as the primary next diligence question.
-- **Walkthrough Finding**: "The visual separation between verified facts with passage receipts and hypothetical production scenarios is exactly what a development desk needs."
+- **Design & Usability Observation**: Visual separation between verified facts with passage receipts and hypothetical production scenarios provides necessary diligence clarity.
 
 #### Profile PRO-02: Acquisitions & Programming Consultant (Documentary Festival)
 - **Focus Project**: *CYCLE*
@@ -152,7 +152,7 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 - **Task P2 (Evidence Audit)**: Audited Racine County Eye and public media reporting passages.
 - **Task P3 (Funding vs. Budget)**: Confirmed non-profit grant and community support baseline without commercial equity dilution.
 - **Task P4 (Diligence Triage)**: Drafted festival screening triage memo; flagged educational and regional civic distribution rights.
-- **Walkthrough Finding**: "Being able to see the exact paragraph from the local investigative reporter without searching through 20 tabs saves significant vetting time."
+- **Design & Usability Observation**: Immediate access to exact passages from local investigative reporting streamlines verification across primary sources.
 
 #### Profile PRO-03: Digital Packaging Agent & Creative Producer
 - **Focus Project**: *The Vampair Series*
@@ -160,14 +160,23 @@ Rather than relying on ungrounded statistical extrapolation or speculative p-val
 - **Task P2 (Evidence Audit)**: Audited Animation Magazine and Kickstarter campaign reporting.
 - **Task P3 (Funding vs. Budget)**: Accurately separated $286k pilot crowdfunding from $1.8M full-season packaging estimates.
 - **Task P4 (Diligence Triage)**: Exported diligence summary; identified co-production partnership structuring as the logical entry point.
-- **Walkthrough Finding**: "Usually audience buzz is disorganized noise. The structured signals here backed by real citation receipts turn audience enthusiasm into actionable intelligence."
+- **Design & Usability Observation**: Structured audience signals backed by citation receipts convert online enthusiasm into actionable development intelligence.
 
 ---
 
-## 7. Concrete User Feedback & Platform Improvements Implemented
+## 7. Concrete Platform Improvements Implemented
 
 1. **Explicit Ambition vs. Hypothesis Labeling**:
-   - *User Feedback* (FS-01, PRO-01): "Don't say 'Creator's Stated Ambition' unless the creator explicitly verified it themselves."
+   - *Scenario Finding* (FS-01, PRO-01): Ambition labels should not appear as creator statements unless confirmed by the creator.
+   - *Action Taken*: Enforced `card.claimStatus === "approved"`. Unclaimed cards truthfully display: *"CREATOR'S DIRECT AMBITION: Not yet documented by creator. The options below represent independent community and scout hypotheses."*
+2. **Audio Hype Reduction**:
+   - *Scenario Finding* (PRO-03, FS-04): Narration tone should resemble objective broadcast analysis rather than promotional copy.
+   - *Action Taken*: Enforced strict anti-hype prompting in `script-builder.ts`, barring superlative phrases like *"undeniable demand"* and *"blockbuster certainty"*.
+3. **Export Usability & Clean Metadata**:
+   - *Scenario Finding* (FS-02, FS-05): Trading card export requires high-contrast typography, project type badges, and direct copy capability.
+   - *Action Taken*: Hardened canvas drawing in `trading-card-exporter.tsx` with editorial typography, crisp border framing, and direct clipboard copy support.
+4. **Nominator Provenance Fail-Closed Gate**:
+   - *Technical Protocol Hardening*: Prohibited nominator-supplied leads from qualifying as objective grounding passages in `deterministic-validator.ts` and `schemas.ts`.
    - *Action Taken*: Enforced `card.claimStatus === "approved"`. Unclaimed cards truthfully display: *"CREATOR'S DIRECT AMBITION: Not yet documented by creator. The options below represent independent community and scout hypotheses."*
 2. **Audio Hype Reduction**:
    - *User Feedback* (PRO-03, FS-04): "The narration should sound like an objective industry broadcaster, not a marketing trailer."

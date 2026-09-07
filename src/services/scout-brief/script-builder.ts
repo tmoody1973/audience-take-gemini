@@ -126,7 +126,8 @@ export function validateScoutBriefTranscript(
   let scoutTurns = 0;
   let analystTurns = 0;
 
-  const validSourceIds = new Set((card.sourceLedger || []).map((s) => s.id));
+  const validSourceIds = new Set((card.sourceLedger || []).map((s: any) => s.id));
+  const validClaimIds = new Set((card.evidenceClaims || []).map((c: any) => c.id));
 
   transcript.segments.forEach((seg, idx) => {
     if (seg.order !== idx + 1) {
@@ -141,14 +142,33 @@ export function validateScoutBriefTranscript(
     else if (seg.speaker === "Analyst") analystTurns++;
     else errors.push(`Unknown speaker: ${seg.speaker}`);
 
-    // Verify citation integrity
+    // Verify citation integrity strictly against the card's sourceLedger
     if (Array.isArray(seg.sourceIds)) {
       for (const sid of seg.sourceIds) {
         if (validSourceIds.size > 0 && !validSourceIds.has(sid)) {
-          if (!sid.startsWith("S") && !sid.startsWith("src-") && !sid.startsWith("source-")) {
-            errors.push(`Referenced invalid sourceId: ${sid}`);
-          }
+          errors.push(`Referenced unknown sourceId '${sid}' not present in card sourceLedger`);
         }
+      }
+    }
+
+    // Verify claim integrity strictly against the card's evidenceClaims
+    if (Array.isArray(seg.claimIds)) {
+      for (const cid of seg.claimIds) {
+        if (validClaimIds.size > 0 && !validClaimIds.has(cid)) {
+          errors.push(`Referenced unknown claimId '${cid}' not present in card evidenceClaims`);
+        }
+      }
+    }
+
+    // Check for ungrounded acquisition/bidding war statements in spoken text
+    if (/netflix acquired|apple acquired|amazon acquired|a24 acquired|bidding war/i.test(seg.text)) {
+      const hasSupportedAcquisition = (card.evidenceClaims || []).some(
+        (c: any) =>
+          c.status === "supported" &&
+          /acquired|bidding war|deal/i.test(c.statement || "")
+      );
+      if (!hasSupportedAcquisition) {
+        errors.push(`Transcript contains ungrounded acquisition or bidding war claim: "${seg.text.slice(0, 60)}..."`);
       }
     }
   });

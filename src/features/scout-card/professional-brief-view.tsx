@@ -41,12 +41,17 @@ function relationshipLabel(card: ScoutCard): string {
       source_aligned: "Aligned by public sources",
       creator_confirmed: "Creator confirmed",
       disputed: "Relationship disputed",
-    }[card.identity.relationshipStatus] || "Aligned by public sources";
+    }[card.identity.relationshipStatus] || "Relationship unresolved";
   }
   if (card.claimStatus === "approved" || (card.claimStatus as string) === "verified") {
     return "Creator confirmed";
   }
-  if (card.creatorContext?.displayName) {
+  const hasVerifiedTradeOrPrimary = (card.sourceLedger || []).some(
+    (s) =>
+      s.verificationStatus === "verified" &&
+      (s.sourceRole === "primary_work" || s.sourceRole === "trade_reporting" || s.sourceTier === "primary" || s.sourceTier === "reputable_trade")
+  );
+  if (card.creatorContext?.displayName && hasVerifiedTradeOrPrimary) {
     return "Aligned by public sources";
   }
   return "Relationship unresolved";
@@ -162,7 +167,8 @@ ${nextDiligenceStep}
 
 4. STRUCTURED STATUS
 - Primary Work: ${primaryWork ? primaryWork.title : "Unknown / Unverified"}
-- Development Stage: ${stageClaim ? stageClaim.statement : card.storyContext.currentFormat || "Not publicly reported"}
+- Format: ${card.projectType.replace("_", " ").toUpperCase()}${card.storyContext.currentFormat ? ` (${card.storyContext.currentFormat})` : ""}
+- Development Stage: ${stageClaim ? stageClaim.statement : "Not publicly reported"}
 - Public Financing: ${financingClaim ? financingClaim.statement : "Not publicly reported"}
 - Attached Partners: ${partnerClaim ? partnerClaim.statement : "Not publicly reported"}
 - Rights / Representation: ${card.claimStatus === "approved" ? "Creator claim approved; representation unverified" : "Unknown"}
@@ -351,11 +357,21 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                 </td>
               </tr>
               <tr>
+                <th scope="row">Format &amp; Asset</th>
+                <td>
+                  <span className="pro-format-pill">{card.projectType.replace("_", " ")}</span>
+                  {card.storyContext.currentFormat && card.storyContext.currentFormat !== card.projectType ? (
+                    <span className="pro-secondary-format"> ({card.storyContext.currentFormat})</span>
+                  ) : null}
+                </td>
+                <td>
+                  <span className="pro-muted-note">Observed from submitted asset</span>
+                </td>
+              </tr>
+              <tr>
                 <th scope="row">Development Stage</th>
                 <td>
-                  {card.storyContext.currentFormat ? (
-                    <span>{card.storyContext.currentFormat}</span>
-                  ) : stageClaim ? (
+                  {stageClaim ? (
                     <strong>{stageClaim.statement}</strong>
                   ) : (
                     <UnknownPill />
@@ -371,7 +387,7 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                       {sourcePresentation(stageSource).role} [{effectiveSourceLabels.get(stageSource.id) || "S"}]
                     </button>
                   ) : (
-                    <span className="pro-muted-note">Observed from submitted format</span>
+                    <span className="pro-muted-note">Unconfirmed</span>
                   )}
                 </td>
               </tr>
