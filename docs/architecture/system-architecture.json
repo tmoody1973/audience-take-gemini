@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Audience Take is built",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [
+      45,
+      85
+    ],
+    "cols": 4,
+    "cellW": 160,
+    "cellH": 76,
+    "gapX": 115,
+    "gapY": 120
+  },
+  "components": [
+    {
+      "id": "people",
+      "type": "external",
+      "label": "People",
+      "sublabel": "Fans + professionals",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Web + API",
+      "sublabel": "Next.js on Cloud Run",
+      "row": 1,
+      "col": 1
+    },
+    {
+      "id": "tasks",
+      "type": "messagebus",
+      "label": "Cloud Tasks",
+      "sublabel": "Research delivery",
+      "row": 1,
+      "col": 2
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Research worker",
+      "sublabel": "Cloud Run handler",
+      "row": 1,
+      "col": 3
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "Firestore",
+      "sublabel": "Runs + card versions",
+      "row": 0,
+      "col": 2
+    },
+    {
+      "id": "model",
+      "type": "cloud",
+      "label": "Gemini",
+      "sublabel": "Structured synthesis",
+      "row": 0,
+      "col": 3
+    },
+    {
+      "id": "parallel",
+      "type": "external",
+      "label": "Parallel",
+      "sublabel": "Search + Extract API",
+      "row": 2,
+      "col": 3
+    }
+  ],
+  "connections": [
+    {
+      "id": "browse",
+      "from": "people",
+      "to": "app",
+      "label": "HTTPS"
+    },
+    {
+      "id": "dispatch",
+      "from": "app",
+      "to": "tasks",
+      "label": "enqueue",
+      "labelAt": [
+        480,
+        350
+      ]
+    },
+    {
+      "id": "deliver",
+      "from": "tasks",
+      "to": "worker",
+      "label": "OIDC task",
+      "labelAt": [
+        785,
+        350
+      ]
+    },
+    {
+      "id": "model-call",
+      "from": "worker",
+      "to": "model",
+      "label": "generate"
+    },
+    {
+      "id": "search-call",
+      "from": "worker",
+      "to": "parallel",
+      "label": "research",
+      "labelAt": [
+        930,
+        400
+      ]
+    },
+    {
+      "id": "write-result",
+      "from": "worker",
+      "to": "store",
+      "label": "persist"
+    },
+    {
+      "id": "read-card",
+      "from": "store",
+      "to": "app",
+      "label": "read card"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Logical service map",
+      "items": [
+        "Web and worker are handlers in the Cloud Run application.",
+        "Firestore holds durable runs and published card records."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Provider disclosure",
+      "items": [
+        "Code a3655da \u00b7 8 September 2026. Gemini backend is configuration-dependent.",
+        "A deployed Vertex AI route is not established by this diagram."
+      ]
+    }
+  ]
+}

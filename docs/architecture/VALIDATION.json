@@ -1,0 +1,157 @@
+{
+  "codeSnapshot": "a3655da",
+  "date": "2026-09-08",
+  "generator": "Archify",
+  "diagrams": [
+    {
+      "name": "discovery-workflow",
+      "type": "workflow",
+      "output": "public/architecture/discovery-workflow.html",
+      "specification": {
+        "sha256": "a67a7934ce12abf0f904e76308b230da71ea7bdf9dae9bed0e16cc08a760df59",
+        "bytes": 2017
+      },
+      "artifact": {
+        "sha256": "bc22f760f8b48c4f7c802e6eacbfe8e50f16fff16691c66dbfb918abba524381",
+        "bytes": 661934
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "automatedVisualCheck": "pass",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 900,
+          "ok": true
+        },
+        {
+          "width": 1600,
+          "height": 1000,
+          "ok": true
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "ok": true
+        },
+        {
+          "width": 2048,
+          "height": 1320,
+          "ok": true
+        }
+      ],
+      "visualReview": "passed",
+      "reviewedCaptures": [
+        "1440x900 dark",
+        "2048x1320 light"
+      ],
+      "visualCorrectionRounds": 1
+    },
+    {
+      "name": "system-architecture",
+      "type": "architecture",
+      "output": "public/architecture/system-architecture.html",
+      "specification": {
+        "sha256": "0a75a0b9b41ae0443888bb17dd86ba2b32f0a815006043285f51ab1c4b644ece",
+        "bytes": 2913
+      },
+      "artifact": {
+        "sha256": "51188d5eec1f5a825610e35263911f5638d14d2689ff583c6a69933650bdfbb2",
+        "bytes": 668115
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "automatedVisualCheck": "pass",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 900,
+          "ok": true
+        },
+        {
+          "width": 1600,
+          "height": 1000,
+          "ok": true
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "ok": true
+        },
+        {
+          "width": 2048,
+          "height": 1320,
+          "ok": true
+        }
+      ],
+      "visualReview": "passed",
+      "reviewedCaptures": [
+        "1440x900 dark",
+        "2048x1320 light"
+      ],
+      "visualCorrectionRounds": 0
+    },
+    {
+      "name": "evidence-policy",
+      "type": "dataflow",
+      "output": "public/architecture/evidence-policy.html",
+      "specification": {
+        "sha256": "0c14acfbf4d42d9d7ad92d8440c811c91c46d134a2397fc4675a16844ff85d01",
+        "bytes": 2898
+      },
+      "artifact": {
+        "sha256": "469a0592fb3bf2f28fe0f3c4a840d8288c8fed68a493db50c1616f80e4308de4",
+        "bytes": 668111
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "automatedVisualCheck": "pass",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 900,
+          "ok": true
+        },
+        {
+          "width": 1600,
+          "height": 1000,
+          "ok": true
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "ok": true
+        },
+        {
+          "width": 2048,
+          "height": 1320,
+          "ok": true
+        }
+      ],
+      "visualReview": "passed",
+      "reviewedCaptures": [
+        "1440x900 dark",
+        "2048x1320 light"
+      ],
+      "visualCorrectionRounds": 0
+    }
+  ]
+}

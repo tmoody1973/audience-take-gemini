@@ -1011,3 +1011,18 @@
     width: 100%;
   }
 }
+
+/* Architecture gallery: same paper, ink and accent language as About. */
+.diagramSection { margin: 48px 0; }
+.diagramGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.diagramCard { display: flex; flex-direction: column; padding: 22px; color: var(--ink); background: var(--paper, #fffdf6); border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); text-decoration: none; }
+.diagramCard:hover { box-shadow: 6px 6px 0 var(--ink); }
+.diagramCard:focus-visible, .diagramNote a:focus-visible { outline: 3px solid var(--blue); outline-offset: 6px; }
+.diagramMeta { font-family: var(--meta); text-transform: uppercase; font-size: .7rem; font-weight: 800; color: var(--blue); letter-spacing: .05em; }
+.diagramCard img { width: 100%; height: auto; margin: 18px 0; border: 1px solid #bcb7ab; }
+.diagramCard h3 { font-family: var(--display); text-transform: uppercase; font-size: 1.8rem; font-weight: 400; line-height: 1.1; margin: 0 0 12px; }
+.diagramCard p { font-size: .94rem; line-height: 1.5; margin: 0 0 20px; }
+.diagramAction { margin-top: auto; font-family: var(--meta); font-weight: 800; color: var(--blue); }
+.diagramNote { line-height: 1.7; margin-top: 24px; }
+.diagramNote a { color: var(--blue); text-underline-offset: 3px; }
+@media (max-width: 850px) { .diagramGrid { grid-template-columns: 1fr; } }

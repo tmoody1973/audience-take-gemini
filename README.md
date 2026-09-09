@@ -9,6 +9,38 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_Mode-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 
+
+## Explore the architecture
+
+Code snapshot reviewed **8 September 2026 · a3655da**. The workflow and service map describe inspected code. The evidence diagram is a **target policy**, with repairs still pending at that snapshot. These links become available when this documentation revision is deployed.
+
+### From discovery to Scout Card
+
+**Current workflow.** Follow a public nomination through source research, Gemini synthesis, validation and publication.
+
+[![From discovery to Scout Card](public/architecture/discovery-workflow-preview.png)](https://audience-take-web-866111144888.us-central1.run.app/architecture/discovery-workflow.html)
+
+[Open interactive diagram](https://audience-take-web-866111144888.us-central1.run.app/architecture/discovery-workflow.html)
+
+### How Audience Take is built
+
+**Current service map.** See how the web application, Cloud Tasks, research worker, Firestore, Gemini and Parallel connect.
+
+[![How Audience Take is built](public/architecture/system-architecture-preview.png)](https://audience-take-web-866111144888.us-central1.run.app/architecture/system-architecture.html)
+
+[Open interactive diagram](https://audience-take-web-866111144888.us-central1.run.app/architecture/system-architecture.html)
+
+### How a claim earns support
+
+**Target policy.** Explore the planned passage checks and the boundary between supported findings and unresolved questions.
+
+[![How a claim earns support](public/architecture/evidence-policy-preview.png)](https://audience-take-web-866111144888.us-central1.run.app/architecture/evidence-policy.html)
+
+[Open interactive diagram](https://audience-take-web-866111144888.us-central1.run.app/architecture/evidence-policy.html)
+
+[Diagram gallery](https://audience-take-web-866111144888.us-central1.run.app/architecture/index.html) · [Evidence and limitations](docs/architecture/README.md)
+
+
 ---
 
 ## 🌟 Executive Overview

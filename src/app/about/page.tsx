@@ -542,6 +542,45 @@ export default function AboutPage() {
           </div>
         </section>
 
+        <section id="architecture" className={styles.diagramSection} aria-labelledby="architecture-title">
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>HOW AUDIENCE TAKE WORKS</span>
+            <h2 id="architecture-title" className={styles.sectionH2}>Follow the work. Inspect the system.</h2>
+            <p className={styles.sectionIntro}>
+              Three interactive diagrams explain the research workflow, the services behind it, and
+              the evidence policy being implemented. The first two describe code reviewed on
+              8 September 2026; the third is a target policy, not a claim that its repairs are complete.
+            </p>
+          </div>
+          <div className={styles.diagramGrid}>
+            <a href="/architecture/discovery-workflow.html" className={styles.diagramCard}>
+              <span className={styles.diagramMeta}>01 / Current workflow</span>
+              <img src="/architecture/discovery-workflow-preview.png" alt="" loading="lazy" width="1440" height="900" />
+              <h3>From discovery to Scout Card</h3>
+              <p>Follow a public nomination through source research, Gemini synthesis, validation and publication.</p>
+              <span className={styles.diagramAction}>Explore diagram →</span>
+            </a>
+            <a href="/architecture/system-architecture.html" className={styles.diagramCard}>
+              <span className={styles.diagramMeta}>02 / Current service map</span>
+              <img src="/architecture/system-architecture-preview.png" alt="" loading="lazy" width="1440" height="900" />
+              <h3>How Audience Take is built</h3>
+              <p>See how the web application, Cloud Tasks, research worker, Firestore, Gemini and Parallel connect.</p>
+              <span className={styles.diagramAction}>Explore diagram →</span>
+            </a>
+            <a href="/architecture/evidence-policy.html" className={styles.diagramCard}>
+              <span className={styles.diagramMeta}>03 / Target policy</span>
+              <img src="/architecture/evidence-policy-preview.png" alt="" loading="lazy" width="1440" height="900" />
+              <h3>How a claim earns support</h3>
+              <p>Explore the planned passage checks and the boundary between supported findings and unresolved questions.</p>
+              <span className={styles.diagramAction}>Explore diagram →</span>
+            </a>
+          </div>
+          <p className={styles.diagramNote}>
+            <a href="/architecture/index.html">Open the diagram gallery</a>{" · "}
+            <a href="/architecture/evidence-notes.html">Read code references and current limitations</a>
+          </p>
+        </section>
+
         {/* 8. SOCIAL LAYER TWO-LEDGER EXPLANATION */}
         <section className={styles.socialSection} aria-labelledby="social-title">
           <div className={styles.sectionHeader}>

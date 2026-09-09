@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "How a claim earns support \u2014 target policy",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      690
+    ]
+  },
+  "stages": [
+    {
+      "label": "Discover"
+    },
+    {
+      "label": "Retrieve"
+    },
+    {
+      "label": "Assess"
+    },
+    {
+      "label": "Decide"
+    },
+    {
+      "label": "Publish"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "lead",
+      "type": "external",
+      "label": "Public source",
+      "sublabel": "Parallel discovery",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "passage",
+      "type": "database",
+      "label": "Passage record",
+      "sublabel": "URL + time + content",
+      "stage": 1,
+      "row": 1
+    },
+    {
+      "id": "support",
+      "type": "security",
+      "label": "Support check",
+      "sublabel": "Identity + exact claim",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "accepted",
+      "type": "database",
+      "label": "Supported claim",
+      "sublabel": "Versioned evidence",
+      "stage": 3,
+      "row": 1
+    },
+    {
+      "id": "unknown",
+      "type": "backend",
+      "label": "Unresolved",
+      "sublabel": "Retain the question",
+      "stage": 2,
+      "row": 3
+    },
+    {
+      "id": "card",
+      "type": "frontend",
+      "label": "Scout Card",
+      "sublabel": "Fan + Pro brief",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "brief",
+      "type": "backend",
+      "label": "Audio briefing",
+      "sublabel": "Same claim version",
+      "stage": 4,
+      "row": 3
+    }
+  ],
+  "flows": [
+    {
+      "id": "capture",
+      "from": "lead",
+      "to": "passage",
+      "label": "retrieve"
+    },
+    {
+      "id": "assess",
+      "from": "passage",
+      "to": "support",
+      "label": "inspect"
+    },
+    {
+      "id": "approve",
+      "from": "support",
+      "to": "accepted",
+      "label": "supported",
+      "variant": "emphasis"
+    },
+    {
+      "id": "withhold",
+      "from": "support",
+      "to": "unknown",
+      "label": "insufficient",
+      "variant": "security"
+    },
+    {
+      "id": "publish",
+      "from": "accepted",
+      "to": "card",
+      "label": "publish"
+    },
+    {
+      "id": "narrate",
+      "from": "card",
+      "to": "brief",
+      "label": "derive",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Target policy \u00b7 not a completion claim",
+      "items": [
+        "Planned repair against code a3655da, reviewed 8 September 2026.",
+        "Legacy verified flags and keyword matching do not yet meet this policy."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Evidence stays attached",
+      "items": [
+        "Page availability and statement support are separate checks.",
+        "A changed claim must invalidate affected audio and summaries."
+      ]
+    }
+  ]
+}

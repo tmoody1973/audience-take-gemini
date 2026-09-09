@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "From discovery to Scout Card",
+    "quality_profile": "showcase",
+    "viewBox": [
+      720,
+      365
+    ]
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "Discover + research"
+    },
+    {
+      "id": "publish",
+      "label": "Check + publish"
+    }
+  ],
+  "mainPath": [
+    "nominate",
+    "research",
+    "synthesis",
+    "validate",
+    "persist"
+  ],
+  "nodes": [
+    {
+      "id": "nominate",
+      "lane": "intake",
+      "col": 0,
+      "type": "frontend",
+      "label": "Nominate",
+      "sublabel": "Public project URL"
+    },
+    {
+      "id": "research",
+      "lane": "intake",
+      "col": 1,
+      "type": "external",
+      "label": "Research",
+      "sublabel": "Sources + Parallel"
+    },
+    {
+      "id": "synthesis",
+      "lane": "intake",
+      "col": 3,
+      "type": "cloud",
+      "label": "Gemini",
+      "sublabel": "Draft proposal"
+    },
+    {
+      "id": "validate",
+      "lane": "publish",
+      "col": 3,
+      "type": "security",
+      "label": "Check claims",
+      "sublabel": "Schema + policy"
+    },
+    {
+      "id": "persist",
+      "lane": "publish",
+      "col": 5,
+      "type": "database",
+      "label": "Publish",
+      "sublabel": "Fan + Pro record"
+    }
+  ],
+  "edges": [
+    {
+      "id": "flow-0",
+      "from": "nominate",
+      "to": "research",
+      "role": "main"
+    },
+    {
+      "id": "flow-1",
+      "from": "research",
+      "to": "synthesis",
+      "role": "main"
+    },
+    {
+      "id": "flow-2",
+      "from": "synthesis",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "id": "flow-3",
+      "from": "validate",
+      "to": "persist",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Code snapshot \u00b7 a3655da \u00b7 8 September 2026",
+      "items": [
+        "Source identity is read before research. Evidence checks still need repair; trailer input remains text-only."
+      ]
+    }
+  ]
+}
