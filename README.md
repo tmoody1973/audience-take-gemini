@@ -15,7 +15,8 @@
 ## 🏛️ Open-Source Repository & Runtime Verification (For Judges & Reviewers)
 
 > **Official Open-Source Repository**: [https://github.com/tmoody1973/audience-take-gemini](https://github.com/tmoody1973/audience-take-gemini)  
-> This open-source repository contains all source code, assets, test suites, architectural schematics, and execution instructions needed to build, test, and run Audience Take.
+> This public repository contains all source code, assets, test suites, architectural schematics, and execution instructions needed to build, test, and run Audience Take.  
+> **License**: Licensed under the OSI-approved **Apache License 2.0** via the complete, standard [`LICENSE`](./LICENSE) file located in the root directory (automatically recognized by GitHub's license detector and displayed in the repository **About** section).
 
 ### Runtime Proof: Google Cloud & Partner Service (Parallel Systems)
 
