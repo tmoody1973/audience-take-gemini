@@ -363,6 +363,20 @@ export function findSupportingSourceIds(
 }
 
 export async function loadPublishedScoutCard(slug: string, database?: ScoutCardFirestore): Promise<ScoutCard | null> {
+  if (
+    !slug ||
+    slug === "proj-c5-monitor-test" ||
+    slug.startsWith("test-") ||
+    slug.startsWith("e2e-") ||
+    slug.startsWith("proj-test-") ||
+    slug.startsWith("proj-terminal-") ||
+    slug.startsWith("proj-monitor-") ||
+    slug.startsWith("proj-parallel-e2e-") ||
+    slug.startsWith("proj-version-inc-") ||
+    slug.startsWith("proj-c5-")
+  ) {
+    return null;
+  }
   try {
     const db = (database ?? getAdminFirestore()) as any;
     const fromFirestore = await readPublishedScoutCard(slug, db);

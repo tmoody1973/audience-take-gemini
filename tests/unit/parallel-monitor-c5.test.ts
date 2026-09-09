@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import { POST as webhookHandler } from "@/app/api/webhooks/parallel/route";
 import { dataRepo } from "@/services/firestore-repo";
 import { NextRequest } from "next/server";
@@ -374,5 +374,17 @@ describe("Package C5: Parallel Monitor Webhook & Lifecycle Repair", () => {
       expect(mon?.projectId).toBe(projectId);
       expect(mon?.providerState).toBe("active");
     });
+  });
+
+  afterAll(async () => {
+    try {
+      const { getAdminFirestore } = await import("@/lib/firebase/admin");
+      const db = getAdminFirestore();
+      if (db) {
+        await db.collection("projects").doc(projectId).delete();
+        await db.collection("scoutCards").doc("card-proj-c5-monitor-test-v1").delete();
+        await db.collection("scoutCards").doc("card-proj-c5-monitor-test-v2").delete();
+      }
+    } catch {}
   });
 });
