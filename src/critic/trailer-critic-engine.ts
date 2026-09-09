@@ -104,19 +104,64 @@ Output strictly in JSON matching this schema:
 }
 `;
 
-      const res = await ai.models.generateContent({
-        model: criticModel,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-        },
-      });
+      let observedModality: "text_context_only" | "multimodal_video" = "text_context_only";
+      let res: any = null;
 
-      if (res.text) {
+      const isEligibleVideo =
+        videoUrl.includes("youtube.com") ||
+        videoUrl.includes("youtu.be") ||
+        videoUrl.endsWith(".mp4") ||
+        videoUrl.endsWith(".webm");
+
+      if (isEligibleVideo) {
+        try {
+          const mediaPart = {
+            fileData: {
+              fileUri: videoUrl,
+              mimeType: "video/mp4",
+            },
+          };
+          res = await ai.models.generateContent({
+            model: criticModel,
+            contents: [mediaPart, prompt],
+            config: {
+              systemInstruction,
+              responseMimeType: "application/json",
+            },
+          });
+          observedModality = "multimodal_video";
+        } catch (mediaErr) {
+          console.warn("[TrailerCritic] Multimodal video attachment failed, falling back to text context:", mediaErr);
+        }
+      }
+
+      if (!res) {
+        res = await ai.models.generateContent({
+          model: criticModel,
+          contents: prompt,
+          config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+          },
+        });
+        observedModality = "text_context_only";
+      }
+
+      if (res?.text) {
         const parsed = JSON.parse(res.text);
+        if (observedModality === "text_context_only") {
+          parsed.timestampedBeats = [];
+          parsed.limitations = "Analysis grounded in verified project and trailer metadata; direct multimodal video stream was unattached or unavailable.";
+          parsed.craftAnalysis = {
+            cinematography: "Direct video stream inspection was unavailable; camera framing, lighting, and composition observations cannot be verified without primary video access.",
+            soundAndScore: "Direct audio track inspection was unavailable; acoustic mix, sound design, and musical score cannot be verified without primary audio access.",
+            editingAndPacing: "Direct video stream inspection was unavailable; shot duration, cut rhythms, and pacing cannot be verified without primary video access.",
+            graphicsAndText: "Direct video stream inspection was unavailable; title cards and typography cannot be verified without primary video access.",
+          };
+        }
         if (validateCriticPayload(parsed)) {
           criticData = parsed;
+          criticData.modality = observedModality;
         } else {
           console.warn("[TrailerCritic] Live payload failed runtime schema validation; using unavailable fallback");
         }
@@ -166,7 +211,7 @@ Output strictly in JSON matching this schema:
     persuasionAndEmotion: criticData.persuasionAndEmotion,
     criticMatrix: criticData.criticMatrix,
     limitations: criticData.limitations,
-    modality: "text_context_only",
+    modality: criticData.modality || "text_context_only",
     analyzedAt: new Date().toISOString(),
     model: criticModel,
   };
@@ -258,19 +303,64 @@ Output strictly in JSON matching this schema:
 }
 `;
 
-      const res = await ai.models.generateContent({
-        model: criticModel,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-        },
-      });
+      let observedModality: "text_context_only" | "multimodal_video" = "text_context_only";
+      let res: any = null;
 
-      if (res.text) {
+      const isEligibleVideo =
+        videoUrl.includes("youtube.com") ||
+        videoUrl.includes("youtu.be") ||
+        videoUrl.endsWith(".mp4") ||
+        videoUrl.endsWith(".webm");
+
+      if (isEligibleVideo) {
+        try {
+          const mediaPart = {
+            fileData: {
+              fileUri: videoUrl,
+              mimeType: "video/mp4",
+            },
+          };
+          res = await ai.models.generateContent({
+            model: criticModel,
+            contents: [mediaPart, prompt],
+            config: {
+              systemInstruction,
+              responseMimeType: "application/json",
+            },
+          });
+          observedModality = "multimodal_video";
+        } catch (mediaErr) {
+          console.warn("[TrailerCritic] Multimodal video attachment failed, falling back to text context:", mediaErr);
+        }
+      }
+
+      if (!res) {
+        res = await ai.models.generateContent({
+          model: criticModel,
+          contents: prompt,
+          config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+          },
+        });
+        observedModality = "text_context_only";
+      }
+
+      if (res?.text) {
         const parsed = JSON.parse(res.text);
+        if (observedModality === "text_context_only") {
+          parsed.timestampedBeats = [];
+          parsed.limitations = "Analysis grounded in verified project and trailer metadata; direct multimodal video stream was unattached or unavailable.";
+          parsed.craftAnalysis = {
+            cinematography: "Direct video stream inspection was unavailable; camera framing, lighting, and composition observations cannot be verified without primary video access.",
+            soundAndScore: "Direct audio track inspection was unavailable; acoustic mix, sound design, and musical score cannot be verified without primary audio access.",
+            editingAndPacing: "Direct video stream inspection was unavailable; shot duration, cut rhythms, and pacing cannot be verified without primary video access.",
+            graphicsAndText: "Direct video stream inspection was unavailable; title cards and typography cannot be verified without primary video access.",
+          };
+        }
         if (validateCriticPayload(parsed)) {
           criticData = parsed;
+          criticData.modality = observedModality;
         } else {
           console.warn("[TrailerCritic] Live payload failed runtime schema validation; using unavailable fallback");
         }
@@ -320,7 +410,7 @@ Output strictly in JSON matching this schema:
     persuasionAndEmotion: criticData.persuasionAndEmotion,
     criticMatrix: criticData.criticMatrix,
     limitations: criticData.limitations,
-    modality: "text_context_only",
+    modality: criticData.modality || "text_context_only",
     analyzedAt: new Date().toISOString(),
     model: criticModel,
   };

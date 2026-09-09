@@ -47,22 +47,63 @@ export async function fetchYouTubeVideoDetails(
         }
       }
     } catch (err) {
-      console.warn("YouTube API video details fetch failed, falling back:", err);
+      console.warn("YouTube API video details fetch failed:", err);
     }
   }
 
-  // Fallback / standard metadata estimation for known projects
-  return {
-    videoId,
-    title: "Vampair: The Animated Pilot",
-    description: "Official trailer and pilot release for Daria Cohen's The Vampair Series.",
-    channelTitle: "Daria Cohen",
-    viewCount: 1845200,
-    likeCount: 142000,
-    commentCount: 9850,
-    publishedAt: "2025-07-03T18:00:00Z",
-    tags: ["vampair", "daria cohen", "animation", "indie animation", "pilot", "the hive studio"],
-  };
+  return null;
+}
+
+export interface YouTubeCommentsOutcome {
+  status: "available" | "unavailable" | "disabled" | "failed";
+  comments: YouTubeCommentItem[];
+  reason?: string;
+  totalRetrieved: number;
+}
+
+export async function fetchYouTubeCommentsStructured(
+  videoId: string,
+  maxResults: number = 50,
+  apiKey: string = process.env.YOUTUBE_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || ""
+): Promise<YouTubeCommentsOutcome> {
+  if (!videoId) {
+    return { status: "unavailable", comments: [], reason: "No video ID provided", totalRetrieved: 0 };
+  }
+  if (!apiKey) {
+    return { status: "unavailable", comments: [], reason: "No YouTube API key configured", totalRetrieved: 0 };
+  }
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=${Math.min(100, maxResults)}&order=relevance&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 403) {
+        return { status: "disabled", comments: [], reason: "Comments disabled or restricted on this video", totalRetrieved: 0 };
+      }
+      return { status: "failed", comments: [], reason: `YouTube API returned status ${res.status}`, totalRetrieved: 0 };
+    }
+    const data = await res.json();
+    if (Array.isArray(data.items)) {
+      const comments: YouTubeCommentItem[] = data.items.map((item: any) => {
+        const top = item.snippet?.topLevelComment?.snippet;
+        return {
+          id: item.id || String(Math.random()),
+          authorName: top?.authorDisplayName || "Viewer",
+          text: top?.textDisplay || top?.textOriginal || "",
+          likeCount: parseInt(top?.likeCount || "0", 10),
+          publishedAt: top?.publishedAt || new Date().toISOString(),
+          replyCount: parseInt(item.snippet?.totalReplyCount || "0", 10),
+        };
+      });
+      return {
+        status: comments.length > 0 ? "available" : "unavailable",
+        comments,
+        totalRetrieved: comments.length,
+      };
+    }
+    return { status: "unavailable", comments: [], reason: "No comment threads returned", totalRetrieved: 0 };
+  } catch (err: unknown) {
+    return { status: "failed", comments: [], reason: err instanceof Error ? err.message : "Network error", totalRetrieved: 0 };
+  }
 }
 
 export async function fetchYouTubeTopComments(
@@ -70,82 +111,6 @@ export async function fetchYouTubeTopComments(
   maxResults: number = 50,
   apiKey: string = process.env.YOUTUBE_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || ""
 ): Promise<YouTubeCommentItem[]> {
-  if (!videoId) return [];
-
-  if (apiKey) {
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=${Math.min(100, maxResults)}&order=relevance&key=${apiKey}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.items)) {
-          return data.items.map((item: any) => {
-            const top = item.snippet?.topLevelComment?.snippet;
-            return {
-              id: item.id || String(Math.random()),
-              authorName: top?.authorDisplayName || "Viewer",
-              text: top?.textDisplay || top?.textOriginal || "",
-              likeCount: parseInt(top?.likeCount || "0", 10),
-              publishedAt: top?.publishedAt || new Date().toISOString(),
-              replyCount: parseInt(item.snippet?.totalReplyCount || "0", 10),
-            };
-          });
-        }
-      }
-    } catch (err) {
-      console.warn("YouTube API comment threads fetch failed, falling back:", err);
-    }
-  }
-
-  // High-fidelity fallback comments corpus representing authentic Vampair community engagement
-  return [
-    {
-      id: "comment-1",
-      authorName: "GothAnimFan",
-      text: "The fact that Daria Cohen and The Hive Studio got €225k on Kickstarter proves 2D indie animation is the future. Duke and Missi's dynamic is unmatched!",
-      likeCount: 4200,
-      publishedAt: "2025-07-04T12:00:00Z",
-      replyCount: 84,
-    },
-    {
-      id: "comment-2",
-      authorName: "SoundtrackJunkie",
-      text: "PLEASE release the soundtrack on vinyl! The musical number at 0:38 gave me chills. The orchestration is incredible.",
-      likeCount: 3150,
-      publishedAt: "2025-07-05T14:30:00Z",
-      replyCount: 42,
-    },
-    {
-      id: "comment-3",
-      authorName: "IndieFrameReview",
-      text: "Between Hazbin Hotel on Prime and Lackadaisy, Vampair is literally the next indie animation ready for a full streaming season order. The character designs are iconic.",
-      likeCount: 2890,
-      publishedAt: "2025-07-06T09:15:00Z",
-      replyCount: 51,
-    },
-    {
-      id: "comment-4",
-      authorName: "ArtOfVampair",
-      text: "I backed the Kickstarter for the art book tier! The hand-drawn shadow animation and lighting in the ballroom scene are absolute masterclasses.",
-      likeCount: 1950,
-      publishedAt: "2025-07-07T16:20:00Z",
-      replyCount: 29,
-    },
-    {
-      id: "comment-5",
-      authorName: "MidnightShowrunner",
-      text: "Adult Swim or Netflix needs to pick this up immediately. We need more gothic horror comedy musicals.",
-      likeCount: 1720,
-      publishedAt: "2025-07-08T11:45:00Z",
-      replyCount: 38,
-    },
-    {
-      id: "comment-6",
-      authorName: "ShadowPacer",
-      text: "Only critique is I hope the full pilot gives more backstory on Duke before the duel, but the pacing of this trailer is 10/10.",
-      likeCount: 1100,
-      publishedAt: "2025-07-09T20:10:00Z",
-      replyCount: 18,
-    },
-  ];
+  const result = await fetchYouTubeCommentsStructured(videoId, maxResults, apiKey);
+  return result.comments;
 }

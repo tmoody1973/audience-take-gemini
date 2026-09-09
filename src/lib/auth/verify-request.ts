@@ -56,6 +56,9 @@ export async function verifyAuthenticatedRequest(
 
   const token = authorization.slice("Bearer ".length).trim();
   if (token === "demo-scout-token") {
+    if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_AUTH !== "true") {
+      throw new AuthenticationError("Sign in is required.", "missing_token");
+    }
     const guestUser = {
       uid: "guest-scout-demo",
       email: "guest@audiencetake.example",

@@ -273,6 +273,11 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
     wouldWatch: typeof commitmentCounts.would_watch === "number" ? (commitmentCounts.would_watch as number) : 0,
     wouldPay: typeof commitmentCounts.would_pay === "number" ? (commitmentCounts.would_pay as number) : 0,
   };
+  const persistedExternalSignals = Array.isArray(cardData?.externalSignals) && cardData.externalSignals.length > 0
+    ? cardData.externalSignals
+    : card.externalSignals || [];
+  const persistedExternalSignalsStatus = cardData?.externalSignalsStatus
+    || (persistedExternalSignals.length > 0 ? "observations_available" : (card.externalSignalsStatus || "not_researched"));
 
   return {
     ...card,
@@ -285,6 +290,8 @@ async function readPublishedScoutCard(slug: string, database: ScoutCardFirestore
     fandomDna: computedFandom,
     livingDossier: computedLivingDossier,
     audiencePulse: initialPulse,
+    externalSignals: persistedExternalSignals,
+    externalSignalsStatus: persistedExternalSignalsStatus,
   };
 }
 
@@ -296,6 +303,9 @@ export function canonicalizeUrl(rawUrl: string): string {
     parsed.searchParams.delete("utm_medium");
     parsed.searchParams.delete("utm_campaign");
     parsed.searchParams.delete("ref");
+    if (parsed.hostname.toLowerCase().includes("kickstarter.com")) {
+      parsed.pathname = parsed.pathname.replace(/\/(?:description|comments|posts|rewards|updates|faqs)(?:\/.*)?$/i, "");
+    }
     let normalized = parsed.toString();
     if (normalized.endsWith("/") && parsed.pathname !== "/") {
       normalized = normalized.slice(0, -1);
@@ -479,24 +489,45 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         const rawExcerpt = ev.excerpt || ev.title || "";
         const cleanedExcerpt = cleanTextExcerpt(rawExcerpt, ev.title);
 
-        const evAvailability = (ev.availability as any) || (ev.verified === false ? "unavailable" : "available");
+        const evAvailability =
+          (ev.availability as any) ||
+          (ev.verified === false && !cleanedExcerpt && !ev.excerpt ? "unavailable" : "available");
         const evVerificationStatus = isSubmitted
           ? ("observed" as const)
           : ev.verificationStatus
             ? (ev.verificationStatus as any)
             : (ev.verified && (ev.receipt?.outcome === "success" || ev.passages?.length > 0) ? ("verified" as const) : ("observed" as const));
 
+        const isCampaignOrCreatorSite = /\b(kickstarter\.com|indiegogo\.com|patreon\.com|gofundme\.com|seedandspark\.com)\b/i.test(canonUrl);
+        const isTradeJournal = /\b(variety\.com|deadline\.com|hollywoodreporter\.com|indiewire\.com|cartoonbrew\.com|awn\.com|screendaily\.com|filmmakermagazine\.com)\b/i.test(canonUrl);
+
+        const sourceRole = isSubmitted
+          ? ("primary_work" as const)
+          : isCampaignOrCreatorSite
+            ? ("creator_statement" as const)
+            : isTradeJournal
+              ? ("trade_reporting" as const)
+              : ("commentary" as const);
+
+        const sourceTier = isSubmitted
+          ? ("primary" as const)
+          : isCampaignOrCreatorSite
+            ? ("creator_authorized" as const)
+            : isTradeJournal
+              ? ("reputable_trade" as const)
+              : ("secondary" as const);
+
         sourceLedgerEntries.push({
           id: sourceId,
           origin: isSubmitted ? ("submitted" as const) : ("parallel" as const),
-          title: ev.title || (isSubmitted ? "Submitted Project Media" : "Parallel Web Discovery"),
+          title: ev.title || (isSubmitted ? "Submitted Project Media" : isCampaignOrCreatorSite ? "Creator Campaign / Project Page" : "Parallel Web Discovery"),
           url: rawUrl,
           publishedAt: ev.publishedAt ? toSafeIsoString(ev.publishedAt, "") : null,
           retrievedAt: toSafeIsoString(ev.retrievedAt || ev.timestamp || dynamicCard.createdAt || dynamicProject?.createdAt),
           availability: evAvailability,
           verificationStatus: evVerificationStatus,
-          sourceRole: isSubmitted ? ("primary_work" as const) : ("trade_reporting" as const),
-          sourceTier: isSubmitted ? ("primary" as const) : ("secondary" as const),
+          sourceRole,
+          sourceTier,
           supportsClaimIds: [],
           externalCommentary: false,
           excerpt: cleanedExcerpt,
@@ -699,7 +730,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           claimIds,
         },
         creatorContext: {
-          displayName: creators[0] || null,
+          displayName: creators.length > 1 ? creators.join(" & ") : creators[0] || null,
           claimStatus: claimStatusVal,
           summary: dynamicCard.whyScouted,
           sourceIds,
@@ -708,7 +739,9 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         sourceIds,
         claimIds,
         evidenceClaims,
-        externalSignals: [],
+        externalSignals: Array.isArray(dynamicCard.externalSignals) ? dynamicCard.externalSignals : [],
+        externalSignalsStatus: dynamicCard.externalSignalsStatus
+          || (Array.isArray(dynamicCard.externalSignals) && dynamicCard.externalSignals.length > 0 ? "observations_available" : "not_researched"),
         pathwayIds: pathways.map((p) => p.id),
         pathways,
         sourceLedger: sourceLedgerEntries,
@@ -924,9 +957,14 @@ export async function getRelatedScoutProjects(currentCard: ScoutCard): Promise<R
     const currentThemes = (currentCard.storyContext?.themes || []).map((t) => t.toLowerCase());
     const currentMedium = (currentCard.projectType || currentCard.storyContext?.currentFormat || "").toLowerCase();
 
-    // Filter out current project (p.id !== currentCard.projectId && p.slug !== currentCard.slug)
+    // Filter out current project, non-published placeholders, and test entries
     const candidates = projects.filter((p: any) => {
+      if (p.publicationStatus !== "published" && !p.publishedCardId) return false;
+      const title = (p.identity?.title || p.title || "").trim().toLowerCase();
+      if (!title || title === "project under research" || title.includes("test")) return false;
+
       const pSlug = (p.slug || (p.id === "proj-junichiro" ? "junichiro-jackson" : (p.identity?.title ? p.identity.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : p.id))).toLowerCase();
+      if (pSlug.includes("test")) return false;
       const pId = (p.id || "").toLowerCase();
       const currentSlug = (currentCard.slug || "").toLowerCase();
       const currentProjId = (currentCard.projectId || "").toLowerCase();

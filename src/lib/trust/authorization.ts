@@ -45,6 +45,9 @@ export async function loadRoleAssignment(
   database: Firestore,
   uid: string,
 ): Promise<RoleAssignment> {
+  if (uid === "guest-scout-demo" || uid.startsWith("demo-")) {
+    return { roles: { fan: true }, creatorProjectIds: [], demoOnly: true };
+  }
   const snapshot = await database.collection("roleAssignments").doc(uid).get();
   return snapshot.exists
     ? parseRoleAssignment(snapshot.data())

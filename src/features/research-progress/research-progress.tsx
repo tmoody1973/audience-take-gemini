@@ -13,6 +13,7 @@ import {
   type ResearchSnapshot,
   type StageState,
 } from "../../lib/research/public-research";
+import { nominationCommandHeaders } from "../../lib/nomination/client-auth";
 
 type LoadState =
   | { kind: "loading"; snapshot: ResearchSnapshot }
@@ -77,7 +78,7 @@ function handleFilmstripKeyDown(event: KeyboardEvent<HTMLOListElement>) {
   filmstrip.scrollLeft = Math.max(0, Math.min(nextPosition, filmstrip.scrollWidth - filmstrip.clientWidth));
 }
 
-function runStateToSnapshot(runState: any): ResearchSnapshot {
+export function runStateToSnapshot(runState: any): ResearchSnapshot {
   const stepMap: Record<string, number> = {
     intake: 1,
     fetching: 3,
@@ -87,16 +88,22 @@ function runStateToSnapshot(runState: any): ResearchSnapshot {
     validating: 6,
     publishing: 6,
     complete: 6,
-    failed: 1,
   };
-  const currentStage = stepMap[runState.currentStep] || 1;
   const isDone = runState.currentStep === "complete";
   const isFailed = runState.currentStep === "failed";
+
+  const lastActiveLog = [...(runState.stepLogs || [])].reverse().find((l: any) => l.step !== "failed");
+  const failedStage = lastActiveLog ? (stepMap[lastActiveLog.step] || 6) : 6;
+  const currentStage = isFailed ? failedStage : (stepMap[runState.currentStep] || 1);
+  const completedStages = isFailed
+    ? Array.from({ length: Math.max(0, failedStage - 1) }, (_, i) => i + 1)
+    : Array.from({ length: currentStage }, (_, i) => i + 1).filter((s) => s < currentStage || isDone);
+
   const events = (runState.stepLogs || []).map((log: any, idx: number) => ({
     id: `event-${idx}`,
     sequence: idx + 1,
-    stage: stepMap[log.step] || 1,
-    status: (log.status === "done" ? "complete" : log.status === "in_progress" ? "active" : "waiting") as StageState,
+    stage: stepMap[log.step] || (log.step === "failed" ? failedStage : 1),
+    status: (log.status === "done" ? "complete" : log.status === "in_progress" ? "active" : log.status === "error" ? "failed" : "waiting") as StageState,
     kind: log.step === "fetching" ? "tool_receipt" : "stage",
     title: log.message.slice(0, 100),
     summary: log.message,
@@ -114,12 +121,12 @@ function runStateToSnapshot(runState: any): ResearchSnapshot {
       researchVersion: 1,
       status: isDone ? "complete" : isFailed ? "failed" : "running",
       currentStage,
-      completedStages: Array.from({ length: currentStage }, (_, i) => i + 1).filter(s => s < currentStage || isDone),
+      completedStages,
       missingStages: [],
-      publicFailureMessage: isFailed ? runState.error || "Research encountered an issue" : null,
+      publicFailureMessage: isFailed ? (runState.errorMessage || runState.error || "Research encountered an issue") : null,
       projectSlug: runState.projectId,
       cardUrl: `/projects/${runState.projectId}`,
-      retryEligible: false,
+      retryEligible: isFailed,
       fallbackUsed: false,
       updatedAt: new Date().toISOString(),
     },
@@ -170,6 +177,8 @@ export function ResearchProgress({ runId }: { runId: string }) {
   const firebaseAvailable = hasFirebaseClientConfig();
   const [loadState, setLoadState] = useState<LoadState>({ kind: "loading", snapshot: initialSnapshot });
   const filmstripRef = useRef<HTMLOListElement>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryMessage, setRetryMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -220,7 +229,19 @@ export function ResearchProgress({ runId }: { runId: string }) {
             if (!active) return;
             if (snapshot) {
               received = true;
-              setLoadState({ kind: "ready", snapshot });
+              setLoadState((current) => {
+                const prevEvents = current.snapshot?.events || [];
+                const nextEvents = snapshot.events.length >= prevEvents.length ? snapshot.events : prevEvents;
+                const prevRun = current.snapshot?.run;
+                const nextRun = {
+                  ...snapshot.run,
+                  currentStage: Math.max(prevRun?.currentStage || 1, snapshot.run.currentStage),
+                  completedStages: Array.from(new Set([...(prevRun?.completedStages || []), ...(snapshot.run.completedStages || [])])).sort((a, b) => a - b),
+                  cardUrl: snapshot.run.cardUrl || prevRun?.cardUrl || null,
+                  projectSlug: snapshot.run.projectSlug || prevRun?.projectSlug || null,
+                };
+                return { kind: "ready", snapshot: { ...snapshot, run: nextRun, events: nextEvents } };
+              });
             }
           },
           () => {
@@ -347,20 +368,51 @@ export function ResearchProgress({ runId }: { runId: string }) {
                   {run.retryEligible ? <button type="button" onClick={() => window.location.reload()}>Check retry status</button> : null}
                   <button
                     type="button"
+                    disabled={isRetrying}
                     onClick={async () => {
+                      setIsRetrying(true);
+                      setRetryMessage(null);
                       try {
-                        await fetch("/api/agent/run", {
+                        const headers = await nominationCommandHeaders();
+                        const response = await fetch("/api/agent/run", {
                           method: "POST",
-                          headers: { "Content-Type": "application/json" },
+                          headers,
                           body: JSON.stringify({ runId, forceRetry: true }),
                         });
-                        window.location.reload();
-                      } catch {}
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                          const errorMsg = data?.error || `Retry request failed with status ${response.status}.`;
+                          setRetryMessage({ type: "error", text: errorMsg });
+                        } else {
+                          setRetryMessage({ type: "success", text: "Retry accepted and dispatched. Updating progress..." });
+                          window.setTimeout(() => {
+                            window.location.reload();
+                          }, 1200);
+                        }
+                      } catch (error) {
+                        setRetryMessage({
+                          type: "error",
+                          text: error instanceof Error ? error.message : "Network error attempting retry.",
+                        });
+                      } finally {
+                        setIsRetrying(false);
+                      }
                     }}
                   >
-                    Retry research
+                    {isRetrying ? "Queuing retry..." : "Retry research"}
                   </button>
                 </div>
+                {retryMessage ? (
+                  <p
+                    style={{
+                      marginTop: "0.5rem",
+                      fontSize: "0.85rem",
+                      color: retryMessage.type === "error" ? "#dc2626" : "#16a34a",
+                    }}
+                  >
+                    {retryMessage.text}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>

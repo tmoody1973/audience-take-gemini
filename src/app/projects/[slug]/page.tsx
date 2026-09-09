@@ -77,12 +77,12 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
     livingUpdates = [];
   }
 
-  let scoutBrief = null;
+  let scoutBriefs: { discover: any; pro: any } = { discover: null, pro: null };
   try {
-    const { loadScoutBriefForCard } = await import("../../../features/scout-brief/data");
-    scoutBrief = await loadScoutBriefForCard(card);
+    const { loadAllScoutBriefsForCard } = await import("../../../features/scout-brief/data");
+    scoutBriefs = await loadAllScoutBriefsForCard(card);
   } catch {
-    scoutBrief = null;
+    scoutBriefs = { discover: null, pro: null };
   }
 
   let relatedProjects: RelatedScoutProject[] = [];
@@ -98,7 +98,8 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
       <ScoutCard
         card={card}
         livingUpdates={livingUpdates}
-        scoutBrief={scoutBrief}
+        scoutBrief={initialView === "pro" ? (scoutBriefs.pro || scoutBriefs.discover) : (scoutBriefs.discover || scoutBriefs.pro)}
+        scoutBriefs={scoutBriefs}
         related={relatedProjects}
         initialView={initialView}
       />

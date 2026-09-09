@@ -248,6 +248,7 @@ EDITORIAL RULES:
 - Avoid repetitive filler like "That is right, Scout" or "Exactly, Scout".
 - Never use automatic promotional exaggeration or unmeasured claims like "undeniable demand", "blockbuster certainty", or "surefire hit". All statements of audience interest must match measured evidence.
 - Do not describe independent AI interpretation or external hypotheses as the "creator's stated ambition" unless verified by an approved creator statement.
+- QUALIFICATION HERITAGE: Any claim in evidenceClaims with status 'qualified', 'inference', or a qualification note (e.g. self-reported campaign pledges, estimated budgets, or unverified completion dates) MUST be spoken with explicit qualification phrasing (e.g. "according to the campaign", "self-reported", "estimated", "pending verification"). NEVER state a self-reported or qualified figure as an unconditional established fact.
 - Map each segment to valid sourceIds and claimIds from the DATA below.
 
 DATA:
@@ -273,6 +274,7 @@ EDITORIAL RULES:
 - Avoid filler introductions like "That is right, Scout".
 - Never use automatic promotional exaggeration or unmeasured claims like "undeniable demand".
 - Do not make independent AI interpretation the "creator's stated ambition."
+- QUALIFICATION HERITAGE: Any claim in evidenceClaims with status 'qualified', 'inference', or a qualification note (e.g. self-reported campaign pledges, estimated budgets, or unverified completion dates) MUST be spoken with explicit qualification phrasing (e.g. "according to the campaign", "self-reported", "estimated", "pending verification"). NEVER state a self-reported or qualified figure as an unconditional established fact.
 - Map each segment to valid sourceIds and claimIds from the DATA below.
 
 DATA:

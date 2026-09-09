@@ -1,7 +1,7 @@
 import { getClientAppCheckToken, getClientAuth } from "../../lib/firebase/client";
 
 export async function socialCommand<T>(path: string, method: "POST" | "PUT" | "PATCH" | "DELETE", body?: unknown): Promise<T> {
-  let token = "demo-scout-token";
+  let token: string | null = null;
   try {
     const user = getClientAuth().currentUser;
     if (user) {
@@ -9,6 +9,14 @@ export async function socialCommand<T>(path: string, method: "POST" | "PUT" | "P
     }
   } catch {
     // client auth unconfigured in test/offline environment
+  }
+  if (!token) {
+    if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ALLOW_DEMO_AUTH === "true") {
+      token = "demo-scout-token";
+    }
+  }
+  if (!token) {
+    throw new Error("Sign in is required to participate.");
   }
   const headers = new Headers({ "content-type": "application/json", authorization: `Bearer ${token}` });
   const appCheck = await getClientAppCheckToken();

@@ -24,6 +24,7 @@ import type {
   ExecutionLease,
 } from "@/domain";
 import { getAdminFirestore } from "@/lib/firebase/admin";
+import { projectSlugFromId } from "@/lib/nomination/store";
 
 function toSafeIso(value: unknown, fallback?: string): string {
   if (typeof value === "string" && value.length > 0) return value;
@@ -1725,11 +1726,17 @@ export const dataRepo = {
             cleanFirestoreObject(run),
             { merge: true }
           );
+          const resolvedSlug = (project as any).slug || (project.id ? projectSlugFromId(project.id) : "");
+          const cardUrl = resolvedSlug ? `/projects/${resolvedSlug}` : `/projects/${project.id.toLowerCase()}`;
           transaction.set(
             db.collection("publicResearchRuns").doc(run.id),
             {
               status: "complete",
-              cardUrl: `/projects/${project.id}`,
+              cardUrl,
+              projectSlug: resolvedSlug || null,
+              currentStage: 6,
+              completedStages: [1, 2, 3, 4, 5, 6],
+              missingStages: [],
               updatedAt: new Date().toISOString(),
             },
             { merge: true }

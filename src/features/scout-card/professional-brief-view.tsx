@@ -67,6 +67,7 @@ export type ProfessionalBriefViewProps = {
   livingUpdates?: ProjectLivingUpdate[];
   scoutBrief?: ScoutBrief | null;
   onOpenCitation?: (source: SourceLedgerEntry, claim?: EvidenceClaim) => void;
+  onViewAudienceParticipation?: () => void;
 };
 
 export function ProfessionalBriefView({
@@ -75,6 +76,7 @@ export function ProfessionalBriefView({
   livingUpdates,
   scoutBrief,
   onOpenCitation,
+  onViewAudienceParticipation,
 }: ProfessionalBriefViewProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
@@ -117,15 +119,18 @@ export function ProfessionalBriefView({
   const supportedClaims = card.evidenceClaims.filter((c) => c.status === "supported" || c.status === "qualified");
 
   const financingClaim = supportedClaims.find((c) =>
-    /\b(kickstarter|crowdfund|pledged|funded|budget|grant|raised)\b/i.test(c.statement)
+    /\b(kickstarter|indiegogo|crowdfund|pledged|funded|budget|grant|raised)\b/i.test(c.statement)
   );
   const financingSource = financingClaim?.sourceIds?.[0]
     ? card.sourceLedger.find((s) => s.id === financingClaim.sourceIds[0])
     : undefined;
 
-  const partnerClaim = supportedClaims.find((c) =>
-    /\b(teamto|studio|partner|co-production|cbc studios|production company)\b/i.test(c.statement)
-  );
+  const partnerClaim = supportedClaims.find((c) => {
+    if (c.id === financingClaim?.id) return false;
+    const s = c.statement.toLowerCase();
+    if (/\b(kickstarter|indiegogo|crowdfund|pledged|backers)\b/i.test(s)) return false;
+    return /\b(teamto|studio|co-production|cbc studios|production company|producing partners?|produced in association with|animation studio)\b/i.test(s);
+  });
   const partnerSource = partnerClaim?.sourceIds?.[0]
     ? card.sourceLedger.find((s) => s.id === partnerClaim.sourceIds[0])
     : undefined;
@@ -141,10 +146,14 @@ export function ProfessionalBriefView({
     ? card.sourceLedger.find((s) => s.id === distributionClaim.sourceIds[0])
     : undefined;
 
-  const stageClaim = supportedClaims.find((c) =>
-    c.id !== partnerClaim?.id &&
-    /\b(proof of concept|pilot|development|pre-production|production|post-production|festival circuit)\b/i.test(c.statement)
-  );
+  const stageClaim = supportedClaims.find((c) => {
+    if (c.id === partnerClaim?.id || c.id === financingClaim?.id) return false;
+    const s = c.statement.toLowerCase();
+    if (s.startsWith("nominator context") || s.includes("nominator context:") || s.includes("nominator submission")) {
+      return false;
+    }
+    return /\b(proof of concept|pilot|development|pre-production|production|post-production|festival circuit)\b/i.test(s);
+  });
   const stageSource = stageClaim?.sourceIds?.[0]
     ? card.sourceLedger.find((s) => s.id === stageClaim.sourceIds[0])
     : undefined;
@@ -647,15 +656,50 @@ Source Link: ${typeof window !== "undefined" ? window.location.href : `/projects
                 ))}
               </ul>
             ) : (
-              <p className="pro-empty-notice">No external commercial signals verified for this project.</p>
+              <p className="pro-empty-notice">
+                {card.externalSignalsStatus === "researching"
+                  ? "External commercial research in progress."
+                  : card.externalSignalsStatus === "research_failed"
+                  ? "External commercial research could not be completed."
+                  : card.externalSignalsStatus === "no_supported_observations"
+                  ? "Research complete · No external signals met verification criteria."
+                  : "No external commercial signals verified for this project."}
+              </p>
             )}
           </div>
 
-          <div className="pro-signal-block">
-            <h3>Native Audience Take Signals</h3>
-            <p className="pro-empty-notice">
-              Independent non-binding community intent. Detailed in Discover view.
+          <div className="pro-signal-block" aria-labelledby="pro-native-signals-title">
+            <h3 id="pro-native-signals-title">Native Audience Take Signals</h3>
+            <div className="pro-native-metrics-grid">
+              <div className="pro-native-metric">
+                <span className="metric-value">{card.followerCount ?? card.audiencePulse?.follows ?? 0}</span>
+                <span className="metric-label">Followers</span>
+              </div>
+              <div className="pro-native-metric">
+                <span className="metric-value">{card.commitmentCounts?.would_watch ?? card.audiencePulse?.wouldWatch ?? 0}</span>
+                <span className="metric-label">Would Watch</span>
+              </div>
+              <div className="pro-native-metric">
+                <span className="metric-value">{card.commitmentCounts?.pay_to_fund ?? card.commitmentCounts?.attend_screening ?? card.audiencePulse?.wouldPay ?? 0}</span>
+                <span className="metric-label">Support Intent</span>
+              </div>
+            </div>
+            <p className="pro-signals-disclosure">
+              Expressions of interest, not purchases. The same person may appear in more than one count.
             </p>
+            {onViewAudienceParticipation ? (
+              <button
+                type="button"
+                className="pro-view-audience-btn"
+                onClick={onViewAudienceParticipation}
+              >
+                Inspect audience participation in Discover view &rarr;
+              </button>
+            ) : (
+              <a href="#audience-pulse" className="pro-view-audience-btn">
+                Inspect audience participation in Discover view &rarr;
+              </a>
+            )}
           </div>
         </div>
       </section>

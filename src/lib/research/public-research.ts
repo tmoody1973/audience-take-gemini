@@ -81,11 +81,18 @@ function publicString(value: unknown, maxLength: number): string | null {
 }
 
 function projectSlug(value: unknown): string | null {
-  return typeof value === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) ? value : null;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().toLowerCase();
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(trimmed) ? trimmed : null;
 }
 
 function scoutCardUrl(value: unknown): string | null {
-  return typeof value === "string" && /^\/projects\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value) ? value : null;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (/^\/projects\/[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$/.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+  return null;
 }
 
 function isoDate(value: unknown): string | null {

@@ -9,7 +9,22 @@ import { fetchSafeWebContent } from "@/services/ssrf-guard";
 import { fetchYouTubeMetadata, type YouTubeMetadata } from "@/lib/media/youtube";
 import { parallelClient } from "@/services/parallel-client";
 import { validateScoutProposal } from "./deterministic-validator";
+import { repairScoutProposal } from "./proposal-repair";
 import { dataRepo } from "@/services/firestore-repo";
+
+export function stepToStage(step: string): number {
+  switch (step) {
+    case "intake": return 1;
+    case "fetching": return 3;
+    case "classifying": return 4;
+    case "synthesizing":
+    case "critic": return 5;
+    case "validating":
+    case "publishing":
+    case "complete": return 6;
+    default: return 6;
+  }
+}
 import { analyzeTrailerVideo } from "@/critic/trailer-critic-engine";
 import { cleanTextExcerpt } from "@/features/scout-card/evidence-display";
 import {
@@ -90,6 +105,27 @@ export async function executeScoutResearchRun(
       status,
     });
     await dataRepo.saveResearchRun(run, leaseToken);
+
+    // Sync active stage to publicResearchRuns for real-time observers
+    const activeStage = stepToStage(step);
+    const completedStages = Array.from({ length: Math.max(0, activeStage - 1) }, (_, i) => i + 1);
+    try {
+      const { getAdminFirestore } = await import("@/lib/firebase/admin");
+      const db = getAdminFirestore();
+      if (db) {
+        await db.collection("publicResearchRuns").doc(run.id).set(
+          {
+            status: "running",
+            currentStage: activeStage,
+            completedStages,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      }
+    } catch {
+      // non-fatal background sync
+    }
   };
 
   try {
@@ -261,7 +297,21 @@ export async function executeScoutResearchRun(
           const parsed = new URL(u);
           const h = parsed.hostname.toLowerCase();
           // Exclude video aggregators and social hosts, but preserve official project root sites (R7.7)
-          if (h.includes("youtube.com") || h.includes("youtu.be") || h.includes("vimeo.com") || h.includes("tiktok.com") || h.includes("x.com") || h.includes("twitter.com")) return false;
+          if (
+            h.includes("youtube.com") ||
+            h.includes("youtu.be") ||
+            h.includes("vimeo.com") ||
+            h.includes("tiktok.com") ||
+            h.includes("x.com") ||
+            h.includes("twitter.com") ||
+            h.includes("facebook.com") ||
+            h.includes("fb.watch") ||
+            h.includes("instagram.com") ||
+            h.includes("threads.net") ||
+            h.includes("linkedin.com") ||
+            h.includes("pinterest.com") ||
+            h.includes("reddit.com")
+          ) return false;
           return true;
         } catch {
           return false;
@@ -401,7 +451,7 @@ STRICT INVARIANTS & INJECTION DEFENSE:
 5. Funding raised does not establish budget sufficiency; record what the campaign actually funds.
 6. Views from one observation do not establish velocity. Without two comparable observations, show a dated count only.
 7. Concordant medium: If medium is 'webseries', 'series', 'short', 'feature', 'documentary', shape pathways accordingly.
-8. Up to 3 realistic growth pathways (1 to 3 distinct paths only when supported). Do not invent an ungrounded third pathway if only 1 or 2 are supported by evidence.
+8. Exactly 3 distinct, bounded growth pathways tailored to the project medium (e.g. Pathway 1: Festival circuit / curated showcase screenings; Pathway 2: Expanded series or feature adaptation; Pathway 3: Creator-led community distribution / direct serialized release). All 3 pathways must be grounded, bounded, and realistic.
 9. Decision Brief must include:
    - logline: 10-400 chars factual logline.
    - coreHook: 5-300 chars distinct creative angle.
@@ -412,6 +462,8 @@ STRICT INVARIANTS & INJECTION DEFENSE:
    - nextDiligenceStep: The prerequisite-aware single next diligence action for a film professional (e.g. 'Request chain of title and pitch deck from creator' or 'Check festival screener status') (max 400 chars).
 10. CLEAN TEXT ONLY: Never output raw markdown links [text](url), headers #, image tags ![], or website navigation boilerplate in whatWeKnow or evidenceLedger. Synthesize clean, professional, factual 1-2 sentence statements.
 11. FACTUAL GROUNDING IN WHAT WE KNOW: Every statement in whatWeKnow MUST directly describe verifiable facts established in <project_identity>, <primary_source_metadata>, or research excerpts (verified creators, medium/format, verified setting/premise, or production stage). Avoid purely subjective aesthetic commentary.
+12. QUALIFICATION HERITAGE: Any self-reported crowdfunding figure (e.g. Kickstarter pledges), estimated budget, or targeted completion window (e.g. 'early 2027') MUST be framed with explicit qualification language (e.g. 'reported by the campaign', 'self-targeted delivery window of early 2027 (unconfirmed)', 'unverified budget statement') across decisionBrief, whatWeKnow, and whyScouted. NEVER promote self-reported campaign assertions into unconditional facts.
+13. PRESERVE ALL CREATORS: If multiple creators or collaborators are identified (e.g. 'Elena & Olivia'), include ALL creators in the 'creators' array. Never drop secondary creators.
 `;
 
         const userPrompt = `
@@ -536,6 +588,64 @@ Output MUST strictly adhere to the following JSON structure:
                 proposalData.decisionBrief.nextDiligenceStep = questionLedger.rights.creatorControlledDiligenceStep;
               }
             }
+
+            // Ensure exactly 3 distinct, bounded pathways
+            if (!Array.isArray(proposalData.pathways)) {
+              proposalData.pathways = [];
+            }
+            if (proposalData.pathways.length < 3) {
+              const med = String(proposalData.medium || "short");
+              const defaultBackfills = [
+                {
+                  title: med.includes("series") ? "Direct Serialized Distribution" : "Independent Festival Circuit & Curated Showcase",
+                  mediumFitRationale: `Targeted festival program and regional showcases to build verified audience momentum for this ${med.replace("_", " ")}.`,
+                  targetAudience: "Film festival audiences, category programmers, and independent cinema supporters.",
+                  risksAndUncertainties: ["Festival submission window timing and competitive programming selection."],
+                  nextBoundedExperiment: {
+                    name: "Festival Submission Strategy",
+                    description: "Submit to 3 targeted regional and category-specific festivals to measure programmer response.",
+                    successMetric: "At least 1 official selection or curated showcase screening.",
+                  },
+                  prerequisites: ["Final locked screener cut and complete press kit."],
+                  owner: "Creative Team",
+                  blockers: ["Submission deadlines and entry budget."],
+                },
+                {
+                  title: med.includes("series") ? "Episodic Expansion & Pitch Package" : "Expanded Format Adaptation",
+                  mediumFitRationale: `Develop the core narrative world into an expanded format package based on initial proof-of-concept reception.`,
+                  targetAudience: "Development executives and production partners seeking distinctive narrative IP.",
+                  risksAndUncertainties: ["Translating proof-of-concept pacing into sustained longer-form character arcs."],
+                  nextBoundedExperiment: {
+                    name: "Series Bible / Treatment Package",
+                    description: "Draft comprehensive pitch treatment outlining character arcs and multi-episode progression.",
+                    successMetric: "Structured coverage review from independent development reader.",
+                  },
+                  prerequisites: ["Clear chain of title and verified underlying rights."],
+                  owner: "Creative Team",
+                  blockers: ["Development financing."],
+                },
+                {
+                  title: "Direct-to-Community Serialized Release",
+                  mediumFitRationale: `Leverage digital community interest and crowdfunding followers to build a sustainable direct supporter base.`,
+                  targetAudience: "Dedicated genre enthusiasts, animation fans, and crowdfunding backers.",
+                  risksAndUncertainties: ["Maintaining organic audience engagement across production intervals."],
+                  nextBoundedExperiment: {
+                    name: "Community Engagement Milestone",
+                    description: "Publish behind-the-scenes production update or teaser clip to track follower engagement.",
+                    successMetric: "Demonstrated audience retention and active community discussion.",
+                  },
+                  prerequisites: ["Active digital project hub or community channel."],
+                  owner: "Creators",
+                  blockers: ["Community management bandwidth."],
+                },
+              ];
+              for (const backfill of defaultBackfills) {
+                if (proposalData.pathways.length >= 3) break;
+                if (!proposalData.pathways.some((p: any) => p.title?.toLowerCase() === backfill.title.toLowerCase())) {
+                  proposalData.pathways.push(backfill);
+                }
+              }
+            }
           }
         }
       } catch (err: unknown) {
@@ -581,9 +691,9 @@ Output MUST strictly adhere to the following JSON structure:
     const nominatorLeadItem = project.nomination?.reason
       ? {
           id: "ev-nominator-lead",
-          sourceUrl: run.sourceUrl,
+          sourceUrl: "",
           title: "Nominator Submission Lead",
-          publisher: "Nominator",
+          publisher: "Nominator Context",
           claimType: "reported" as const,
           excerpt: `Nominator context: "${project.nomination.reason}"`,
           verified: false,
@@ -599,6 +709,10 @@ Output MUST strictly adhere to the following JSON structure:
       .split(/\s+/)
       .filter((t: string) => t.length > 2);
 
+    const creatorTokens = (proposalData.creators || project.identity?.creators || [])
+      .flatMap((c: string) => c.toLowerCase().split(/\s+/))
+      .filter((t: string) => t.length > 2);
+
     const parallelEvidence = allSearchResults
       .filter((r) => {
         if (!r.url || r.url === run.sourceUrl) return false;
@@ -607,11 +721,32 @@ Output MUST strictly adhere to the following JSON structure:
           const parsed = new URL(r.url);
           const h = parsed.hostname.toLowerCase();
           // Exclude video aggregators and social hosts, but preserve official project root sites (R7.7)
-          if (h.includes("youtube.com") || h.includes("youtu.be") || h.includes("vimeo.com") || h.includes("tiktok.com") || h.includes("x.com") || h.includes("twitter.com")) return false;
+          if (
+            h.includes("youtube.com") ||
+            h.includes("youtu.be") ||
+            h.includes("vimeo.com") ||
+            h.includes("tiktok.com") ||
+            h.includes("x.com") ||
+            h.includes("twitter.com") ||
+            h.includes("facebook.com") ||
+            h.includes("fb.watch") ||
+            h.includes("instagram.com") ||
+            h.includes("threads.net") ||
+            h.includes("linkedin.com") ||
+            h.includes("pinterest.com") ||
+            h.includes("reddit.com")
+          ) return false;
         } catch {
           return false;
         }
         const fullText = `${r.title} ${r.url} ${r.excerpts?.join(" ") || ""}`.toLowerCase();
+        // If the title is a short single token (e.g. "Genesis", "Cycle", <= 7 chars), require creator match or project context match
+        if (titleTokens.length === 1 && titleTokens[0].length <= 7) {
+          const hasTitle = fullText.includes(titleTokens[0]);
+          const hasCreator = creatorTokens.some((ct: string) => fullText.includes(ct));
+          const hasProjectContext = /\b(short|film|movie|animation|animated|pilot|kickstarter|indiegogo|campaign|director|writer|teaser|trailer)\b/i.test(fullText);
+          return hasTitle && (hasCreator || hasProjectContext);
+        }
         return titleTokens.length === 0 || titleTokens.some((tok: string) => fullText.includes(tok));
       })
       .map((r, i) => {
@@ -639,6 +774,7 @@ Output MUST strictly adhere to the following JSON structure:
           claimType: "reported" as const,
           excerpt: cleaned || r.title,
           verified: false,
+          availability: "available",
           publishedAt: r.publish_date || null,
           retrievedAt: new Date().toISOString(),
         };
@@ -685,7 +821,26 @@ Output MUST strictly adhere to the following JSON structure:
     // ----------------------------------------------------
     await logStep("validating", "Running proposal through deterministic TypeScript validation pipeline...", 85, "in_progress");
 
-    const validationResult = validateScoutProposal(proposalData);
+    let validationResult = validateScoutProposal(proposalData);
+    let repairedReason: string | null = null;
+
+    if (!validationResult.valid || !validationResult.sanitizedCard) {
+      // Attempt bounded repair for ungrounded commercial assertions, budgets, or buyer claims
+      const repairOutcome = repairScoutProposal(proposalData, validationResult.errors);
+      if (repairOutcome.repaired) {
+        proposalData = repairOutcome.proposal;
+        validationResult = validateScoutProposal(proposalData);
+        if (validationResult.valid && validationResult.sanitizedCard) {
+          repairedReason = `Repaired ungrounded assertions through bounded validation loop (${repairOutcome.actionsTaken.join("; ")})`;
+          await logStep(
+            "validating",
+            `Deterministic validation passed after bounded repair: ${repairOutcome.actionsTaken.join("; ")}.`,
+            88,
+            "done"
+          );
+        }
+      }
+    }
 
     if (!validationResult.valid || !validationResult.sanitizedCard) {
       throw new Error(`Deterministic validation failed: ${validationResult.errors.join("; ")}`);
@@ -703,16 +858,19 @@ Output MUST strictly adhere to the following JSON structure:
     if (videoSourceUrl) {
       await logStep(
         "validating",
-        `Gemini Video Critic analyzing sampled audiovisual stream from ${videoSourceUrl}...`,
+        `Gemini Video Critic evaluating project trailer context and available media from ${videoSourceUrl}...`,
         90,
         "in_progress"
       );
       try {
         const criticRecord = await analyzeTrailerVideo(project.id, videoSourceUrl);
         trailerCriticId = criticRecord.id;
+        const modalityLabel = criticRecord.modality === "multimodal_video"
+          ? `${criticRecord.timestampedBeats.length} multimodal video beats`
+          : "contextual reading (direct video stream unattached)";
         await logStep(
           "validating",
-          `Gemini Video Critic synthesized ${criticRecord.timestampedBeats.length} timestamped narrative beats and craft matrix.`,
+          `Gemini Video Critic synthesized craft analysis (${modalityLabel}) and evaluation matrix.`,
           95,
           "done"
         );
@@ -733,7 +891,7 @@ Output MUST strictly adhere to the following JSON structure:
       versionProvenance: {
         generatedAt: new Date().toISOString(),
         model: researchModel,
-        changeReason: "Autonomous Gemini 3.5 Flash clean-room research run",
+        changeReason: repairedReason || "Autonomous Gemini 3.5 Flash clean-room research run",
         gateReceipt: validationResult.sanitizedCard.versionProvenance?.gateReceipt,
       },
     };
@@ -806,6 +964,11 @@ Output MUST strictly adhere to the following JSON structure:
       }
     }
 
+    const lastActiveLog = [...(run.stepLogs || [])].reverse().find((l) => l.step !== "failed");
+    const failedStep = lastActiveLog ? lastActiveLog.step : "validating";
+    const failedStage = stepToStage(failedStep);
+    const completedStages = Array.from({ length: Math.max(0, failedStage - 1) }, (_, i) => i + 1);
+
     run.currentStep = "failed";
     run.errorMessage = errorMsg;
     run.lease = null;
@@ -816,6 +979,25 @@ Output MUST strictly adhere to the following JSON structure:
       status: "error",
     });
     await dataRepo.saveResearchRun(run, leaseToken);
+
+    try {
+      const { getAdminFirestore } = await import("@/lib/firebase/admin");
+      const db = getAdminFirestore();
+      if (db) {
+        await db.collection("publicResearchRuns").doc(run.id).set(
+          {
+            status: "failed",
+            currentStage: failedStage,
+            completedStages,
+            publicFailureMessage: errorMsg,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      }
+    } catch (syncErr) {
+      console.warn("Could not sync public research run failure:", syncErr);
+    }
     return run;
   }
 }

@@ -5,18 +5,42 @@ import type { ScoutCard, ScoutPathway } from "./types";
 
 export type PathwayVotingSectionProps = {
   card: ScoutCard;
-  onVote?: (pathwayId: string) => void;
+  onVote?: (pathwayId: string) => Promise<void> | void;
 };
 
 export function PathwayVotingSection({ card, onVote }: PathwayVotingSectionProps) {
   const [selectedPathwayId, setSelectedPathwayId] = useState<string | null>(null);
   const [voteSubmitted, setVoteSubmitted] = useState<string | null>(null);
+  const [voteError, setVoteError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleVote = (pathway: ScoutPathway) => {
+  const handleVote = async (pathway: ScoutPathway) => {
+    if (isSubmitting) return;
+    setVoteError(null);
+    setIsSubmitting(true);
+    const prevSelected = selectedPathwayId;
+    const prevSubmitted = voteSubmitted;
+
+    // Optimistically record selection for instant user feedback
     setSelectedPathwayId(pathway.id);
     setVoteSubmitted(pathway.label);
-    if (onVote) {
-      onVote(pathway.id);
+
+    try {
+      if (onVote) {
+        await onVote(pathway.id);
+      } else {
+        const { socialCommand } = await import("../social/client");
+        await socialCommand(`/api/projects/${card.projectId}/vote`, "PUT", {
+          pathwayId: pathway.id,
+          active: true,
+        });
+      }
+    } catch (err: unknown) {
+      setSelectedPathwayId(prevSelected);
+      setVoteSubmitted(prevSubmitted);
+      setVoteError(err instanceof Error ? err.message : "Unable to save vote. Sign in may be required.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -94,6 +118,12 @@ export function PathwayVotingSection({ card, onVote }: PathwayVotingSectionProps
       {voteSubmitted ? (
         <div className="pathway-vote-confirmation" role="status" aria-live="polite">
           <span>✓ You selected: <strong>{voteSubmitted}</strong>. Thank you for contributing your signal!</span>
+        </div>
+      ) : null}
+
+      {voteError ? (
+        <div className="pathway-vote-error" role="alert">
+          <span>{voteError}</span>
         </div>
       ) : null}
     </section>

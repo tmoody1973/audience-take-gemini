@@ -456,12 +456,14 @@ export function ScoutCard({
   card,
   livingUpdates,
   scoutBrief,
+  scoutBriefs,
   related,
   initialView = "discover",
 }: {
   card: ScoutCardModel;
   livingUpdates?: ProjectLivingUpdate[];
   scoutBrief?: ScoutBrief | null;
+  scoutBriefs?: { discover: ScoutBrief | null; pro: ScoutBrief | null } | null;
   related?: RelatedScoutProject[];
   initialView?: "discover" | "pro";
 }) {
@@ -470,6 +472,10 @@ export function ScoutCard({
   }
 
   const [view, setView] = useState<"discover" | "pro">(initialView);
+  const discoverBrief = scoutBriefs?.discover || (scoutBrief?.variant === "discover" ? scoutBrief : null) || scoutBrief;
+  const proBrief = scoutBriefs?.pro || (scoutBrief?.variant === "pro" ? scoutBrief : null) || scoutBrief;
+  const activeBrief = view === "discover" ? discoverBrief : proBrief;
+
   const [activeCitationSource, setActiveCitationSource] = useState<SourceLedgerEntry | null>(null);
   const [activeCitationClaim, setActiveCitationClaim] = useState<EvidenceClaim | null>(null);
   const [citationReturnFocusEl, setCitationReturnFocusEl] = useState<HTMLElement | null>(null);
@@ -497,13 +503,22 @@ export function ScoutCard({
     }
   }, []);
 
-  const handleViewChange = (newView: "discover" | "pro") => {
+  const handleViewChange = (newView: "discover" | "pro", targetHash?: string) => {
     setView(newView);
     if (typeof window !== "undefined") {
       try {
         const url = new URL(window.location.href);
         url.searchParams.set("view", newView);
+        if (targetHash) {
+          url.hash = targetHash.startsWith("#") ? targetHash : `#${targetHash}`;
+        }
         window.history.replaceState(null, "", url.toString());
+        if (targetHash) {
+          setTimeout(() => {
+            const el = document.getElementById(targetHash.replace(/^#/, ""));
+            el?.scrollIntoView({ behavior: "smooth" });
+          }, 50);
+        }
       } catch {
         /* ignore */
       }
@@ -624,9 +639,9 @@ export function ScoutCard({
               cardStructureStatus={cardStructureStatus}
               cardEvidenceLabel={cardEvidenceLabel}
               audioBriefNode={
-                scoutBrief ? (
+                activeBrief ? (
                   <ScoutBriefPlayer
-                    brief={scoutBrief}
+                    brief={activeBrief}
                     unclaimed={card.claimStatus === "unclaimed"}
                     sources={card.sourceLedger}
                     onOpenCitation={handleOpenCitation}
@@ -746,7 +761,27 @@ export function ScoutCard({
 
             <section className="external-signals" aria-labelledby="signals-title">
               <div><h2 id="signals-title">External signals</h2><p>Public-web observations remain separate from Audience Take-native participation.</p></div>
-              {card.externalSignals.length ? <ul>{card.externalSignals.map((signal) => <li key={signal.label}><strong>{signal.label}</strong><p>{signal.analysis}</p><small>Not an Audience Take-native count.</small></li>)}</ul> : <p className="signals-empty">No external signals were included in this Scout Card. No native audience count is claimed.</p>}
+              {card.externalSignals.length ? (
+                <ul>
+                  {card.externalSignals.map((signal) => (
+                    <li key={signal.label}>
+                      <strong>{signal.label}</strong>
+                      <p>{signal.analysis}</p>
+                      <small>Not an Audience Take-native count.</small>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="signals-empty">
+                  {card.externalSignalsStatus === "researching"
+                    ? "External audience research is currently in progress."
+                    : card.externalSignalsStatus === "research_failed"
+                    ? "External audience research encountered an error and could not be completed."
+                    : card.externalSignalsStatus === "no_supported_observations"
+                    ? "Independent research was conducted; no public commercial signals met verification thresholds."
+                    : "No external signals were included in this Scout Card. No native audience count is claimed."}
+                </p>
+              )}
             </section>
 
             <section className="scout-limitations" aria-labelledby="limitations-title">
@@ -770,8 +805,9 @@ export function ScoutCard({
             card={card}
             sourceLabels={sourceLabels}
             livingUpdates={livingUpdates}
-            scoutBrief={scoutBrief}
+            scoutBrief={proBrief}
             onOpenCitation={handleOpenCitation}
+            onViewAudienceParticipation={() => handleViewChange("discover", "audience-pulse")}
           />
         </div>
       )}

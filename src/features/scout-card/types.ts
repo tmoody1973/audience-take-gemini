@@ -180,6 +180,12 @@ export type ScoutCard = {
     limitations: string[];
     nativeAudienceCount: false;
   }>;
+  externalSignalsStatus?:
+    | "not_researched"
+    | "researching"
+    | "observations_available"
+    | "no_supported_observations"
+    | "research_failed";
   pathwayIds: string[];
   pathways: ScoutPathway[];
   sourceLedger: SourceLedgerEntry[];
@@ -218,6 +224,8 @@ export type ScoutCard = {
     wouldWatch: number;
     wouldPay?: number;
   };
+  followerCount?: number;
+  commitmentCounts?: Record<string, number>;
   creatorStatement?: {
     authorName: string;
     statementText: string;
