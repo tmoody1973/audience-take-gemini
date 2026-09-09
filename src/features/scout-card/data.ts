@@ -322,16 +322,17 @@ const STOPWORDS = new Set([
 ]);
 
 export function findSupportingSourceIds(
-  claimText: string,
+  claimText: unknown,
   sources: Array<{ id: string; title: string; excerpt?: string; url: string }>
 ): string[] {
-  if (!claimText || sources.length === 0) return [];
-  const normalizedClaim = claimText.toLowerCase();
+  const text = typeof claimText === "string" ? claimText : (claimText && typeof (claimText as any).title === "string") ? (claimText as any).title : "";
+  if (!text || !Array.isArray(sources) || sources.length === 0) return [];
+  const normalizedClaim = text.toLowerCase();
 
   const words = normalizedClaim
     .replace(/[^\w\s-]/g, " ")
     .split(/\s+/)
-    .filter((w) => w.length >= 4 && !STOPWORDS.has(w));
+    .filter((w: string) => w.length >= 4 && !STOPWORDS.has(w));
 
   const matchingSourceIds: string[] = [];
 
@@ -701,11 +702,12 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         limitations: ["Based on public web reporting and submitted video evidence."],
         industryLens: {
           pathwayIds: pathways.map((p) => p.id),
-          comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((cmpTitle: string) => {
+          comparables: (dynamicCard.industryLens?.comparables || ["Independent Comparable"]).map((cmp: any) => {
+            const cmpTitle = typeof cmp === "string" ? cmp : cmp?.title || "Independent Comparable";
             const matchingSources = findSupportingSourceIds(cmpTitle, sourceLedgerEntries);
             return {
               title: cmpTitle,
-              relevance: "Comparable market trajectory and audience crossover.",
+              relevance: typeof cmp?.relevance === "string" ? cmp.relevance : "Comparable market trajectory and audience crossover.",
               sourceIds: matchingSources,
               limitations: matchingSources.length > 0
                 ? ["Market conditions differ."]

@@ -84,6 +84,9 @@ export async function loadScoutingWallEntries(
           (projectData.moderationState !== undefined && projectData.moderationState !== "clear") ||
           typeof projectData.slug !== "string" || !projectData.slug ||
           projectData.slug.startsWith("e2e-") || projectData.slug.startsWith("test-") ||
+          projectData.slug.startsWith("proj-test-") || projectData.slug.startsWith("proj-terminal-") ||
+          projectData.slug.startsWith("proj-monitor-") || projectData.slug.startsWith("proj-parallel-e2e-") ||
+          projectData.slug.startsWith("proj-version-inc-") ||
           typeof projectData.latestCardVersionId !== "string" || !projectData.latestCardVersionId
         ) return null;
 
