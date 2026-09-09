@@ -7,7 +7,47 @@
 [![Tests Passing](https://img.shields.io/badge/Vitest-265%2B_Tests_Passing-brightgreen?logo=vitest&logoColor=white)](./tests)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.5_(App_Router)-black?logo=next.js&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_Mode-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Open--Source_Repository-181717?logo=github)](https://github.com/tmoody1973/audience-take-gemini)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+
+---
+
+## 🏛️ Open-Source Repository & Runtime Verification (For Judges & Reviewers)
+
+> **Official Open-Source Repository**: [https://github.com/tmoody1973/audience-take-gemini](https://github.com/tmoody1973/audience-take-gemini)  
+> This open-source repository contains all source code, assets, test suites, architectural schematics, and execution instructions needed to build, test, and run Audience Take.
+
+### Runtime Proof: Google Cloud & Partner Service (Parallel Systems)
+
+As required by the competition judging criteria, Audience Take demonstrates **actual runtime use** of Google Cloud and our chosen Partner service (**Parallel Systems**)—both are imported and actively invoked in server-side production code:
+
+#### 1. Chosen Partner: Parallel Systems (`api.parallel.ai`)
+*Parallel Systems is imported and invoked directly during research runs to execute live web search, deep page content extraction, and automated dossier monitoring:*
+- **REST Client Implementation**: [`src/services/parallel-client.ts`](src/services/parallel-client.ts) executes raw HTTP requests against `https://api.parallel.ai/v1/search`, `https://api.parallel.ai/v1/extract`, and `https://api.parallel.ai/v1/monitors`.
+- **Import Statement**: `import { parallelClient } from "@/services/parallel-client";` in [`src/agent/agent-runner.ts`](src/agent/agent-runner.ts) (line 10).
+- **Runtime Search Invocations**:
+  - `await parallelClient.search({ query, ... })` at [`src/agent/agent-runner.ts`](src/agent/agent-runner.ts) (line 261 & line 374) to discover trade press articles (*Variety*, *C21Media*, *Animation Magazine*), festival screenings, and crowdfunding campaigns.
+- **Runtime Extract Invocations**:
+  - `await parallelClient.extract({ urls, ... })` at [`src/agent/agent-runner.ts`](src/agent/agent-runner.ts) (lines 155, 325, 395) to convert non-video campaign pages and press releases into clean, LLM-ready Markdown.
+- **Runtime Monitor Sensor Creation**:
+  - `await parallelClient.createMonitor({ url, ... })` at [`src/agent/agent-runner.ts`](src/agent/agent-runner.ts) (line 925) to maintain continuous freshness on scouted projects.
+- **Live Webhook Receiver**: [`src/app/api/webhooks/parallel/route.ts`](src/app/api/webhooks/parallel/route.ts) processes incoming monitor change events directly into Firestore.
+
+#### 2. Google Cloud Platform (GCP)
+*Audience Take deeply leverages Google Cloud across intelligence, storage, orchestration, and compute:*
+- **Google GenAI SDK (`@google/genai`)**:
+  - **Import**: `import { GoogleGenAI } from "@google/genai";` in [`src/lib/google/genai-client.ts`](src/lib/google/genai-client.ts) (line 1).
+  - **Runtime Calls**: `getGoogleGenAIClient()` called in [`src/agent/agent-runner.ts`](src/agent/agent-runner.ts) (line 438) for **Gemini 3.5 Flash** structured JSON synthesis (`responseSchema`), and in [`src/critic/trailer-critic-engine.ts`](src/critic/trailer-critic-engine.ts) (line 49 & 230) for **Gemini 3.7 Flash** multimodal video analysis.
+- **Google Cloud YouTube Data API v3**:
+  - Live query engine in [`src/services/youtube-client.ts`](src/services/youtube-client.ts) fetching real-time video metrics and comment threads for Gemini NLP discourse analysis.
+- **Google Cloud Tasks (`@google-cloud/tasks`)**:
+  - Imported and instantiated in [`src/lib/tasks/cloud-tasks.ts`](src/lib/tasks/cloud-tasks.ts) (`createCloudTasksResearchDispatcher`, `createCloudTasksTrailerCriticDispatcher`) to asynchronously queue and isolate long-running research jobs.
+- **Google Cloud Firestore (`firebase-admin/firestore`) & App Check**:
+  - Low-latency real-time document store and security perimeter in [`src/lib/firebase/admin.ts`](src/lib/firebase/admin.ts) and [`src/services/firestore-repo.ts`](src/services/firestore-repo.ts).
+- **Google Cloud Run**:
+  - Fully containerized production deployment serving 100% of live traffic in region `us-central1` on project `test-app-mkark4`.
+
+---
 
 
 ## Explore the architecture
