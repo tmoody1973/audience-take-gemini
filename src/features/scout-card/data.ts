@@ -652,7 +652,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         runId: "run-dynamic",
         researchVersion: 1,
         projectId: dynamicProject?.id || dyn?.id || slug,
-        slug: dynamicProject?.id || slug,
+        slug: (dynamicProject as any)?.slug || slug || dynamicProject?.id,
         title,
         hook,
         projectType: (medium === "series" ? "series" : "film") as any,

@@ -66,6 +66,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Research run not found in storage" }, { status: 404 });
     }
 
+    // If run already reached terminal failure, acknowledge immediately to prevent task retries (R5.7)
+    if (existingRun.currentStep === "failed") {
+      const isTerminal =
+        existingRun.errorMessage?.includes("Deterministic validation failed") ||
+        existingRun.errorMessage?.includes("quarantined") ||
+        existingRun.errorMessage?.includes("No relevant content") ||
+        existingRun.errorMessage?.includes("invalid") ||
+        existingRun.errorMessage?.includes("Project not found");
+
+      if (isTerminal) {
+        return NextResponse.json({
+          ok: true,
+          status: "failed",
+          terminal: true,
+          runId: existingRun.id,
+          error: existingRun.errorMessage,
+        });
+      }
+    }
+
     const workerId = taskName || taskHeader || `cloud-tasks-${runId}-attempt-${attempt || 1}`;
 
     const run = await executeScoutResearchRun(runId, {

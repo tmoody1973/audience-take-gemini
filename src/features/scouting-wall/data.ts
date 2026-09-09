@@ -1,4 +1,5 @@
 import { getAdminFirestore } from "../../lib/firebase/admin";
+import { dataRepo } from "../../services/firestore-repo";
 import {
   loadPublishedScoutCard,
   parsePublishedCard,
@@ -146,9 +147,65 @@ export async function loadScoutingWallEntries(
     );
 
     const seen = new Set<string>();
+    const existingSlugs = new Set<string>();
     const validEntries = entries
       .filter((entry): entry is ScoutingWallEntry => entry !== null)
       .sort((left, right) => (right.publishedAt || "").localeCompare(left.publishedAt || ""));
+
+    for (const entry of validEntries) {
+      existingSlugs.add(entry.slug);
+      existingSlugs.add(entry.projectId);
+    }
+
+    // When running with default Firestore, merge any canonical published projects from dataRepo
+    const isDefaultDb = !database || database === (getAdminFirestore() as unknown as ScoutCardFirestore);
+    if (isDefaultDb) {
+      try {
+        const repoProjects = await dataRepo.getProjects();
+        for (const p of repoProjects) {
+          const slug = p.id === "proj-cycle" ? "cycle" : p.id === "proj-vampair" ? "the-vampair-series" : p.id;
+          if (p.publicationStatus === "published" && !existingSlugs.has(slug) && !existingSlugs.has(p.id)) {
+            const card = await loadPublishedScoutCard(slug, database);
+            if (card) {
+              validEntries.push({
+                accessionId: card.cardVersionId,
+                projectId: card.projectId,
+                slug: card.slug,
+                title: card.title,
+                hook: card.hook,
+                projectType: card.projectType,
+                submissionLabel: card.submissionLabel,
+                claimStatus: card.claimStatus,
+                completeness: card.completeness,
+                evidenceStatus: card.evidenceStatus ?? "verification_in_progress",
+                publishedAt: card.publishedAt,
+                sourceCount: card.sourceLedger.length,
+                pathwayLabels: card.pathways.map((pathway) => pathway.label),
+                audiencePulse: {
+                  follows: card.audiencePulse?.follows ?? 0,
+                  wouldWatch: card.audiencePulse?.wouldWatch ?? 0,
+                  wouldPay: card.audiencePulse?.wouldPay ?? 0,
+                  bringToCity: 0,
+                  backNextChapter: 0,
+                },
+                audienceHeatScore: card.marketViability?.audienceHeatScore,
+                marketReadinessScore: card.marketViability?.marketReadinessScore,
+                marketTier: card.marketViability?.tier,
+                buyerTargets: card.marketViability?.buyerDecisionMatrix?.primaryBuyerTargets,
+                creators: card.creatorContext?.displayName ? [card.creatorContext.displayName] : [],
+                channelTitle: card.channelEcosystem?.channelTitle,
+                channelHandle: card.channelEcosystem?.channelHandle,
+                audioArtifactId: card.cardVersionId,
+                durationSeconds: 150,
+                imageUrl: card.media?.imageUrl,
+              });
+              existingSlugs.add(slug);
+              existingSlugs.add(p.id);
+            }
+          }
+        }
+      } catch {}
+    }
 
     const uniqueEntries: ScoutingWallEntry[] = [];
     for (const entry of validEntries) {

@@ -861,10 +861,10 @@ class InMemoryStore {
     // Project 6: The Vampair Series (Indie Animated Musical)
     // ---------------------------------------------------------
     const p6Id = "proj-vampair";
-    const c6Id = "card-vampair-v1";
+    const c6Id = "card-vampair-v2";
 
-    const p6Card: ScoutCard = {
-      id: c6Id,
+    const p6CardV1: ScoutCard = {
+      id: "card-vampair-v1",
       projectId: p6Id,
       version: 1,
       status: "published",
@@ -889,7 +889,7 @@ class InMemoryStore {
       evidenceLedger: [
         {
           id: "ev-va-1",
-          sourceUrl: "https://www.kickstarter.com/projects/dariacohen/the-vampair-series-pilot",
+          sourceUrl: "https://kickstarter.com/projects/dariacohen/the-vampair-series-pilot",
           title: "Kickstarter: The Vampair Series — Official Musical Pilot (Campaign Archive)",
           publisher: "Kickstarter",
           claimType: "reported",
@@ -898,12 +898,114 @@ class InMemoryStore {
         },
         {
           id: "ev-va-2",
+          sourceUrl: "https://animationmagazine.net/2024/05/vampair-pilot-spotlight",
+          title: "Animation Magazine: Indie Animator Daria Cohen Explores New Frontiers in Gothic Musicals",
+          publisher: "Animation Magazine",
+          claimType: "unresolved",
+          excerpt: "Citation link unavailable (HTTP 404); trade coverage unverified pending refreshed press retrieval.",
+          verified: false
+        }
+      ],
+      pathways: [
+        {
+          title: "Creator-Owned Multi-Episode Limited Series",
+          mediumFitRationale: "Developing an episodic dark comedy narrative with musical set-pieces provides strong streaming and creator-direct platform appeal.",
+          targetAudience: "Adult animation fans and musical theatre enthusiasts.",
+          risksAndUncertainties: ["High per-minute animation costs ($1.5M - $2.0M season budget) require studio co-production."],
+          nextBoundedExperiment: {
+            name: "Co-Production Financing Deck",
+            description: "Structure production milestones and co-financing model protecting core IP ownership.",
+            successMetric: "Secure 2 qualified animation co-production term sheets."
+          }
+        },
+        {
+          title: "Theatrical Showcase & Film Festival Tour",
+          mediumFitRationale: "Screening completed pilot animatics and musical shorts at genre festivals builds prestige buzz.",
+          targetAudience: "Indie animation festival goers and gothic pop-culture communities.",
+          risksAndUncertainties: ["Festival run does not directly fund ongoing episodic production."],
+          nextBoundedExperiment: {
+            name: "Festival Submission Pilot",
+            description: "Submit to 5 international animation and short film festivals.",
+            successMetric: "Official selection at 2+ tier-one animation festivals."
+          }
+        },
+        {
+          title: "Direct-to-Community Transmedia & Merchandising",
+          mediumFitRationale: "Capitalizing on high YouTube engagement through original soundtracks, vinyl releases, and artbooks.",
+          targetAudience: "Dedicated fan community and soundtrack collectors.",
+          risksAndUncertainties: ["Merchandise margins may not fully offset long-term animation deficits."],
+          nextBoundedExperiment: {
+            name: "OST Vinyl Pre-Order Campaign",
+            description: "Launch limited vinyl and artbook collection for dedicated backers.",
+            successMetric: "Sell out 2,500 units within 30 days."
+          }
+        }
+      ],
+      decisionBrief: {
+        logline: "An eccentric mortal is pulled into a flamboyant blood-feud between a centuries-old vampire lord and a vengeful rival.",
+        coreHook: "High-octane musical numbers combined with fluid expressive 2D animation and gothic romance satire.",
+        comparativeTitles: ["Hazbin Hotel", "Helluva Boss", "Castlevania", "The Nightmare Before Christmas"],
+        primaryRisk: "The full episodic budget ($1.5M - $2.0M) requires strategic co-production without diluting creator ownership.",
+        triageSummary: "Creator-owned gothic musical animation with verified $286k pilot crowdfunding and 100% creator IP retention by Daria Cohen. Full multi-episode season ($1.5M–$2.0M) requires studio co-production partner without diluting creator rights.",
+        materialUncertainty: "Co-production studio partner terms and full episodic series financing without IP dilution.",
+        nextDiligenceStep: "Review target co-production term sheet with creator representative and evaluate pilot animatics."
+      },
+      industryLens: {
+        marketContext: "Explosive demand for creator-driven adult animated musicals with rabid online followings.",
+        comparables: ["Hazbin Hotel (A24 / Amazon Prime)", "Helluva Boss (SpindleHorse Toons)"],
+        realisticConstraints: "Pilot crowdfunding ($286k) establishes proof-of-concept; scaling to an episodic series ($1.5M–$2.0M) requires studio co-production."
+      },
+      trailerCriticId: null,
+      versionProvenance: {
+        generatedAt: "2026-08-28T10:30:00Z",
+        model: "gemini-2.5-pro",
+        changeReason: "Initial Scout Card publication with verified funding and IP structure"
+      }
+    };
+
+    const p6Card: ScoutCard = {
+      id: c6Id,
+      projectId: p6Id,
+      version: 2,
+      status: "published",
+      whatWeKnow: [
+        "Independent gothic animated musical franchise created, directed, and designed by animator Daria Cohen (@DariaCohen) featuring characters Missi and Duke.",
+        "Crowdfunding campaigns reported over $286,000 across platforms to finance initial musical pilot production.",
+        "Episodic series development and co-production agreements remain in exploratory development, subject to formal chain-of-title and rights diligence."
+      ],
+      whatWereChecking: [
+        "Verification of primary crowdfunding campaign ledger and active backer totals.",
+        "Co-production studio partnership model for the full $1.5M - $2.0M multi-episode episodic series budget."
+      ],
+      whyScouted: "A powerhouse creator-directed gothic animated musical with passionate grassroots community validation and an intensely dedicated global fanbase.",
+      sourceMedia: [
+        {
+          type: "youtube_embed",
+          url: "https://www.youtube.com/watch?v=4FWO4VM-y1U",
+          verified: true,
+          caption: "The Real Vampair Pilot's Trailer That Ever Trailered! (Official Trailer — Daria Cohen [@DariaCohen])"
+        }
+      ],
+      evidenceLedger: [
+        {
+          id: "ev-va-1",
+          sourceUrl: "https://www.kickstarter.com/projects/dariacohen/the-vampair-series-pilot",
+          title: "Kickstarter: The Vampair Series — Official Musical Pilot (Campaign Archive)",
+          publisher: "Kickstarter",
+          claimType: "reported",
+          excerpt: "Reported $286,400 raised from 4,100+ backers across crowdfunding drives to finance independent animated pilot production.",
+          verified: false,
+          availability: "available"
+        },
+        {
+          id: "ev-va-2",
           sourceUrl: "https://www.animationmagazine.net/2025/daria-cohen-vampair-breakout",
           title: "Animation Magazine: Indie Animator Daria Cohen Explores New Frontiers in Gothic Musicals (404 / Unavailable)",
           publisher: "Animation Magazine",
           claimType: "unresolved",
           excerpt: "Citation link unavailable (HTTP 404); trade coverage unverified pending refreshed press retrieval.",
-          verified: false
+          verified: false,
+          availability: "unavailable"
         }
       ],
       pathways: [
@@ -946,7 +1048,7 @@ class InMemoryStore {
         coreHook: "High-octane musical numbers combined with fluid expressive 2D animation and gothic romance satire.",
         comparativeTitles: ["Hazbin Hotel", "Helluva Boss", "Castlevania", "The Nightmare Before Christmas"],
         primaryRisk: "The full episodic budget ($1.5M - $2.0M) requires strategic co-production without diluting creator ownership.",
-        triageSummary: "Creator-owned gothic musical animation with verified $286k pilot crowdfunding and 100% creator IP retention by Daria Cohen. Full multi-episode season ($1.5M–$2.0M) requires studio co-production partner without diluting creator rights.",
+        triageSummary: "Creator-directed gothic musical animation with reported $286k pilot crowdfunding. Full multi-episode series adaptation requires studio co-production diligence and chain-of-title audit.",
         materialUncertainty: "Co-production studio partner terms and full episodic series financing without IP dilution.",
         nextDiligenceStep: "Review target co-production term sheet with creator representative and evaluate pilot animatics."
       },
@@ -957,9 +1059,9 @@ class InMemoryStore {
       },
       trailerCriticId: null,
       versionProvenance: {
-        generatedAt: "2026-08-28T10:30:00Z",
+        generatedAt: "2026-09-09T17:30:00Z",
         model: "gemini-2.5-pro",
-        changeReason: "Initial Scout Card publication with verified funding and IP structure"
+        changeReason: "Upgrade to v2: reconciled creator attribution (@DariaCohen) and removed ungrounded 100% IP retention claims."
       }
     };
 
@@ -1026,6 +1128,7 @@ class InMemoryStore {
 
     this.projects.set(p6Id, p6);
     this.scoutCards.set(c6Id, p6Card);
+    this.scoutCards.set("card-vampair-v1", p6CardV1);
   }
 }
 
