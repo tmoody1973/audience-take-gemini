@@ -49,10 +49,23 @@ export function claimEvidenceState(
   if (claim.status === "inference") return "inferred";
   if (claim.status === "unsupported") return "unknown";
 
-  const usableSources = sources.filter(
-    (source) => claim.sourceIds.includes(source.id) && source.availability === "available",
-  );
-  if (usableSources.length === 0) return "unknown";
+  const citedSources = sources.filter((source) => claim.sourceIds.includes(source.id));
+  if (citedSources.length === 0) return "unknown";
+
+  const usableSources = citedSources.filter((source) => source.availability === "available");
+  if (usableSources.length === 0) {
+    if (claim.status === "qualified" || claim.status === "supported") {
+      const notesSavedSnapshot = Boolean(
+        claim.qualification?.toLowerCase().includes("unavailable") ||
+        claim.qualification?.toLowerCase().includes("snapshot")
+      );
+      if (notesSavedSnapshot) {
+        return "reported";
+      }
+    }
+    return "unknown";
+  }
+
   if (
     claim.status === "supported"
     && usableSources.some((source) => source.verificationStatus === "verified")

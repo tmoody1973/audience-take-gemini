@@ -285,15 +285,31 @@ ${JSON.stringify(cardInput, null, 2)}
  * Any change to claims, qualifications, or next diligence steps invalidates cached briefings.
  */
 export function computeCardInputDigest(card: any): string {
-  const supportedClaims = (card.evidenceClaims || [])
-    .filter((c: any) => c.status === "supported")
-    .map((c: any) => `${c.id}:${c.statement}`)
-    .sort();
+  const claims = (card.evidenceClaims || [])
+    .map((c: any) => ({
+      id: c.id || "",
+      statement: c.statement || "",
+      status: c.status || "",
+      qualification: c.qualification || "",
+      sourceIds: [...(c.sourceIds || [])].sort(),
+    }))
+    .sort((a: any, b: any) => a.id.localeCompare(b.id));
+
+  const sources = (card.sourceLedger || [])
+    .map((s: any) => ({
+      id: s.id || "",
+      url: s.url || "",
+      availability: s.availability || "",
+      verificationStatus: s.verificationStatus || "",
+    }))
+    .sort((a: any, b: any) => a.id.localeCompare(b.id));
+
   const rawData = {
     cardVersionId: card.cardVersionId || card.id || "",
     researchVersion: card.researchVersion || card.version || 1,
     title: card.title || "",
-    supportedClaims,
+    claims,
+    sources,
     whatWeKnow: [...(card.whatWeKnow || [])].sort(),
     whatWereChecking: [...(card.whatWereChecking || [])].sort(),
     triageSummary: card.decisionBrief?.triageSummary || "",

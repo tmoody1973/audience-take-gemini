@@ -6,6 +6,7 @@
 
 import { LLMScoutProposalSchema } from "@/domain/schemas";
 import type { ScoutCard, MediumType, EvidenceItem, PathwayHypothesis } from "@/domain";
+import { detectBoilerplateOrSoftError } from "@/domain/evidence-policy";
 
 export interface ValidationResult {
   valid: boolean;
@@ -265,10 +266,21 @@ export function checkCitationCoverage(
   evidenceLedger: EvidenceItem[],
   whatWeKnow: string[]
 ): { sufficientCoverage: boolean; ungroundedClaims: string[]; groundedClaims: string[] } {
-  // Exclude nominator leads and unresolved placeholders from ever grounding claims
-  const nonNominatorEvidence = (evidenceLedger || []).filter(
-    (ev) => !isNominatorEvidence(ev) && ev.claimType !== "unresolved"
-  );
+  // Exclude nominator leads, unresolved placeholders, unavailable sources, and boilerplate from grounding claims
+  const nonNominatorEvidence = (evidenceLedger || []).filter((ev) => {
+    if (isNominatorEvidence(ev) || ev.claimType === "unresolved") return false;
+    if (
+      ev.availability === "unavailable" ||
+      ev.availability === "restricted" ||
+      ev.availability === "timed_out" ||
+      ev.availability === "fetch_error" ||
+      ev.availability === "soft_error"
+    ) {
+      return false;
+    }
+    const bp = detectBoilerplateOrSoftError(ev.excerpt || "", ev.title);
+    return !bp.isBoilerplate && !bp.isSoftError;
+  });
 
   if (nonNominatorEvidence.length === 0) {
     return { sufficientCoverage: false, ungroundedClaims: whatWeKnow, groundedClaims: [] };

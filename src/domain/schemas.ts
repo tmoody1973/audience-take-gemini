@@ -49,6 +49,17 @@ export const EvidenceItemSchema = z.object({
   supportingClaimIds: z.array(z.string()).optional(),
   isNominatorLead: z.boolean().optional(),
   origin: z.enum(["nominator", "primary", "parallel", "community", "creator"]).optional(),
+  availability: z
+    .enum([
+      "available",
+      "unavailable",
+      "restricted",
+      "timed_out",
+      "fetch_error",
+      "soft_error",
+      "not_checked",
+    ])
+    .optional(),
 });
 
 export const BoundedExperimentSchema = z.object({

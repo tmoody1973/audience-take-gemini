@@ -76,14 +76,15 @@ export const FROZEN_BENCHMARK_CANDIDATES: EvaluatedCandidate[] = [
   {
     caseId: "case-cycle",
     resolvedTitle: "CYCLE",
-    resolvedCreators: ["Laura Dyan Kezman", "Lion Art Media", "Vianca Fuster", "Michelle Craig"],
+    resolvedCreators: ["Laura Dyan Kezman", "William Howell", "Lion Art Media", "Amanda Thaxton"],
     factualClaims: [
       {
         claimText:
-          "Directed by Laura Dyan Kezman and produced by Lion Art Media.",
+          "Feature documentary directed by Laura Dyan Kezman and William Howell (Lion Art Media), produced with Amanda Thaxton.",
         isSupported: true,
         citationUrls: [
-          "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
+          "https://www.wuwm.com/race-ethnicity/2025-07-15/cycle-tells-the-story-of-racines-tyrese-west-a-black-teenager-shot-by-police",
+          "https://beloitfilmfest.org/films/cycle/",
         ],
       },
       {
@@ -91,15 +92,16 @@ export const FROZEN_BENCHMARK_CANDIDATES: EvaluatedCandidate[] = [
           "Investigative documentary covering the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin.",
         isSupported: true,
         citationUrls: [
-          "https://racinecountyeye.com/cycle-documentary-investigation",
+          "https://www.wuwm.com/race-ethnicity/2025-07-15/cycle-tells-the-story-of-racines-tyrese-west-a-black-teenager-shot-by-police",
         ],
       },
       {
         claimText:
-          "Covered by Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin.",
+          "World premiere held at the 2025 Milwaukee Film Festival and selected for the Beloit International Film Festival.",
         isSupported: true,
         citationUrls: [
-          "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
+          "https://racinecountyeye.com/2025/05/05/cycle-tyrese-west-new-details-giese/",
+          "https://beloitfilmfest.org/films/cycle/",
         ],
       },
     ],
@@ -117,12 +119,17 @@ export const FROZEN_BENCHMARK_CANDIDATES: EvaluatedCandidate[] = [
     ],
     citedSources: [
       {
-        url: "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
+        url: "https://www.wuwm.com/race-ethnicity/2025-07-15/cycle-tells-the-story-of-racines-tyrese-west-a-black-teenager-shot-by-police",
         isRelevant: true,
         isWrongProject: false,
       },
       {
-        url: "https://racinecountyeye.com/cycle-documentary-investigation",
+        url: "https://beloitfilmfest.org/films/cycle/",
+        isRelevant: true,
+        isWrongProject: false,
+      },
+      {
+        url: "https://racinecountyeye.com/2025/05/05/cycle-tyrese-west-new-details-giese/",
         isRelevant: true,
         isWrongProject: false,
       },

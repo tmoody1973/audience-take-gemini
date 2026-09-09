@@ -30,17 +30,22 @@
       "title": "CYCLE",
       "category": "documentary",
       "medium": "documentary",
-      "expectedCreators": ["Laura Dyan Kezman", "Lion Art Media", "Vianca Fuster", "Michelle Craig"],
+      "expectedCreators": ["Laura Dyan Kezman", "William Howell", "Lion Art Media", "Amanda Thaxton"],
       "verifiedSubject": "Ty'Rese West fatal police shooting in Mount Pleasant, WI",
       "disprovedLore": "Youth bicycle collective rebuilding discarded bikes",
       "verifiedFacts": [
-        "Directed by Laura Dyan Kezman and produced by Lion Art Media.",
+        "Feature documentary directed by Laura Dyan Kezman and William Howell (Lion Art Media), produced with Amanda Thaxton.",
         "Investigative documentary covering the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin.",
-        "Covered by Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin."
+        "World premiere held at the 2025 Milwaukee Film Festival and selected for the Beloit International Film Festival."
       ],
       "materialUnknowns": ["Midwest festival premiere dates", "Regional broadcast window terms"],
       "conflictsOrNegations": ["Zero bicycle collective lore; strictly investigative civil rights documentary."],
       "exactSources": [
+        "https://www.wuwm.com/race-ethnicity/2025-07-15/cycle-tells-the-story-of-racines-tyrese-west-a-black-teenager-shot-by-police",
+        "https://beloitfilmfest.org/films/cycle/",
+        "https://racinecountyeye.com/2025/05/05/cycle-tyrese-west-new-details-giese/"
+      ],
+      "negativeSourceFixtures": [
         "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
         "https://racinecountyeye.com/cycle-documentary-investigation"
       ]

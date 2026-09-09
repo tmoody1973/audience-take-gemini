@@ -464,6 +464,13 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         const rawExcerpt = ev.excerpt || ev.title || "";
         const cleanedExcerpt = cleanTextExcerpt(rawExcerpt, ev.title);
 
+        const evAvailability = (ev.availability as any) || (ev.verified === false ? "unavailable" : "available");
+        const evVerificationStatus = isSubmitted
+          ? ("observed" as const)
+          : ev.verificationStatus
+            ? (ev.verificationStatus as any)
+            : (ev.verified && (ev.receipt?.outcome === "success" || ev.passages?.length > 0) ? ("verified" as const) : ("observed" as const));
+
         sourceLedgerEntries.push({
           id: sourceId,
           origin: isSubmitted ? ("submitted" as const) : ("parallel" as const),
@@ -471,8 +478,8 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           url: rawUrl,
           publishedAt: ev.publishedAt ? toSafeIsoString(ev.publishedAt, "") : null,
           retrievedAt: toSafeIsoString(ev.retrievedAt || ev.timestamp || dynamicCard.createdAt || dynamicProject?.createdAt),
-          availability: "available" as const,
-          verificationStatus: isSubmitted ? ("observed" as const) : (ev.verified ? "verified" as const : "observed" as const),
+          availability: evAvailability,
+          verificationStatus: evVerificationStatus,
           sourceRole: isSubmitted ? ("primary_work" as const) : ("trade_reporting" as const),
           sourceTier: isSubmitted ? ("primary" as const) : ("secondary" as const),
           supportsClaimIds: [],
@@ -543,7 +550,7 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           if (matchingSources.length > 0) {
             const allVerified = matchingSources.every((sId) => {
               const src = sourceLedgerEntries.find((s) => s.id === sId);
-              return src?.verificationStatus === "verified";
+              return src?.verificationStatus === "verified" && src?.availability === "available";
             });
             evidenceClaims.push({
               id: claimId,
@@ -581,9 +588,10 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
         const canonSourceId = canonUrlToSourceId.get(canonUrl) || ev.id || `source-${idx + 1}`;
         const claimId = ev.id ? `claim-${ev.id}` : `claim-ev-${idx + 1}`;
 
+        const src = sourceLedgerEntries.find((s) => s.id === canonSourceId);
         const isConflict = ev.claimType === "conflict";
         const isInference = ev.claimType === "inference";
-        const isVerified = ev.verified === true;
+        const isVerified = (src?.verificationStatus === "verified" || ev.verificationStatus === "verified") && src?.availability === "available";
 
         evidenceClaims.push({
           id: claimId,
@@ -593,7 +601,6 @@ export async function loadPublishedScoutCard(slug: string, database?: ScoutCardF
           qualification: isConflict ? "Source reports conflicting information." : !isVerified ? "Reported claim pending independent verification." : null,
         });
 
-        const src = sourceLedgerEntries.find((s) => s.id === canonSourceId);
         if (src && !src.supportsClaimIds.includes(claimId)) {
           src.supportsClaimIds.push(claimId);
         }

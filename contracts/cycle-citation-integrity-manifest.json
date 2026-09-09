@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "manifestVersion": "1.0.0",
+  "generatedAt": "2026-09-09T11:26:00.000Z",
+  "isDryRun": true,
+  "description": "CYCLE Citation & Evidence Integrity Correction Manifest — Repairs false verification and dead citations",
+  "target": {
+    "projectId": "proj-cycle",
+    "publicSlug": "cycle",
+    "priorCardVersionId": "card-cycle-v1",
+    "newCardVersionId": "card-cycle-v2",
+    "expectedPriorHash": "card-cycle-v1-seed-verified"
+  },
+  "defectsIdentified": [
+    {
+      "type": "synthetic_seed_urls",
+      "priorValue": "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
+      "finding": "URL times out; synthetic 2026 date. Real WUWM article published July 15, 2025."
+    },
+    {
+      "type": "synthetic_seed_urls",
+      "priorValue": "https://racinecountyeye.com/cycle-documentary-investigation",
+      "finding": "URL returns HTTP 404. Official Beloit festival links verified May 5, 2025 article."
+    },
+    {
+      "type": "unverified_credit_claims",
+      "priorValue": "Producers Vianca Fuster and Michelle Craig",
+      "finding": "Contradicts Beloit Film Festival credits listing Laura Dyan Kezman, William Howell, and Amanda Thaxton as producers."
+    },
+    {
+      "type": "unverified_outlet_claim",
+      "priorValue": "Extensively reported and cited by Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin",
+      "finding": "PBS Wisconsin reporting not established in inspected primary/secondary evidence."
+    },
+    {
+      "type": "adapter_automatic_promotion",
+      "priorValue": "availability: available, verificationStatus: verified",
+      "finding": "Adapter blindly assigned available and promoted seed verified: true into green badge."
+    }
+  ],
+  "inspectedRealEvidence": [
+    {
+      "sourceId": "ev-cy-wuwm",
+      "url": "https://www.wuwm.com/race-ethnicity/2025-07-15/cycle-tells-the-story-of-racines-tyrese-west-a-black-teenager-shot-by-police",
+      "title": "'CYCLE' tells the story of Racine's Ty'Rese West, a Black teenager shot by police",
+      "publisher": "WUWM 89.7 FM - Milwaukee's NPR",
+      "publishedDate": "2025-07-15",
+      "verifiedStatus": "available",
+      "httpStatus": 200,
+      "exactPassages": [
+        "What happened in the lead-up and aftermath of Ty’Rese’s death is the subject of a new documentary called CYCLE. The film premiered earlier this year at the Milwaukee Film Festival...",
+        "Ahead of that, co-directors William Howell and Laura Dyan Kezman join Lake Effect’s Joy Powers.",
+        "As CYCLE explores, Sgt. Giese's body camera was turned off, his dashboard camera was not functioning and the shooting was not captured on CCTV from buildings in the surrounding business park. In the aftermath, Giese was not charged in West's death.",
+        "Using exclusive court footage of Sergeant Giese's deposition, the film highlights various logical inconsistencies in the officer's testimony and calls into question his justification for using lethal force."
+      ]
+    },
+    {
+      "sourceId": "ev-cy-biff",
+      "url": "https://beloitfilmfest.org/films/cycle/",
+      "title": "Cycle — Beloit International Film Festival",
+      "publisher": "Beloit International Film Festival",
+      "publishedDate": "2025-02-01",
+      "verifiedStatus": "available",
+      "httpStatus": 200,
+      "exactPassages": [
+        "Cycle Directed by Laura Dyan Kezman & William Howell. Documentary Feature, United States | 95 min | 2025.",
+        "Director: Laura Dyan Kezman & William Howell. Writer: Laura Dyan Kezman & William Howell. Producer: Laura Dyan Kezman, William Howell, Amanda Thaxton.",
+        "CYCLE pierces the silence surrounding police violence in America through the story of Ty’rese West, an 18-year-old Black teenager killed by police in Racine, Wisconsin. Developed in close collaboration with Ty’rese’s family..."
+      ]
+    },
+    {
+      "sourceId": "ev-cy-rce",
+      "url": "https://racinecountyeye.com/2025/05/05/cycle-tyrese-west-new-details-giese/",
+      "title": "Ty’Rese West shooting: New evidence from 'CYCLE' reveals contradictions in 2019 case",
+      "publisher": "Racine County Eye",
+      "publishedDate": "2025-05-05",
+      "verifiedStatus": "available",
+      "httpStatus": 200,
+      "exactPassages": [
+        "Hundreds of people attended the world premiere of CYCLE on Sunday, May 4, at the Oriental Theater in Milwaukee as part of the annual Milwaukee Film Festival.",
+        "Central to the film is the deposition of Mount Pleasant police Sgt. Eric Giese, the officer who shot West after a foot pursuit."
+      ]
+    }
+  ],
+  "proposedCardCorrections": {
+    "whatWeKnow": [
+      "Feature documentary directed by Laura Dyan Kezman and William Howell (Lion Art Media), produced with Amanda Thaxton.",
+      "Investigates the 2019 fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, centering Monique West and the West family's pursuit of accountability.",
+      "World premiere held at the 2025 Milwaukee Film Festival (Oriental Theater) and officially selected for the Beloit International Film Festival (95-minute feature).",
+      "Scrutinizes court deposition testimony of Sgt. Eric Giese and highlights the absence of operational body or dashboard camera footage."
+    ],
+    "whatWereChecking": [
+      "Subsequent regional arthouse screenings and public broadcast acquisition timeline (e.g. PBS Wisconsin or POV review).",
+      "Community screening license availability for civic impact forums in Racine, Kenosha, and Milwaukee."
+    ],
+    "withheldClaims": [
+      "Withheld: Unverified producer credits (Vianca Fuster, Michelle Craig) pending primary film billing confirmation.",
+      "Withheld: Claim of PBS Wisconsin reporting coverage — reporting established across WUWM 89.7, Racine County Eye, Milwaukee Magazine, and Racine Journal Times.",
+      "Withheld: Confirmed television broadcast acquisition licenses."
+    ]
+  },
+  "derivativeAudioAction": {
+    "action": "invalidate_and_regenerate",
+    "priorAudioArtifactId": "scout-brief-card-cycle-v1-pro-g1",
+    "newAudioArtifactId": "scout-brief-card-cycle-v2-pro-g1",
+    "reason": "Prior transcript contained ungrounded four-outlet claims and outdated credit assertions."
+  },
+  "rollbackMethod": "Point project.latestCardVersionId back to card-cycle-v1 in Firestore transaction if emergency rollback is required."
+}

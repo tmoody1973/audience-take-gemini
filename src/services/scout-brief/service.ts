@@ -22,7 +22,7 @@ export async function generateAndPublishScoutBrief(
   }
   if (variant === "pro") {
     const legacy = await scoutBriefStore.getScoutBrief(`scout-brief-${card.cardVersionId}-g${generationVersion}`);
-    if (legacy && legacy.status === "ready") {
+    if (legacy && legacy.status === "ready" && legacy.inputDigest === inputDigest) {
       if (!legacy.variant) legacy.variant = "pro";
       return legacy;
     }

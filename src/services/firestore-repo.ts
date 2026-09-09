@@ -416,20 +416,21 @@ class InMemoryStore {
     // Project 3: CYCLE (Investigative Documentary)
     // ---------------------------------------------------------
     const p3Id = "proj-cycle";
-    const c3Id = "card-cycle-v1";
+    const c3Id = "card-cycle-v2";
 
     const p3Card: ScoutCard = {
       id: c3Id,
       projectId: p3Id,
-      version: 1,
+      version: 2,
       status: "published",
       whatWeKnow: [
-        "Feature documentary directed by Laura Dyan Kezman (Lion Art Media) with producers Vianca Fuster and Michelle Craig.",
-        "Investigates the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, and his family's pursuit of accountability.",
-        "Extensively reported and cited by Milwaukee Journal Sentinel, Racine County Eye, WUWM 89.7, and PBS Wisconsin."
+        "Feature documentary directed by Laura Dyan Kezman and William Howell (Lion Art Media), produced with Amanda Thaxton.",
+        "Investigates the 2019 fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, and his family's pursuit of accountability.",
+        "World premiere held at the 2025 Milwaukee Film Festival (Oriental Theater) and selected for the Beloit International Film Festival.",
+        "Examines court deposition testimony of Sgt. Eric Giese and addresses the absence of operational body or dashboard camera footage."
       ],
       whatWereChecking: [
-        "Midwest regional film festival tour premiere dates (Milwaukee Film Festival, Beloit International Film Festival).",
+        "Subsequent regional arthouse screenings and public broadcast acquisition timeline (e.g. PBS Wisconsin or POV review).",
         "Public screening licenses for Wisconsin civic impact and community justice forums."
       ],
       whyScouted: "A rigorous, empathetic investigative documentary centering family grief, systemic transparency, and community-led civil rights advocacy in southeastern Wisconsin.",
@@ -443,21 +444,30 @@ class InMemoryStore {
       ],
       evidenceLedger: [
         {
-          id: "ev-cy-1",
-          sourceUrl: "https://wuwm.com/2026/08/cycle-documentary-milwaukee-lion-art",
-          title: "WUWM 89.7: Independent Documentary CYCLE Explores Justice and Accountability in Racine County",
+          id: "ev-cy-wuwm",
+          sourceUrl: "https://www.wuwm.com/race-ethnicity/2025-07-15/cycle-tells-the-story-of-racines-tyrese-west-a-black-teenager-shot-by-police",
+          title: "WUWM 89.7: 'CYCLE' tells the story of Racine's Ty'Rese West, a Black teenager shot by police",
           publisher: "WUWM Milwaukee NPR",
           claimType: "reported",
-          excerpt: "Director Laura Dyan Kezman and Lion Art Media chronicle the aftermath of Ty'Rese West's death and a community demanding systemic reform.",
+          excerpt: "Documentary by co-directors William Howell and Laura Dyan Kezman examining the shooting of Ty'Rese West by Mount Pleasant police, Sgt. Giese's deposition, and absence of body camera footage.",
           verified: true
         },
         {
-          id: "ev-cy-2",
-          sourceUrl: "https://racinecountyeye.com/cycle-documentary-investigation",
-          title: "Racine County Eye: Investigative Documentary Examines Mount Pleasant Police Shooting",
+          id: "ev-cy-biff",
+          sourceUrl: "https://beloitfilmfest.org/films/cycle/",
+          title: "Beloit International Film Festival: Cycle",
+          publisher: "Beloit International Film Festival",
+          claimType: "reported",
+          excerpt: "95 min Documentary Feature directed by Laura Dyan Kezman & William Howell; produced by Laura Dyan Kezman, William Howell, Amanda Thaxton.",
+          verified: true
+        },
+        {
+          id: "ev-cy-rce",
+          sourceUrl: "https://racinecountyeye.com/2025/05/05/cycle-tyrese-west-new-details-giese/",
+          title: "Racine County Eye: Ty’Rese West shooting: New evidence from 'CYCLE' reveals contradictions in 2019 case",
           publisher: "Racine County Eye",
           claimType: "reported",
-          excerpt: "CYCLE brings extensive local investigative reporting into focus through the lived experience of the West family.",
+          excerpt: "Hundreds attended the world premiere of CYCLE on Sunday, May 4, at the Oriental Theater in Milwaukee as part of the annual Milwaukee Film Festival.",
           verified: true
         }
       ],
@@ -524,7 +534,7 @@ class InMemoryStore {
         medium: "documentary",
         currentStage: "production",
         logline: "An investigative documentary examining the fatal police shooting of 18-year-old Ty'Rese West in Mount Pleasant, Wisconsin, centering his family's pursuit of accountability and systemic reform.",
-        creators: ["Laura Dyan Kezman", "Lion Art Media", "Vianca Fuster", "Michelle Craig"]
+        creators: ["Laura Dyan Kezman", "William Howell", "Lion Art Media", "Amanda Thaxton"]
       },
       publishedCardId: c3Id,
       publicationStatus: "published",
@@ -1000,6 +1010,12 @@ class InMemoryStore {
 
     this.projects.set(p3Id, p3);
     this.scoutCards.set(c3Id, p3Card);
+    this.scoutCards.set("card-cycle-v1", {
+      ...p3Card,
+      id: "card-cycle-v1",
+      version: 1,
+      status: "superseded" as any,
+    });
 
     this.projects.set(p4Id, p4);
     this.scoutCards.set(c4Id, p4Card);

@@ -60,6 +60,14 @@ export interface EvidenceItem {
   supportingClaimIds?: string[];
   isNominatorLead?: boolean;
   origin?: "nominator" | "primary" | "parallel" | "community" | "creator";
+  availability?:
+    | "available"
+    | "unavailable"
+    | "restricted"
+    | "timed_out"
+    | "fetch_error"
+    | "soft_error"
+    | "not_checked";
 }
 
 export interface BoundedExperiment {
