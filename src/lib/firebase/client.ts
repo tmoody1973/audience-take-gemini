@@ -10,10 +10,13 @@ import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 
 import {
+  FIREBASE_APP_CHECK_DEFAULT_SITE_KEY,
   firebaseClientConfig,
   firebaseEmulatorConfig,
   hasFirebaseClientConfig,
 } from "./config";
+
+export { FIREBASE_APP_CHECK_DEFAULT_SITE_KEY };
 
 let emulatorConnected = false;
 let appCheckStarted = false;
@@ -55,7 +58,8 @@ export function getClientStorage() {
 }
 
 export function startAppCheck(): AppCheck | null {
-  const siteKey = process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_SITE_KEY;
+  const siteKey =
+    process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_SITE_KEY || FIREBASE_APP_CHECK_DEFAULT_SITE_KEY;
   if (appCheckStarted) {
     return appCheckInstance;
   }
@@ -75,8 +79,9 @@ export function startAppCheck(): AppCheck | null {
   return appCheckInstance;
 }
 
-export async function getClientAppCheckToken(): Promise<string | undefined> {
+export async function getClientAppCheckToken(forceRefresh = false): Promise<string | undefined> {
   const appCheck = startAppCheck();
   if (!appCheck) return undefined;
-  return (await getToken(appCheck)).token;
+  const result = await getToken(appCheck, forceRefresh);
+  return result?.token;
 }

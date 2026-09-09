@@ -7,6 +7,8 @@ export const firebaseClientConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:866111144888:web:02d8c2e8c00a98ed9c854d",
 };
 
+export const FIREBASE_APP_CHECK_DEFAULT_SITE_KEY = "6LdxL5stAAAAAHpXdxPQUfKIyhHZd4pN0UY6Sjcw";
+
 export function hasFirebaseClientConfig(): boolean {
   return true;
 }
